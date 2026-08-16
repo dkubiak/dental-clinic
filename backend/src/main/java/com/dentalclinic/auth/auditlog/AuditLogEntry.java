@@ -26,7 +26,10 @@ public class AuditLogEntry {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // @JdbcTypeCode(SqlTypes.NAMED_ENUM): audit_event_type is a native Postgres enum type
+  // (V5__audit_log.sql) — see StaffAccount.role's identical comment for why this is needed.
   @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "event_type", nullable = false)
   private AuditEventType eventType;
 
@@ -51,10 +54,16 @@ public class AuditLogEntry {
   @Column(name = "metadata")
   private String metadata;
 
-  @Column(name = "previous_entry_hash")
+  // @JdbcTypeCode(SqlTypes.CHAR) matches V5__audit_log.sql's CHAR(64) exactly — without it
+  // Hibernate's schema validation (spring.jpa.hibernate.ddl-auto: validate) maps a plain String
+  // field to VARCHAR regardless of columnDefinition text, and fails to start against a real
+  // CHAR(64) column.
+  @JdbcTypeCode(SqlTypes.CHAR)
+  @Column(name = "previous_entry_hash", length = 64)
   private String previousEntryHash;
 
-  @Column(name = "entry_hash", nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
+  @Column(name = "entry_hash", nullable = false, length = 64)
   private String entryHash;
 
   protected AuditLogEntry() {

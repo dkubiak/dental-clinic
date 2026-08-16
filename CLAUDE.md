@@ -58,7 +58,7 @@ in `.specify/templates/overrides/` → installed presets in `.specify/presets/` 
 
 ## Constitution — binding project rules
 
-`.specify/memory/constitution.md` is the authoritative source of truth (currently v1.3.0) and
+`.specify/memory/constitution.md` is the authoritative source of truth (currently v1.3.1) and
 supersedes any other convention. Every `/speckit-*` output and every PR must be checked against it.
 Key points future work must honor:
 
@@ -115,7 +115,9 @@ decision):**
   review before merge.
 - Changes introducing/modifying a high-risk module must document their availability approach in the
   `/speckit-plan` output before `/speckit-implement` proceeds.
-- At least one other contributor must review before merge.
+- At least one other contributor must review before merge. This and the security/compliance
+  review above are conceptually distinct checks, but MAY be satisfied by the same reviewer's
+  approval — a separate second person is not mandated solely to cover both.
 
 When a `/speckit-plan` or implementation decision would conflict with any of the above, call out the
 conflict explicitly rather than silently deviating — per Governance, amendments require documented

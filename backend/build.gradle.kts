@@ -37,10 +37,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-flyway")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springframework.session:spring-session-jdbc")
     runtimeOnly("org.postgresql:postgresql")
+    // Spring Security's Argon2PasswordEncoder (SecurityConfig, research.md #6) delegates its
+    // actual crypto to BouncyCastle at runtime — not pulled in transitively by
+    // spring-boot-starter-security.
+    runtimeOnly("org.bouncycastle:bcprov-jdk18on:1.79")
 
     // MFA (T004)
     implementation("dev.samstevens.totp:totp:$javaTotpVersion")
@@ -51,6 +56,10 @@ dependencies {
 
     // Test (T007)
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Spring Boot 4's modularized starters (see spring-boot-webmvc above) split MockMvc
+    // test-autoconfiguration (@AutoConfigureMockMvc) out of spring-boot-test-autoconfigure into
+    // its own artifact, unlike the Boot 3.x monolithic spring-boot-starter-test.
+    testImplementation("org.springframework.boot:spring-boot-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
@@ -58,6 +67,10 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 // Linting/formatting (T005)

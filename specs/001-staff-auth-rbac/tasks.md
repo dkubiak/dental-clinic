@@ -138,69 +138,107 @@ password reset completes end-to-end (spec.md "Independent Test", User Story 1).
 
 ### Tests for User Story 1 ⚠️ Write first — confirm they FAIL before implementation
 
-- [ ] T032 [P] [US1] Contract test `POST /auth/login` (valid, wrong password, locked, deactivated)
+- [X] T032 [P] [US1] Contract test `POST /auth/login` (valid, wrong password, locked, deactivated)
       in `backend/src/test/java/com/dentalclinic/auth/api/LoginControllerContractTest.java`
-- [ ] T033 [P] [US1] Contract test `POST /auth/mfa/verify` (valid/invalid/expired pre-auth token)
+- [X] T033 [P] [US1] Contract test `POST /auth/mfa/verify` (valid/invalid/expired pre-auth token)
       in `backend/src/test/java/com/dentalclinic/auth/api/MfaControllerContractTest.java`
-- [ ] T034 [P] [US1] Contract test `POST /auth/password-reset/request` and `/confirm` in
+- [X] T034 [P] [US1] Contract test `POST /auth/password-reset/request` and `/confirm` in
       `backend/src/test/java/com/dentalclinic/auth/api/PasswordResetControllerContractTest.java`
-- [ ] T035 [P] [US1] Integration test (Testcontainers): 5 consecutive failed attempts → 15-minute
+- [X] T035 [P] [US1] Integration test (Testcontainers): 5 consecutive failed attempts → 15-minute
       lockout (FR-011) in
       `backend/src/test/java/com/dentalclinic/auth/account/AccountLockoutIntegrationTest.java`
-- [ ] T036 [P] [US1] Integration test (Testcontainers): out-of-role direct request returns `404`,
+- [X] T036 [P] [US1] Integration test (Testcontainers): out-of-role direct request returns `404`,
       not `403` (FR-005) in
       `backend/src/test/java/com/dentalclinic/auth/role/RbacEnforcementIntegrationTest.java`
-- [ ] T037 [P] [US1] Integration test (Testcontainers): deactivated account cannot log in (FR-010)
+- [X] T037 [P] [US1] Integration test (Testcontainers): deactivated account cannot log in (FR-010)
       in `backend/src/test/java/com/dentalclinic/auth/account/DeactivatedAccountLoginTest.java`
-- [ ] T038 [P] [US1] Vitest unit tests for login form + MFA challenge components in
+- [X] T038 [P] [US1] Vitest unit tests for login form + MFA challenge components in
       `frontend/src/app/features/auth/login/login.component.spec.ts`
-- [ ] T039 [P] [US1] Playwright e2e test covering spec.md US1 Acceptance Scenarios 1–7 in
+- [X] T039 [P] [US1] Playwright e2e test covering spec.md US1 Acceptance Scenarios 1–7 in
       `frontend/e2e/us1-login-rbac.spec.ts`
-- [ ] T039a [P] [US1] Integration test (Testcontainers): session expires after 15 minutes of
+- [X] T039a [P] [US1] Integration test (Testcontainers): session expires after 15 minutes of
       inactivity — subsequent request with the expired session ID returns `401` (FR-012) in
       `backend/src/test/java/com/dentalclinic/auth/session/SessionIdleTimeoutIntegrationTest.java`
-- [ ] T039b [P] [US1] Integration test (Testcontainers): session is invalidated at the 8-hour
+- [X] T039b [P] [US1] Integration test (Testcontainers): session is invalidated at the 8-hour
       hard cap even when kept continuously active (FR-012, spec Assumptions) in
       `backend/src/test/java/com/dentalclinic/auth/session/SessionHardCapIntegrationTest.java`
+- [X] T039c [P] [US1] Integration test (Testcontainers): password creation/reset rejects passwords
+      shorter than 12 characters and passwords found on the breached-password list (FR-002a) in
+      `backend/src/test/java/com/dentalclinic/auth/account/PasswordPolicyValidatorTest.java`
+- [X] T039d [P] [US1] Integration test (Testcontainers): repeated invalid MFA codes increment the
+      same `failed_login_count` used for password failures and trigger lockout at the same
+      5-attempt/15-minute threshold (FR-011a) in
+      `backend/src/test/java/com/dentalclinic/auth/account/MfaFailureLockoutIntegrationTest.java`
+- [X] T039e [P] [US1] Integration test (Testcontainers): login attempts from a single source IP
+      against multiple different accounts are rejected with `429` once the per-IP threshold is
+      exceeded, independent of any single account's own lockout state (FR-011b) in
+      `backend/src/test/java/com/dentalclinic/auth/account/IpRateLimitIntegrationTest.java`
+- [X] T039f [P] [US1] Integration test (Testcontainers): account lockout (FR-011) triggers an
+      email notification to the account's registered address (FR-011c) in
+      `backend/src/test/java/com/dentalclinic/auth/account/LockoutNotificationIntegrationTest.java`
+- [X] T039g [P] [US1] Integration test (Testcontainers): pre-auth token issued by `POST
+      /auth/login` is rejected by `POST /auth/mfa/verify` exactly 5 minutes after issuance
+      (FR-015a) in
+      `backend/src/test/java/com/dentalclinic/auth/account/PreAuthTokenExpiryIntegrationTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T040 [US1] AuthService — verify email/password, issue short-lived pre-auth token in
+- [X] T040 [US1] AuthService — verify email/password, issue pre-auth token valid for exactly 5
+      minutes (FR-015a) in
       `backend/src/main/java/com/dentalclinic/auth/account/AuthService.java` (depends on T020, T026)
-- [ ] T041 [US1] AccountLockoutService — `failed_login_count`/`locked_until` logic (FR-011) in
+- [X] T041 [US1] AccountLockoutService — `failed_login_count`/`locked_until` logic (FR-011) in
       `backend/src/main/java/com/dentalclinic/auth/account/AccountLockoutService.java`
       (depends on T040)
-- [ ] T042 [US1] MfaService — TOTP secret enrollment + code verification via `java-totp` (FR-015),
+- [X] T041a [US1] Wire MfaService (T042) to call AccountLockoutService (T041) on an invalid TOTP
+      code, incrementing the same `failed_login_count`/`locked_until` used for password failures
+      (FR-011a) (depends on T041, T042)
+- [X] T041b [US1] IpRateLimitService — Postgres-backed `LoginAttemptByIp` sliding-window counter
+      checked/incremented in `POST /auth/login` before credential verification, rejecting with
+      `429` once the per-IP threshold is exceeded, independent of per-account lockout (FR-011b,
+      data-model.md `LoginAttemptByIp`; deliberately no new datastore, per plan.md Constraints) in
+      `backend/src/main/java/com/dentalclinic/auth/account/IpRateLimitService.java`
+      (depends on T040)
+- [X] T041c [US1] Wire AccountLockoutService (T041) to send an account-lockout email notification
+      via the AWS SES integration established in T043 (FR-011c) (depends on T041, T043)
+- [X] T042 [US1] MfaService — TOTP secret enrollment + code verification via `java-totp` (FR-015),
       encrypting/decrypting the stored secret through T022a's `TotpSecretConverter` (FR-013) in
       `backend/src/main/java/com/dentalclinic/auth/mfa/MfaService.java` (depends on T022, T022a)
-- [ ] T043 [US1] PasswordResetService — token issuance/consumption (30-min validity, single use,
-      FR-016) + AWS SES email send (FR-017 logging) in
+- [X] T043 [US1] PasswordResetService — token issuance/consumption (30-min validity, single use,
+      FR-016, uniform response regardless of whether the email matches an account) + AWS SES email
+      send (FR-017 logging) in
       `backend/src/main/java/com/dentalclinic/auth/passwordreset/PasswordResetService.java`
       (depends on T023)
-- [ ] T044 [US1] LoginController (`POST /auth/login`, `POST /auth/logout`) per
+- [X] T043a [US1] PasswordPolicyValidator — enforce NIST 800-63B (minimum 12 characters, rejected
+      if present on a known-breached-password list, no forced character-class complexity) for
+      passwords set via PasswordResetService (T043) and AccountAdminService account creation
+      (T074) (FR-002a) in
+      `backend/src/main/java/com/dentalclinic/auth/account/PasswordPolicyValidator.java`
+      (depends on T043)
+- [X] T044 [US1] LoginController (`POST /auth/login`, `POST /auth/logout`) per
       contracts/auth-api.yaml in
       `backend/src/main/java/com/dentalclinic/auth/api/LoginController.java`
       (depends on T040, T041)
-- [ ] T045 [US1] MfaController (`POST /auth/mfa/verify`) per contracts/auth-api.yaml in
+- [X] T045 [US1] MfaController (`POST /auth/mfa/verify`) per contracts/auth-api.yaml in
       `backend/src/main/java/com/dentalclinic/auth/api/MfaController.java` (depends on T042)
-- [ ] T046 [US1] PasswordResetController (`/auth/password-reset/request`, `/confirm`) in
+- [X] T046 [US1] PasswordResetController (`/auth/password-reset/request`, `/confirm`) in
       `backend/src/main/java/com/dentalclinic/auth/api/PasswordResetController.java`
       (depends on T043)
-- [ ] T047 [US1] RBAC permission-matrix enforcement (`@PreAuthorize`) on role-scoped endpoints per
+- [X] T047 [US1] RBAC permission-matrix enforcement (`@PreAuthorize`) on role-scoped endpoints per
       contracts/rbac-policy.md (depends on T026, T028)
-- [ ] T048 [US1] Wire audit logging (`LOGIN_SUCCESS`, `LOGIN_FAILURE`, `LOGIN_DENIED_LOCKED`,
-      `LOGIN_DENIED_DEACTIVATED`, `MFA_FAILURE`, `PASSWORD_RESET_*`) into T040–T043 via
-      AuditLogWriter (FR-006, FR-011, FR-017) (depends on T025, T040–T043)
-- [ ] T049 [P] [US1] Angular login page (email + password step) in
+- [X] T048 [US1] Wire audit logging (`LOGIN_SUCCESS`, `LOGIN_FAILURE`, `LOGIN_DENIED_LOCKED`,
+      `LOGIN_DENIED_DEACTIVATED`, `LOGIN_DENIED_RATE_LIMITED`, `MFA_FAILURE`, `PASSWORD_RESET_*`)
+      into T040–T043, T041b via AuditLogWriter (FR-006, FR-011, FR-011b, FR-017)
+      (depends on T025, T040–T043, T041b)
+- [X] T049 [P] [US1] Angular login page (email + password step) in
       `frontend/src/app/features/auth/login/login.component.ts` — mobile-first, Angular Material
       default theme (no custom branding — deferred to feature 002)
-- [ ] T050 [P] [US1] Angular MFA challenge screen in
+- [X] T050 [P] [US1] Angular MFA challenge screen in
       `frontend/src/app/features/auth/login/mfa-challenge.component.ts`
-- [ ] T051 [P] [US1] Angular password-reset request + confirm screens in
+- [X] T051 [P] [US1] Angular password-reset request + confirm screens in
       `frontend/src/app/features/auth/password-reset/`
-- [ ] T052 [US1] Angular AuthService (calls `/auth/login`, `/auth/mfa/verify`, `/auth/logout`) in
+- [X] T052 [US1] Angular AuthService (calls `/auth/login`, `/auth/mfa/verify`, `/auth/logout`) in
       `frontend/src/app/core/auth/auth.service.ts` (depends on T049–T051)
-- [ ] T053 [US1] Role-appropriate home-screen redirect after successful MFA (SC-001: <10s) wired
+- [X] T053 [US1] Role-appropriate home-screen redirect after successful MFA (SC-001: <10s) wired
       into `frontend/src/app/features/auth/login/login.component.ts` routing logic
       (depends on T052)
 
@@ -280,6 +318,14 @@ User Story 3).
 - [ ] T068a [P] [US3] Contract test `POST /accounts/{id}/deactivate` returns `409` when the
       target is the last active `ADMINISTRATOR` account, and the attempt is audit-logged
       (FR-009a; Edge Cases, spec.md) in the same test class as T066
+- [ ] T068b [P] [US3] Contract test `POST /accounts/{id}/mfa-reset` (admin-only `404` for
+      non-admin caller, `200` clears enrollment, audit-logged as `MFA_RESET`) (FR-015b) in the
+      same test class as T066
+- [ ] T068c [P] [US3] Integration test (Testcontainers): two concurrent `POST
+      /accounts/{id}/deactivate` requests targeting the two remaining active `ADMINISTRATOR`
+      accounts result in exactly one succeeding and one refused with `409` — no window where both
+      pass validation (FR-009b) in
+      `backend/src/test/java/com/dentalclinic/auth/account/ConcurrentAdminDeactivationTest.java`
 - [ ] T069 [P] [US3] Integration test (Testcontainers): deactivating an account immediately
       invalidates its active session (Edge Cases, spec.md) in
       `backend/src/test/java/com/dentalclinic/auth/account/DeactivateSessionInvalidationTest.java`
@@ -302,9 +348,14 @@ User Story 3).
 - [ ] T074 [US3] AccountAdminService (create/deactivate/reactivate/change-role, FR-009) in
       `backend/src/main/java/com/dentalclinic/auth/account/AccountAdminService.java`
       (depends on T020)
-- [ ] T074a [US3] Guard in AccountAdminService.deactivate(): reject with a `409`-mapped
-      exception if the target is the last active `ADMINISTRATOR` account, and write an
-      audit-log entry for the rejected attempt (FR-009a) (depends on T074)
+- [ ] T074a [US3] Guard in AccountAdminService.deactivate(): atomically (`SELECT ... FOR UPDATE`
+      or an equivalent serializable-transaction guard on the set of active ADMINISTRATOR accounts
+      — FR-009b) reject with a `409`-mapped exception if the target is the last active
+      `ADMINISTRATOR` account, and write an audit-log entry for the rejected attempt (FR-009a)
+      (depends on T074)
+- [ ] T074b [US3] AccountAdminService.resetMfa(): delete the target account's `MfaEnrollment` row,
+      forcing MFA re-enrollment on its next login (FR-015b) in `AccountAdminService.java`
+      (depends on T074)
 - [ ] T075 [US3] Wire session invalidation into deactivate (kill all active Sessions for the
       account) in `AccountAdminService.java` (depends on T027, T074)
 - [ ] T075a [US3] Wire session invalidation into change-role (kill all active Sessions for the
@@ -312,14 +363,20 @@ User Story 3).
       (depends on T027, T074)
 - [ ] T076 [US3] Wire audit logging (`ACCOUNT_CREATED`, `ACCOUNT_DEACTIVATED`,
       `ACCOUNT_REACTIVATED`, `ROLE_CHANGED`) into T074 via AuditLogWriter (depends on T025, T074)
+- [ ] T076a [US3] Wire audit logging (`MFA_RESET`, actor/target/timestamp) into T074b via
+      AuditLogWriter (FR-015b) (depends on T025, T074b)
 - [ ] T077 [US3] AccountController (`GET/POST /accounts`, `PATCH /accounts/{id}`,
       `/deactivate`, `/reactivate`), admin-only via RBAC, per contracts/auth-api.yaml in
       `backend/src/main/java/com/dentalclinic/auth/api/AccountController.java`
       (depends on T047, T074)
+- [ ] T077a [US3] Add `POST /accounts/{id}/mfa-reset` to AccountController per
+      contracts/auth-api.yaml (FR-015b) (depends on T047, T074b)
 - [ ] T078 [P] [US3] Angular admin accounts screens (list, create form, role-change,
       deactivate/reactivate actions) in `frontend/src/app/features/admin/accounts/`
 - [ ] T079 [US3] Angular AccountAdminService (calls `/accounts` endpoints) in
       `frontend/src/app/features/admin/accounts/account-admin.service.ts` (depends on T078)
+- [ ] T079a [P] [US3] Angular UI action for admin-triggered MFA reset (button + confirmation) in
+      the accounts screen (FR-015b) (depends on T078)
 
 **Checkpoint**: All three user stories independently functional.
 
@@ -337,6 +394,14 @@ User Story 3).
 - [ ] T084 Verify SC-001 through SC-007 against the running stack (spec.md Success Criteria)
 - [ ] T085 [P] Terraform DEV workspace `apply`, smoke test against it, then `destroy` (DEV is
       ephemeral per Environments & Release Process)
+- [ ] T085a [P] AuditLogRetentionJob — scheduled job (e.g. Spring `@Scheduled`) that deletes
+      AuditLogEntry rows older than 3 years, running under a privileged DB role separate from the
+      application's normal `INSERT`-only role (FR-018, data-model.md AuditLogEntry Retention) in
+      `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditLogRetentionJob.java`
+      (depends on T019, T024)
+- [ ] T085b [P] Terraform: pin the ALB listener's minimum TLS policy to
+      `ELBSecurityPolicy-TLS13-1-2-2021-06` (or equivalent TLS-1.2-minimum policy) (FR-013) in
+      `infra/terraform/` (depends on T009)
 
 ---
 
@@ -362,7 +427,7 @@ User Story 3).
 
 ### Within Each User Story
 
-- Tests (T032–T039, T039a, T039b, T054–T060, T066–T068a, T069, T069a, T070–T073) MUST be written
+- Tests (T032–T039, T039a–T039g, T054–T060, T066–T068c, T069, T069a, T070–T073) MUST be written
   and confirmed FAILING before their corresponding implementation tasks (Principle I, NON-NEGOTIABLE).
 - Backend entities/services before controllers; controllers before frontend integration.
 - Story complete (checkpoint) before moving to the next priority, if working sequentially.

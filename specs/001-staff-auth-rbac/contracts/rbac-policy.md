@@ -23,6 +23,7 @@ changes touching authz require security/compliance review).
 | View/manage medical records & treatment history (any patient) | ❌ | ✅ | ❌ |
 | Create / deactivate / reactivate staff accounts | ❌ | ❌ | ✅ |
 | Assign / change staff roles | ❌ | ❌ | ✅ |
+| Reset another account's MFA enrollment (FR-015b) | ❌ | ❌ | ✅ |
 | System configuration | ❌ | ❌ | ✅ |
 | Read audit log | ❌ | ❌ | ✅ |
 | Write/edit/delete audit log (any role, any endpoint) | ❌ | ❌ | ❌ (no such capability exists — FR-008) |

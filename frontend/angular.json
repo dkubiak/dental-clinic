@@ -37,6 +37,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": { "buildTarget": "dental-clinic-frontend:build:production" },
             "development": { "buildTarget": "dental-clinic-frontend:build:development" }
