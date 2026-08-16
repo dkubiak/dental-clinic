@@ -1,9 +1,7 @@
 // @ts-check
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
-const angular = require('@angular-eslint/eslint-plugin');
-const angularTemplate = require('@angular-eslint/eslint-plugin-template');
-const angularTemplateParser = require('@angular-eslint/template-parser');
+const angular = require('angular-eslint');
 
 module.exports = tseslint.config(
   {
@@ -11,20 +9,21 @@ module.exports = tseslint.config(
   },
   {
     files: ['**/*.ts'],
-    extends: [eslint.configs.recommended, ...tseslint.configs.recommended],
-    plugins: {
-      '@angular-eslint': angular,
-    },
+    extends: [eslint.configs.recommended, ...tseslint.configs.recommended, ...angular.configs.tsRecommended],
     processor: angular.processInlineTemplates,
     rules: {
       '@angular-eslint/directive-selector': ['error', { type: 'attribute', prefix: 'app', style: 'camelCase' }],
       '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'app', style: 'kebab-case' }],
+      // Angular's current style guide (v20+, used by `ng generate`) drops the
+      // "Component"/"Directive" class-name suffix; angular-eslint's recommended
+      // config still defaults to requiring it (angular-eslint#2497).
+      '@angular-eslint/component-class-suffix': 'off',
+      '@angular-eslint/directive-class-suffix': 'off',
     },
   },
   {
     files: ['**/*.html'],
-    languageOptions: { parser: angularTemplateParser },
-    plugins: { '@angular-eslint/template': angularTemplate },
+    extends: [...angular.configs.templateRecommended],
     rules: {
       '@angular-eslint/template/prefer-control-flow': 'error',
     },

@@ -68,7 +68,10 @@ checkstyle {
 
 spotless {
     java {
-        googleJavaFormat()
+        // Pinned above the Spotless-bundled default (1.24.0), which predates JDK 25 support:
+        // google-java-format < 1.34.0 throws NoSuchMethodError against JDK 25's javac
+        // (Log$DeferredDiagnosticHandler.getDiagnostics() changed Queue -> List).
+        googleJavaFormat("1.36.1")
         removeUnusedImports()
     }
 }
