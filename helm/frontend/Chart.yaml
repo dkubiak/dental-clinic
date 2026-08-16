@@ -1,0 +1,9 @@
+apiVersion: v2
+name: frontend
+description: >
+  Angular static build for the staff auth/RBAC UI (feature 001-staff-auth-rbac), served from an
+  EKS-hosted service behind the same ALB as auth-service. Own Helm release (not the auth-service
+  backend's failure domain).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,19 @@
+@use '@angular/material' as mat;
+
+// Angular Material default theme — no custom branding/theme (deferred to feature 002, see
+// tasks.md T049 note).
+html {
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}

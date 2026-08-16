@@ -1,0 +1,83 @@
+name: Deploy (Helm / Argo CD sync)
+
+# Triggered on merge to main (Principle VI — merge is what triggers deployment, never a manual
+# action outside the pipeline). GitOps: this workflow updates the Helm values/image tag in the
+# Argo CD-tracked manifests repo/path and lets Argo CD reconcile — it does NOT run `helm upgrade`
+# or `kubectl apply` directly against the cluster (pull-based GitOps per Technology Stack
+# Constraints).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "helm/**"
+
+permissions:
+  contents: write # to commit the updated image tag into the GitOps manifests path
+  id-token: write # OIDC for ECR push
+
+jobs:
+  build-and-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ECR_PUSH_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push auth-service image
+        run: |
+          docker build -t "$AUTH_SERVICE_ECR_REPO:${{ steps.tag.outputs.tag }}" backend/
+          docker push "$AUTH_SERVICE_ECR_REPO:${{ steps.tag.outputs.tag }}"
+        env:
+          AUTH_SERVICE_ECR_REPO: ${{ secrets.AUTH_SERVICE_ECR_REPO }}
+
+      - name: Build & push frontend image
+        run: |
+          docker build -t "$FRONTEND_ECR_REPO:${{ steps.tag.outputs.tag }}" frontend/
+          docker push "$FRONTEND_ECR_REPO:${{ steps.tag.outputs.tag }}"
+        env:
+          FRONTEND_ECR_REPO: ${{ secrets.FRONTEND_ECR_REPO }}
+
+  update-gitops-manifests:
+    name: Update Helm values → Argo CD sync (canary)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: prod # GitHub Environments protection rule gates this job
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.GITOPS_MANIFESTS_REPO }}
+          token: ${{ secrets.GITOPS_MANIFESTS_TOKEN }}
+
+      - name: Bump image tag in Helm values (drives Argo Rollouts canary)
+        run: |
+          yq -i '.image.tag = "${{ needs.build-and-push.outputs.image-tag }}"' \
+            environments/prod/auth-service/values.yaml
+          yq -i '.image.tag = "${{ needs.build-and-push.outputs.image-tag }}"' \
+            environments/prod/frontend/values.yaml
+
+      - name: Commit & push (Argo CD picks up the change and reconciles — GitOps, pull-based)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: auth-service/frontend ${{ needs.build-and-push.outputs.image-tag }}"
+          git push
+
+      # Argo Rollouts then executes the weighted canary steps defined in
+      # helm/auth-service/values.yaml (rollout.canarySteps), observed via the AWS Load Balancer
+      # Controller's weighted target groups — see Environments & Release Process. No step here
+      # applies 100% traffic directly.

@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: Dental Clinic - Staff Auth & RBAC API
+  version: "0.1.0"
+  description: >
+    Backend REST API for staff authentication, MFA, self-service password reset,
+    admin account management, and audit log review. This is the sole authorization
+    enforcement point (FR-005) — the Angular frontend's route guards are UX-only.
+servers:
+  - url: /api
+
+security:
+  - sessionCookie: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Step 1 of login — verify email + password.
+      description: >
+        On success, does NOT yet establish an authenticated session if the account
+        has MFA enrolled and unverified for this session (FR-015 — MFA required for
+        all roles). Returns a short-lived pre-auth token to be used with
+        /auth/mfa/verify. Failure and success are both audit-logged (FR-006).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Credentials valid; MFA challenge required.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preAuthToken: { type: string }
+                  mfaRequired: { type: boolean, enum: [true] }
+        "401":
+          description: >
+            Invalid email or password. Response body deliberately does not indicate
+            which was wrong (Acceptance Scenario US1-4).
+        "423":
+          description: Account temporarily locked after 5 consecutive failed attempts (FR-011).
+        "403":
+          description: Account is deactivated (FR-010).
+
+  /auth/mfa/verify:
+    post:
+      summary: Step 2 of login — verify TOTP code, establish session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preAuthToken, totpCode]
+              properties:
+                preAuthToken: { type: string }
+                totpCode: { type: string, pattern: "^[0-9]{6}$" }
+      responses:
+        "200":
+          description: >
+            MFA verified; session cookie set. Response includes the role so the
+            frontend can route to the role-appropriate home screen (SC-001).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    enum: [RECEPTION, DOCTOR, ADMINISTRATOR]
+        "401":
+          description: Invalid or expired TOTP code / pre-auth token; audit-logged as MFA_FAILURE.
+
+  /auth/logout:
+    post:
+      summary: Invalidate the current session.
+      responses:
+        "204":
+          description: Session invalidated.
+
+  /auth/password-reset/request:
+    post:
+      summary: Request a self-service password reset link (FR-016).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: >
+            Always returns 202 regardless of whether the email matches an account,
+            to avoid revealing account existence. If it matches, an email with a
+            30-minute single-use link is sent (FR-016) and a
+            PASSWORD_RESET_REQUESTED audit entry is written (FR-017).
+
+  /auth/password-reset/confirm:
+    post:
+      summary: Consume a reset token and set a new password.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, format: password }
+      responses:
+        "200":
+          description: Password updated; audit-logged as PASSWORD_RESET_SUCCEEDED.
+        "410":
+          description: Token expired or already used; audit-logged as PASSWORD_RESET_EXPIRED or PASSWORD_RESET_FAILED.
+
+  /accounts:
+    get:
+      summary: List staff accounts (ADMINISTRATOR only, US3).
+      responses:
+        "200":
+          description: List of accounts.
+        "404":
+          description: >
+            Caller lacks ADMINISTRATOR role — 404, not 403, per FR-005 /
+            research.md #8 (no confirmation that admin-only resources exist).
+    post:
+      summary: Create a staff account and assign its role (ADMINISTRATOR only, FR-009).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [RECEPTION, DOCTOR, ADMINISTRATOR] }
+      responses:
+        "201":
+          description: Account created (ACCOUNT_CREATED audit entry); MFA enrollment happens on first login.
+        "404":
+          description: Caller lacks ADMINISTRATOR role.
+
+  /accounts/{id}:
+    patch:
+      summary: Change an account's role (ADMINISTRATOR only, FR-009/FR-007).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [RECEPTION, DOCTOR, ADMINISTRATOR] }
+      responses:
+        "200":
+          description: >
+            Role changed; ROLE_CHANGED audit entry with before/after state (FR-007); any active
+            session for this account is invalidated immediately, forcing re-authentication with
+            the new role (FR-007a).
+        "404":
+          description: Caller lacks ADMINISTRATOR role, or account does not exist.
+
+  /accounts/{id}/deactivate:
+    post:
+      summary: Deactivate an account (ADMINISTRATOR only, US3 AC2).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: >
+            Account deactivated; any active session for this account is invalidated
+            immediately (Edge Cases in spec.md); ACCOUNT_DEACTIVATED audit entry.
+        "404":
+          description: Caller lacks ADMINISTRATOR role, or account does not exist.
+        "409":
+          description: >
+            Target account is the last remaining active ADMINISTRATOR account —
+            deactivation refused (FR-009a); the rejected attempt is audit-logged.
+
+  /accounts/{id}/reactivate:
+    post:
+      summary: Reactivate a previously deactivated account (ADMINISTRATOR only, US3).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Account reactivated; ACCOUNT_REACTIVATED audit entry.
+        "404":
+          description: Caller lacks ADMINISTRATOR role, or account does not exist.
+
+  /audit-log:
+    get:
+      summary: Read-only audit log review (ADMINISTRATOR only, US2).
+      description: >
+        Read-only by construction — no PATCH/PUT/DELETE exists anywhere in this API
+        for audit log entries (FR-008).
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: eventType
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated list of audit log entries.
+        "404":
+          description: Caller lacks ADMINISTRATOR role.
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: SESSION

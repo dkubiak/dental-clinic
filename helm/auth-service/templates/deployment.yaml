@@ -1,0 +1,52 @@
+# Deliberately its own Deployment — never co-scheduled with lower-tier modules (plan.md Risk
+# Tier section, Principle V). Full Argo Rollouts canary object supersedes this once T014's
+# deploy.yml wires it in (values.rollout.enabled).
+{{- if not .Values.rollout.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "auth-service.name" . }}
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "auth-service.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "auth-service.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: auth-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.service.port }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "auth-service.labels" . | nindent 20 }}
+                topologyKey: topology.kubernetes.io/zone
+{{- end }}

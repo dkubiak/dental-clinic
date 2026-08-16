@@ -1,0 +1,23 @@
+package com.dentalclinic.auth.auditlog;
+
+/**
+ * Mirrors the `audit_event_type` Postgres enum (V5__audit_log.sql). Covers every FR-006/007/
+ * 009a/010/011/017 and User Story 2/3 audit requirement (data-model.md).
+ */
+public enum AuditEventType {
+  LOGIN_SUCCESS,
+  LOGIN_FAILURE,
+  LOGIN_DENIED_LOCKED,
+  LOGIN_DENIED_DEACTIVATED,
+  MFA_FAILURE,
+  ROLE_CHANGED,
+  ACCOUNT_CREATED,
+  ACCOUNT_DEACTIVATED,
+  ACCOUNT_DEACTIVATION_DENIED_LAST_ADMIN,
+  ACCOUNT_REACTIVATED,
+  PASSWORD_RESET_REQUESTED,
+  PASSWORD_RESET_SUCCEEDED,
+  PASSWORD_RESET_FAILED,
+  PASSWORD_RESET_EXPIRED,
+  ACCESS_DENIED_OUT_OF_ROLE
+}

@@ -1,0 +1,47 @@
+replicaCount: 2 # ≥2 replicas across AZs behind the ALB (plan.md Risk Tier section)
+
+image:
+  repository: REPLACE_WITH_ECR_REPO_URL
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: auth-service
+  # Populated by CI from the Terraform `module.kms.irsa_role_arn` output (T022a) — grants
+  # kms:Encrypt/Decrypt on the MFA-secret key via IRSA, no static credentials.
+  eksRoleArn: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+env:
+  DB_URL: ""
+  MFA_SECRET_KMS_KEY_ID: ""
+  SES_FROM_ADDRESS: "no-reply@dentalclinic.example"
+
+# Argo Rollouts canary steps (Environments & Release Process) — applied via the Rollout resource
+# once Argo Rollouts is wired in (deploy.yml, T014); left disabled until then.
+rollout:
+  enabled: false
+  canarySteps:
+    - setWeight: 10
+    - pause: { duration: "5m" }
+    - setWeight: 50
+    - pause: { duration: "5m" }
+    - setWeight: 100

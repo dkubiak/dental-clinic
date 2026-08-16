@@ -1,0 +1,14 @@
+apiVersion: v2
+name: auth-service
+description: >
+  Staff authentication & RBAC backend (feature 001-staff-auth-rbac). Its own Helm release,
+  deliberately separate from any future lower-tier module chart (plan.md Risk Tier section,
+  constitution Principle V) so a lower-tier module's failure can never take down login/RBAC
+  enforcement.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - auth
+  - rbac
+  - high-risk-module

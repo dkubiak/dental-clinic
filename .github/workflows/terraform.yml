@@ -1,0 +1,87 @@
+name: Terraform Plan/Apply
+
+# No manual `terraform apply` anywhere (Principle VI — Infrastructure as Code, NON-NEGOTIABLE).
+# `plan` runs on every PR touching infra/terraform/; `apply` runs only on merge to main, and only
+# for the environment that changed. DEV apply is also triggerable on demand (workflow_dispatch)
+# since DEV is ephemeral/on-demand per Environments & Release Process; PROD apply only follows a
+# merge to main.
+on:
+  pull_request:
+    branches: [main]
+    paths: ["infra/terraform/**"]
+  push:
+    branches: [main]
+    paths: ["infra/terraform/**"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to plan/apply (dev is ephemeral — see Environments & Release Process)"
+        required: true
+        default: dev
+        type: choice
+        options: [dev, prod]
+      action:
+        description: "terraform action"
+        required: true
+        default: plan
+        type: choice
+        options: [plan, apply, destroy]
+
+permissions:
+  contents: read
+  id-token: write # OIDC federation to AWS — no long-lived AWS credentials in this repo
+
+jobs:
+  plan:
+    name: terraform plan (${{ matrix.environment }})
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.TERRAFORM_PLAN_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: terraform init
+        working-directory: infra/terraform/environments/${{ matrix.environment }}
+        run: terraform init
+
+      - name: terraform validate
+        working-directory: infra/terraform/environments/${{ matrix.environment }}
+        run: terraform validate
+
+      - name: terraform plan
+        working-directory: infra/terraform/environments/${{ matrix.environment }}
+        run: terraform plan -input=false
+
+  apply-or-dispatch:
+    name: terraform ${{ github.event.inputs.action || 'apply' }} (${{ github.event.inputs.environment || 'prod' }})
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'prod' }} # requires manual approval for prod via GitHub Environments protection rules
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.TERRAFORM_APPLY_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: terraform init
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment || 'prod' }}
+        run: terraform init
+
+      - name: terraform apply/destroy
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment || 'prod' }}
+        run: terraform ${{ github.event.inputs.action || 'apply' }} -input=false -auto-approve
