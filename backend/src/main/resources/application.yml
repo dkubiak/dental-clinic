@@ -62,6 +62,16 @@ app:
     mfa-secret-key-id: ${MFA_SECRET_KMS_KEY_ID:} # populated from Terraform output (T009a)
   ses:
     from-address: ${SES_FROM_ADDRESS:no-reply@dentalclinic.example}
+  retention:
+    # FR-018 — AuditLogRetentionJob (T085a). Runs under a separate, more-privileged DB role
+    # (auth_service_retention, V8__audit_log_retention_role.sql) than the application's normal
+    # auth_service_app, which has DELETE revoked on audit_log_entry (FR-008).
+    max-age: 1095d # 3 years
+    cron: ${AUDIT_LOG_RETENTION_CRON:0 0 3 * * *} # daily at 03:00
+    db:
+      url: ${AUDIT_RETENTION_DB_URL:${DB_URL:jdbc:postgresql://localhost:5432/dental_clinic_auth}}
+      username: ${AUDIT_RETENTION_DB_USERNAME:auth_service_retention}
+      password: ${AUDIT_RETENTION_DB_PASSWORD:}
   e2e-seed:
     # Only read when spring.profiles.active includes e2e-seed (E2eSeedRunner/E2eStubAwsConfig) —
     # defaults assume the standard monorepo layout (backend/, frontend/ siblings) and

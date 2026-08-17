@@ -21,6 +21,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       AUTH_SERVICE_APP_PASSWORD: ${AUTH_SERVICE_APP_PASSWORD:-auth_service_app_password}
+      AUTH_SERVICE_RETENTION_PASSWORD: ${AUTH_SERVICE_RETENTION_PASSWORD:-auth_service_retention_password}
     ports:
       - "5432:5432"
     volumes:
@@ -47,6 +48,10 @@ services:
       # CREATEs auth_service_app) — the postgres superuser, same as PostgresIntegrationTestBase.
       FLYWAY_DB_USERNAME: postgres
       FLYWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # AuditLogRetentionJob's separate, more-privileged connection (T085a, FR-018).
+      AUDIT_RETENTION_DB_URL: jdbc:postgresql://postgres:5432/dental_clinic_auth
+      AUDIT_RETENTION_DB_USERNAME: auth_service_retention
+      AUDIT_RETENTION_DB_PASSWORD: ${AUTH_SERVICE_RETENTION_PASSWORD:-auth_service_retention_password}
       E2E_SEED_OUTPUT_PATH: /seed/seed-accounts.json
       E2E_SEED_EMAILS_PATH: /seed/sent-emails.jsonl
     volumes:

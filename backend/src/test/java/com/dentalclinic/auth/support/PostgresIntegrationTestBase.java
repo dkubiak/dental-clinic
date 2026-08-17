@@ -88,14 +88,35 @@ public abstract class PostgresIntegrationTestBase {
             });
   }
 
+  /**
+   * A fixed double-submit CSRF cookie/header pair, used instead of {@code
+   * SecurityMockMvcRequestPostProcessors.csrf()} for every mutating request in this codebase's
+   * Phase 4/5 tests. That helper looks convenient but has a serious side effect: it uses reflection
+   * to PERMANENTLY replace the real, shared {@code CsrfFilter} bean's {@code tokenRepository} field
+   * (found via the cached Spring context) with a session-based test repository, the first time it
+   * is called anywhere in the test JVM — silently breaking every OTHER test's real cookie-based
+   * CSRF flow (including CsrfCookieIntegrationTest) for the rest of the run, non-deterministically
+   * depending on test execution order (discovered while adding that test). Cookie-based CSRF is a
+   * double-submit pattern — the server only checks that the cookie and header match each other, not
+   * that it issued this exact value — so simply sending a matching pair, without ever touching the
+   * real repository, is a faithful, side-effect-free simulation of an already-authenticated browser
+   * echoing back its cookie.
+   */
+  protected static final String CSRF_TOKEN_VALUE = "test-fixed-csrf-token";
+
+  protected static final Cookie CSRF_TOKEN_COOKIE = new Cookie("XSRF-TOKEN", CSRF_TOKEN_VALUE);
+
   protected static final String APP_ROLE_PASSWORD = "test-app-password";
 
   protected static final PostgreSQLContainer<?> POSTGRES =
       new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("dental_clinic_auth");
 
+  protected static final String RETENTION_ROLE_PASSWORD = "test-retention-password";
+
   static {
     POSTGRES.start();
     bootstrapAppRole();
+    bootstrapRetentionRole();
   }
 
   private static void bootstrapAppRole() {
@@ -119,6 +140,34 @@ public abstract class PostgresIntegrationTestBase {
     }
   }
 
+  /**
+   * Mirrors {@link #bootstrapAppRole()} for {@code auth_service_retention}
+   * (V8__audit_log_retention_role.sql, AuditLogRetentionJob, T085a) — pre-created here WITH a
+   * password so V8's own passwordless {@code CREATE ROLE IF NOT EXISTS} becomes a harmless no-op,
+   * exactly like V5's auth_service_app.
+   */
+  private static void bootstrapRetentionRole() {
+    try (Connection connection =
+            DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+        Statement statement = connection.createStatement()) {
+      statement.execute(
+          """
+          DO $$
+          BEGIN
+              IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'auth_service_retention') THEN
+                  CREATE ROLE auth_service_retention WITH LOGIN PASSWORD '%s';
+              END IF;
+          END
+          $$;
+          """
+              .formatted(RETENTION_ROLE_PASSWORD));
+    } catch (SQLException e) {
+      throw new IllegalStateException(
+          "Failed to bootstrap auth_service_retention role for tests", e);
+    }
+  }
+
   @DynamicPropertySource
   static void datasourceProperties(DynamicPropertyRegistry registry) {
     // Flyway runs as the container's own admin user (owns/creates every table, V1 onward).
@@ -130,6 +179,11 @@ public abstract class PostgresIntegrationTestBase {
     registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
     registry.add("spring.datasource.username", () -> "auth_service_app");
     registry.add("spring.datasource.password", () -> APP_ROLE_PASSWORD);
+
+    // AuditLogRetentionJob's separate, more-privileged connection (T085a).
+    registry.add("app.retention.db.url", POSTGRES::getJdbcUrl);
+    registry.add("app.retention.db.username", () -> "auth_service_retention");
+    registry.add("app.retention.db.password", () -> RETENTION_ROLE_PASSWORD);
   }
 
   /**
