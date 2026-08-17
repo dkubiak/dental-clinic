@@ -1,21 +1,30 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.1 → 1.4.0
+- Version change: 1.4.0 → 1.5.0
 - Modified principles: none
 - Added principles: none
 - Modified sections:
-  - Development Workflow & Quality Gates: added a per-phase implementation gate —
-    during `/speckit-implement`, each task-plan phase MUST end with the full
-    automated test suite green and a commit of that phase's changes before the
-    next phase begins. Requested to keep implementation history granular and
-    reversible and to stop phase-to-phase progress with a broken test suite.
+  - Development Workflow & Quality Gates: replaced the blanket "code review by at
+    least one other contributor" gate with a risk-tiered rule for the project's
+    current solo-developer phase. Non-sensitive changes (not touching patient data,
+    auth/authz, or audit logging) now merge on green CI alone, with auto-merge
+    permitted. Changes touching patient data, auth/authz, or audit logging still
+    require an explicit, documented security/compliance review before merge — now
+    self-attested by the sole contributor rather than requiring a second person —
+    and auto-merge MUST NOT be enabled for those paths. Requested because the
+    project has one contributor (no second reviewer available) and GitHub does not
+    allow a PR author to approve their own PR, making the prior rule unworkable.
 - Added sections: none
 - Removed sections: none
-- Deferred TODOs: none
+- Deferred TODOs:
+  - TODO(SECOND_CONTRIBUTOR): once a second contributor joins the project, revisit
+    this clause and reinstate independent two-person review for all changes.
 -->
 
 <!--
 Constitution amendment history (older Sync Impact Reports, newest first):
+
+1.4.0 → 1.5.0: see current Sync Impact Report above for details.
 
 1.3.0 → 1.3.1
 - Modified principles: none
@@ -191,10 +200,25 @@ Principle III (Full Auditability).
 - Any change introducing or modifying a high-risk module (Principle V) MUST document
   its availability approach in the corresponding `/speckit-plan` output before
   `/speckit-implement` proceeds.
-- Code review by at least one other contributor is required before merge. This
-  requirement and the security/compliance review above are two conceptually distinct
-  checks, but a single reviewer's approval MAY satisfy both simultaneously — a
-  separate second person is not mandated solely to cover both checks.
+- Code review is risk-tiered to accommodate the project's current solo-developer
+  phase (a single contributor, with no second person available to review; GitHub
+  also does not allow a pull request's author to approve their own pull request):
+  - For changes that do NOT touch patient data, authentication, authorization, or
+    audit logging: a green CI run (the full automated test suite passing, per
+    Principle I) is sufficient for merge. Self-merge by the sole contributor is
+    permitted, and repository auto-merge-on-green-CI MAY be enabled for these
+    paths.
+  - For changes that DO touch patient data, authentication, authorization, or
+    audit logging — the same scope as the security/compliance review requirement
+    above — an explicit security/compliance review MUST still be documented in the
+    pull request before merge (e.g. a checklist confirming RBAC scope, encryption,
+    and audit logging coverage were checked). In the absence of a second
+    contributor, this documented self-review by the sole contributor satisfies the
+    requirement. Auto-merge MUST NOT be enabled for these paths; merge MUST remain
+    a deliberate, manual action taken after the documented review.
+  - TODO(SECOND_CONTRIBUTOR): once a second contributor joins the project, this
+    clause MUST be revisited and independent review by someone other than the
+    change's author MUST be reinstated as a requirement for all changes.
 - During `/speckit-implement` execution, each task-plan phase (e.g. Setup, Tests,
   Core, Integration, Polish, or the plan's equivalent breakdown) MUST end with the
   full automated test suite (backend Java and frontend Angular, per Principle I)
@@ -220,4 +244,4 @@ All pull requests and `/speckit-*` command outputs MUST be checked against these
 principles for compliance; unjustified complexity or deviation must be called out
 explicitly rather than silently introduced.
 
-**Version**: 1.4.0 | **Ratified**: 2026-08-16 | **Last Amended**: 2026-08-16
+**Version**: 1.5.0 | **Ratified**: 2026-08-16 | **Last Amended**: 2026-08-17
