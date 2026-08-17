@@ -12,7 +12,9 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
@@ -50,30 +52,52 @@ public class SecurityConfig {
     return new Argon2PasswordEncoder(16, 32, 1, 19 * 1024, 2);
   }
 
+  /**
+   * Used explicitly (rather than left to Spring Security's internal default) so {@link
+   * com.dentalclinic.auth.api.SessionEstablisher} can inject the same instance to persist the
+   * {@link org.springframework.security.core.context.SecurityContext} into the HTTP session after
+   * MFA verification succeeds (T045) — saving under the standard {@code SPRING_SECURITY_CONTEXT}
+   * session attribute is also what lets Spring Session JDBC's principal-name index (T075/T075a)
+   * resolve correctly.
+   */
+  @Bean
+  public SecurityContextRepository securityContextRepository() {
+    return new HttpSessionSecurityContextRepository();
+  }
+
+  /**
+   * Endpoints reachable before any session/CSRF-cookie relationship exists (the pre-auth login flow
+   * and self-service password reset — all {@code security: []} in contracts/auth-api.yaml). A
+   * browser's very first request to the app is one of these, so it cannot yet be carrying a CSRF
+   * cookie to echo back; requiring one here would make login impossible, not more secure — there is
+   * no ambient authenticated session for a forged cross-site request to ride on until after MFA
+   * succeeds, which is exactly where CSRF protection resumes (SessionEstablisher, T045).
+   */
+  private static final String[] PRE_AUTH_PATHS = {
+    "/auth/login",
+    "/auth/mfa/verify",
+    "/auth/password-reset/request",
+    "/auth/password-reset/confirm"
+  };
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
     http.csrf(
             csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                    .csrfTokenRequestHandler(csrfHandler))
+                    .csrfTokenRequestHandler(csrfHandler)
+                    .ignoringRequestMatchers(PRE_AUTH_PATHS))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+        .securityContext(context -> context.securityContextRepository(securityContextRepository()))
         .addFilterAfter(sessionHardCapFilter, SecurityContextHolderFilter.class)
         .exceptionHandling(
             ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .authorizeHttpRequests(
             authorize ->
-                authorize
-                    .requestMatchers(
-                        "/auth/login",
-                        "/auth/mfa/verify",
-                        "/auth/password-reset/request",
-                        "/auth/password-reset/confirm")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated());
+                authorize.requestMatchers(PRE_AUTH_PATHS).permitAll().anyRequest().authenticated());
 
     return http.build();
   }

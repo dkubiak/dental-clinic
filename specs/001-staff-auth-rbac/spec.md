@@ -69,7 +69,7 @@ Administrator tworzy, dezaktywuje i reaktywuje konta personelu oraz przypisuje i
 
 1. **Given** zalogowany administrator, **When** tworzy nowe konto personelu i przypisuje mu jedną z trzech ról, **Then** nowe konto może się zalogować i ma dostęp zgodny z przypisaną rolą.
 2. **Given** zalogowany administrator, **When** dezaktywuje istniejące konto, **Then** to konto nie może się już zalogować, a próba logowania jest odnotowana w logu audytowym jako odmowa dostępu do konta nieaktywnego.
-3. **Given** zalogowany administrator, **When** próbuje bezpośrednio otworzyć dokumentację medyczną lub historię leczenia pacjenta bez wcześniej przyznanego uprawnienia specjalnego, **Then** system odmawia dostępu.
+3. **Given** zalogowany administrator, **When** próbuje bezpośrednio otworzyć dokumentację medyczną lub historię leczenia pacjenta, **Then** system zawsze odmawia dostępu — w tej wersji nie istnieje żaden mechanizm przyznania administratorowi wyjątkowego dostępu do danych klinicznych (zob. FR-004).
 
 ---
 
@@ -80,7 +80,7 @@ Administrator tworzy, dezaktywuje i reaktywuje konta personelu oraz przypisuje i
 - Co się dzieje, gdy rola użytkownika zostanie zmieniona w trakcie jego aktywnej sesji? Rozwiązane: zmiana obowiązuje natychmiast — system unieważnia wszystkie aktywne sesje konta (FR-007a), a nie dopiero po ponownym zalogowaniu.
 - Jak system obsługuje próbę dostępu do zasobu spoza zakresu roli poprzez bezpośredni adres/identyfikator zasobu (nie tylko przez UI)?
 - Co się dzieje, gdy administrator próbuje dezaktywować własne jedyne konto administratorskie (ryzyko braku dostępu administracyjnego do systemu)? Rozwiązane: system odmawia takiej dezaktywacji (FR-009a).
-- Jak system postępuje z sesją użytkownika, którego konto zostało dezaktywowane w trakcie trwania sesji?
+- Jak system postępuje z sesją użytkownika, którego konto zostało dezaktywowane w trakcie trwania sesji? Rozwiązane: sesja jest natychmiast unieważniana, analogicznie do zmiany roli (FR-010a).
 
 ## Requirements *(mandatory)*
 
@@ -88,26 +88,60 @@ Administrator tworzy, dezaktywuje i reaktywuje konta personelu oraz przypisuje i
 
 - **FR-001**: System MUSI umożliwiać uwierzytelnianie wyłącznie użytkownikom personelu (recepcja, lekarz, administrator); pacjenci nie są użytkownikami tego mechanizmu logowania.
 - **FR-002**: System MUSI wymagać unikalnego identyfikatora (np. adres e-mail) i hasła dla każdego konta personelu.
+- **FR-002a**: System MUSI wymuszać hasło o długości minimum 12 znaków (zgodnie z NIST 800-63B) i
+  odrzucać hasła znajdujące się na liście znanych, wyciekłych haseł; system NIE wymaga sztucznej
+  złożoności (wielkie/małe litery, cyfry, znaki specjalne) jako osobnego warunku.
 - **FR-003**: System MUSI przypisywać każdemu kontu personelu dokładnie jedną rolę spośród: recepcja, lekarz, administrator.
 - **FR-004**: System MUSI egzekwować kontrolę dostępu opartą na roli (RBAC) zgodnie z zasadą najmniejszych uprawnień:
   - recepcja: zarządzanie wizytami oraz danymi kontaktowymi wszystkich pacjentów kliniki; brak dostępu do dokumentacji medycznej.
   - lekarz: dostęp do dokumentacji medycznej i historii leczenia wszystkich pacjentów kliniki (nie tylko własnych) — wspiera konsultacje między lekarzami i przekazywanie opieki nad pacjentem (np. podczas urlopu innego lekarza).
-  - administrator: zarządzanie kontami użytkowników i konfiguracją systemu; brak domyślnego dostępu do danych klinicznych pacjentów.
+  - administrator: zarządzanie kontami użytkowników i konfiguracją systemu; brak dostępu do danych klinicznych pacjentów — w tej wersji nie istnieje żaden mechanizm przyznania takiego dostępu (zero wyjątków).
 - **FR-005**: System MUSI odmawiać dostępu do funkcji i danych spoza zakresu roli użytkownika, niezależnie od sposobu próby dostępu (interfejs, bezpośredni odnośnik, itp.), i nie ujawniać przy tym istnienia ani treści zasobu.
 - **FR-006**: System MUSI rejestrować w logu audytowym każdą próbę logowania (udaną i nieudaną) wraz z identyfikatorem użytkownika (jeśli znany), znacznikiem czasu i wynikiem, bez zapisywania samego hasła w logu.
 - **FR-007**: System MUSI rejestrować w logu audytowym każdą zmianę roli lub uprawnień użytkownika, wraz z wykonawcą zmiany, docelowym użytkownikiem, stanem przed i po zmianie oraz znacznikiem czasu.
 - **FR-007a**: System MUSI natychmiast unieważniać wszystkie aktywne sesje konta, którego rola została zmieniona, wymuszając ponowne uwierzytelnienie z nowym zakresem uprawnień — zmiana roli nie może obowiązywać dopiero po naturalnym wygaśnięciu starej sesji.
 - **FR-008**: Log audytowy MUSI być tylko-do-odczytu (append-only) — żaden wpis nie może zostać zmodyfikowany ani usunięty przez normalne ścieżki aplikacji, w tym przez administratora.
+- **FR-008a**: Odczyt logu audytowego jest dostępny wyłącznie dla roli administrator; recepcja i
+  lekarz nie mają dostępu do logu audytowego (zgodnie z zasadą najmniejszych uprawnień, FR-004).
 - **FR-009**: System MUSI umożliwiać administratorowi tworzenie, dezaktywację i reaktywację kont personelu oraz przypisywanie/zmianę ich roli.
 - **FR-009a**: System MUSI odmówić dezaktywacji konta z rolą "administrator", jeśli byłoby to jedyne pozostałe aktywne konto administratorskie w systemie, i zarejestrować taką odrzuconą próbę w logu audytowym.
+- **FR-009b**: Kontrola z FR-009a (sprawdzenie, czy dezaktywowane konto jest jedynym pozostałym
+  aktywnym kontem administratorskim) oraz sama dezaktywacja MUSZĄ zostać wykonane atomowo, tak aby
+  dwa równoległe żądania dezaktywacji różnych kont administratorskich nie mogły obie przejść
+  walidacji jednocześnie i doprowadzić do braku jakiegokolwiek aktywnego konta administratorskiego.
 - **FR-010**: System MUSI odmawiać logowania na konto zdezaktywowane i rejestrować taką próbę w logu audytowym.
+- **FR-010a**: System MUSI natychmiast unieważniać wszystkie aktywne sesje konta w chwili jego
+  dezaktywacji, analogicznie do FR-007a — zdezaktywowane konto nie może kontynuować działania w
+  ramach już otwartej sesji.
 - **FR-011**: System MUSI blokować możliwość logowania po przekroczeniu progu kolejnych nieudanych prób logowania na to samo konto, w celu ochrony przed atakami typu brute-force, i rejestrować to zdarzenie w logu audytowym.
+- **FR-011a**: Licznik nieudanych prób z FR-011 MUSI obejmować zarówno nieudane próby podania
+  hasła, jak i nieudane próby podania kodu MFA — oba typy niepowodzeń zwiększają ten sam licznik i
+  podlegają temu samemu progowi (5 prób) i czasowi blokady (15 minut).
+- **FR-011b**: System MUSI ograniczać liczbę prób logowania z pojedynczego adresu IP w jednostce
+  czasu, niezależnie od tego, na które konto(a) są kierowane, w celu ochrony przed rozproszonym
+  atakiem brute-force obejmującym wiele kont jednocześnie; przekroczenie progu MUSI zostać
+  zarejestrowane w logu audytowym.
+- **FR-011c**: System MUSI wysyłać powiadomienie e-mail na zarejestrowany adres służbowy właściciela
+  konta w chwili zablokowania konta (FR-011), informujące o wykrytych nieudanych próbach logowania.
 - **FR-012**: System MUSI kończyć sesję użytkownika po okresie bezczynności i wymagać ponownego uwierzytelnienia.
-- **FR-013**: System MUSI szyfrować dane uwierzytelniające (hasła) w sposób uniemożliwiający ich odczytanie w postaci jawnej, zarówno w spoczynku, jak i w trakcie przesyłania.
+- **FR-013**: System MUSI szyfrować dane uwierzytelniające (hasła) w sposób uniemożliwiający ich odczytanie w postaci jawnej, zarówno w spoczynku, jak i w trakcie przesyłania; transmisja MUSI używać TLS w wersji minimum 1.2 (starsze wersje protokołu wyłączone).
 - **FR-014**: System MUSI zapewniać każdemu kontu z rolą "lekarz" dostęp do dokumentacji medycznej i historii leczenia wszystkich pacjentów kliniki (nie tylko pacjentów danego lekarza), aby wspierać konsultacje między lekarzami i przekazywanie opieki nad pacjentem (np. podczas nieobecności/urlopu innego lekarza); granicą uprawnień jest sama rola "lekarz", a nie indywidualne przypisanie pacjenta do lekarza.
-- **FR-015**: System MUSI wymagać drugiego składnika uwierzytelniania (MFA) przy logowaniu, dla każdej z trzech ról (recepcja, lekarz, administrator).
-- **FR-016**: System MUSI udostępniać pracownikowi mechanizm samoobsługowego resetu hasła poprzez link wysyłany na jego zarejestrowany e-mail służbowy; link resetujący MUSI mieć ograniczony czas ważności i MUSI zostać unieważniony po jednorazowym użyciu.
+- **FR-015**: System MUSI wymagać drugiego składnika uwierzytelniania (MFA) przy logowaniu, dla każdej z trzech ról (recepcja, lekarz, administrator), w oparciu o TOTP (RFC 6238).
+- **FR-015a**: Token pośredni (pre-auth) wydawany po poprawnej weryfikacji hasła, a przed weryfikacją
+  kodu MFA, MUSI wygasać po 5 minutach od wydania; wygaśnięcie wymaga ponownego rozpoczęcia procesu
+  logowania od kroku hasła.
+- **FR-015b**: System MUSI udostępniać administratorowi mechanizm unieważnienia (resetu) powiązania
+  MFA konta personelu, który utracił dostęp do swojego urządzenia TOTP; po resecie użytkownik loguje
+  się hasłem i przechodzi ponowną rejestrację MFA. Każdy taki reset MUSI zostać zarejestrowany w
+  logu audytowym jako czynność wysokiego ryzyka (wykonawca, docelowe konto, znacznik czasu).
+- **FR-016**: System MUSI udostępniać pracownikowi mechanizm samoobsługowego resetu hasła poprzez link wysyłany na jego zarejestrowany e-mail służbowy; link resetujący MUSI mieć ograniczony czas ważności i MUSI zostać unieważniony po jednorazowym użyciu. Żądanie resetu MUSI zwracać tę samą odpowiedź niezależnie od tego, czy podany adres e-mail odpowiada istniejącemu kontu, zgodnie z zasadą nieujawniania z FR-005.
 - **FR-017**: System MUSI rejestrować w logu audytowym każde żądanie resetu hasła oraz jego wynik (sukces/niepowodzenie/wygaśnięcie linku).
+- **FR-018**: System MUSI przechowywać wpisy logu audytowego przez 3 lata od ich utworzenia
+  (zgodne z terminem przedawnienia roszczeń pracowniczych w PL), łącznie z zawartymi w nich
+  metadanymi (np. adres IP); po tym okresie wpisy podlegają usunięciu zgodnie z zasadą minimalizacji
+  danych RODO. Dodanie nowego typu zdarzenia (`event_type`) do rejestrowanej taksonomii wymaga
+  aktualizacji niniejszej specyfikacji i data-model.md w ramach standardowego procesu
+  `/speckit-*`, a nie wyłącznie zmiany w kodzie.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -133,8 +167,19 @@ Administrator tworzy, dezaktywuje i reaktywuje konta personelu oraz przypisuje i
 
 - Klinika korzysta z pojedynczej, scentralizowanej bazy kont personelu (brak wymogu integracji z zewnętrznym dostawcą tożsamości/SSO w tej wersji funkcji).
 - Próg blokady konta po nieudanych próbach logowania: 5 kolejnych nieudanych prób skutkuje czasową blokadą na 15 minut (standardowa praktyka branżowa dla aplikacji przetwarzających dane wrażliwe).
-- Czas bezczynności prowadzący do wygaśnięcia sesji: 15 minut, zgodnie ze standardową praktyką dla aplikacji medycznych przetwarzających dane szczególnej kategorii (RODO Art. 9).
-- Niezależnie od bezczynności, sesja wygasa twardo (bez możliwości przedłużenia) po 8 godzinach od momentu zalogowania, odpowiadając długości jednej zmiany roboczej personelu klinicznego — standardowa praktyka branżowa jako dodatkowe zabezpieczenie na wypadek pozostawienia niezablokowanego urządzenia przez cały dzień pracy.
-- Konkretna metoda drugiego składnika MFA (aplikacja TOTP, kod SMS, e-mail) nie jest przesądzona w tej specyfikacji i zostanie doprecyzowana na etapie planowania jako decyzja techniczna.
+- Czas bezczynności prowadzący do wygaśnięcia sesji: 15 minut, jednolicie dla wszystkich trzech ról (recepcja, lekarz, administrator), zgodnie ze standardową praktyką dla aplikacji medycznych przetwarzających dane szczególnej kategorii (RODO Art. 9).
+- Niezależnie od bezczynności, sesja wygasa twardo (bez możliwości przedłużenia) po 8 godzinach od momentu zalogowania, jednolicie dla wszystkich trzech ról, odpowiadając długości jednej zmiany roboczej personelu klinicznego — standardowa praktyka branżowa jako dodatkowe zabezpieczenie na wypadek pozostawienia niezablokowanego urządzenia przez cały dzień pracy.
+- Metoda drugiego składnika MFA to TOTP (RFC 6238, aplikacja uwierzytelniająca) — zob. FR-015 oraz plan.md §Primary Dependencies.
 - Link resetujący hasło ma czas ważności 30 minut (standardowa praktyka branżowa), po czym wygasa i wymaga ponownego żądania.
-- Wszyscy lekarze i wszyscy pracownicy recepcji należą do jednej kliniki (jednej lokalizacji/placówki) współdzielącej wspólny zespół opieki; stąd granicą uprawnień jest rola, a nie indywidualne przypisanie do pacjenta. Jeśli w przyszłości klinika obejmie wiele niezależnych placówek/zespołów, ograniczenie dostępu per-placówka będzie wymagało osobnej decyzji o zakresie (nowa funkcja lub zmiana tej specyfikacji).
+- Realizacja praw podmiotu danych (RODO Art. 15/17 — eksport i usunięcie danych własnych) dla
+  danych osobowych **personelu** (e-mail, imię/nazwisko itp., odrębnie od danych klinicznych
+  pacjentów już objętych konstytucją) oraz okres retencji PII kont zdezaktywowanych są świadomie
+  odroczone poza zakres tej funkcji — zostaną zaadresowane w osobnej, przyszłej funkcji dot. zgodności
+  RODO. Nie jest to przeoczenie: FR-018 (retencja logu audytowego) i FR-008 (append-only) już
+  ograniczają, co i jak długo jest przechowywane w odniesieniu do samych zdarzeń logowania.
+- Odzyskanie dostępu, gdy jedyne konto administratora utraci zarówno hasło, jak i urządzenie MFA
+  (bez innego aktywnego konta administratora zdolnego wykonać reset per FR-015b), jest poza
+  zakresem tej wersji — wymaga ręcznej interwencji operacyjnej (DBA/infra) poza aplikacją. Nie
+  projektujemy dodatkowego mechanizmu "break-glass" w tej funkcji, spójnie z usunięciem koncepcji
+  break-glass dla lekarzy w powyższych klaryfikacjach.
+- Wszyscy lekarze i wszyscy pracownicy recepcji należą do jednej kliniki (jednej lokalizacji/placówki) współdzielącej wspólny zespół opieki; stąd granicą uprawnień jest rola, a nie indywidualne przypisanie do pacjenta. Zweryfikowane z interesariuszem (przegląd security checklist, 2026-08-16): brak znanych, bliskich planów rozszerzenia kliniki na wiele niezależnych placówek. Jeśli w przyszłości klinika obejmie wiele niezależnych placówek/zespołów, ograniczenie dostępu per-placówka będzie wymagało osobnej decyzji o zakresie (nowa funkcja lub zmiana tej specyfikacji).

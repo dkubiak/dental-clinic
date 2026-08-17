@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * A clinic employee authorized to log in (spec.md "Konto użytkownika (personelu)"). See
@@ -20,17 +22,26 @@ public class StaffAccount {
 
   @Id private UUID id;
 
-  @Column(nullable = false, unique = true)
-  private String email; // FR-002; citext at the DB level (V1__staff_account.sql)
+  // columnDefinition matches V1__staff_account.sql's CITEXT exactly — without it Hibernate's
+  // schema validation (spring.jpa.hibernate.ddl-auto: validate) expects VARCHAR and fails to
+  // start against the real citext column.
+  @Column(nullable = false, unique = true, columnDefinition = "citext")
+  private String email; // FR-002
 
   @Column(name = "password_hash", nullable = false)
   private String passwordHash; // Argon2id (FR-013) — never plaintext
 
+  // @JdbcTypeCode(SqlTypes.NAMED_ENUM): staff_role/staff_account_status are native Postgres enum
+  // types (V1__staff_account.sql) — without this, Hibernate binds the parameter as a plain
+  // varchar and Postgres rejects it ("column is of type staff_role but expression is of type
+  // character varying").
   @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(nullable = false)
   private Role role; // FR-003 — exactly one
 
   @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(nullable = false)
   private AccountStatus status = AccountStatus.ACTIVE;
 

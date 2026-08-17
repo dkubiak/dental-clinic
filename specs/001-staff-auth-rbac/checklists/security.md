@@ -17,110 +17,146 @@ quality. It does not mean implementation work is complete.
 
 ## Authentication & MFA Requirements Quality
 
-- [ ] CHK001 Are password complexity/strength requirements (minimum length, character rules)
-      specified for staff accounts? [Gap, Spec §FR-002]
-- [ ] CHK002 Is the final MFA method decision (TOTP, per plan.md) reflected back into spec.md, or
+- [x] CHK001 Are password complexity/strength requirements (minimum length, character rules)
+      specified for staff accounts? [Gap, Spec §FR-002] — Resolved: FR-002a (NIST 800-63B, min 12
+      chars + breach-list check, no forced complexity).
+- [x] CHK002 Is the final MFA method decision (TOTP, per plan.md) reflected back into spec.md, or
       does spec.md's Assumption still read as an open planning-stage choice? [Consistency, Spec
-      §Assumptions vs plan.md Technical Context]
-- [ ] CHK003 Is there a documented account-recovery path for a staff member who loses their MFA
-      device (TOTP app), distinct from the password-reset flow? [Gap, Coverage]
-- [ ] CHK004 Are failed-MFA-attempt requirements (lockout threshold, if any) specified separately
+      §Assumptions vs plan.md Technical Context] — Resolved: Assumptions updated, FR-015 now states
+      TOTP explicitly.
+- [x] CHK003 Is there a documented account-recovery path for a staff member who loses their MFA
+      device (TOTP app), distinct from the password-reset flow? [Gap, Coverage] — Resolved: FR-015b
+      (admin-assisted MFA reset, audited as high-risk).
+- [x] CHK004 Are failed-MFA-attempt requirements (lockout threshold, if any) specified separately
       from password-failure lockout, or is it assumed to share the same counter? [Ambiguity, Spec
-      §FR-011/FR-015]
-- [ ] CHK005 Is the pre-auth token issued between the password and MFA steps bounded by an
-      explicit expiry/validity requirement? [Gap, Spec §FR-015]
+      §FR-011/FR-015] — Resolved: FR-011a (shared counter with password failures).
+- [x] CHK005 Is the pre-auth token issued between the password and MFA steps bounded by an
+      explicit expiry/validity requirement? [Gap, Spec §FR-015] — Resolved: FR-015a (5-minute TTL).
 
 ## RBAC & Access Control Requirements Quality
 
-- [ ] CHK006 Are each of the three roles' permission boundaries (FR-004) independently
-      measurable/testable, or do any rely on subjective terms? [Measurability, Spec §FR-004]
-- [ ] CHK007 Is "no default access" for administrators to clinical data defined precisely enough
-      to distinguish default vs. a future explicitly-granted exception? [Clarity, Spec §FR-004]
-- [ ] CHK008 Are rate-limiting requirements defined for distributed brute-force attempts across
-      many accounts, not just repeated attempts on one account (FR-011)? [Gap, Coverage]
-- [ ] CHK009 Is the requirement that RBAC denials disclose no information about resource
+- [x] CHK006 Are each of the three roles' permission boundaries (FR-004) independently
+      measurable/testable, or do any rely on subjective terms? [Measurability, Spec §FR-004] —
+      Resolved: contracts/rbac-policy.md permission matrix is concrete/testable per role.
+- [x] CHK007 Is "no default access" for administrators to clinical data defined precisely enough
+      to distinguish default vs. a future explicitly-granted exception? [Clarity, Spec §FR-004] —
+      Resolved: FR-004 and US3 acceptance scenario 3 reworded — zero exceptions in this version,
+      no grant mechanism exists, matching rbac-policy.md rule 3.
+- [x] CHK008 Are rate-limiting requirements defined for distributed brute-force attempts across
+      many accounts, not just repeated attempts on one account (FR-011)? [Gap, Coverage] —
+      Resolved: FR-011b (per-IP rate limiting, audited).
+- [x] CHK009 Is the requirement that RBAC denials disclose no information about resource
       existence (FR-005) consistent with the audit log's own read-access rules for denial
-      entries? [Consistency, Spec §FR-005 vs FR-006]
-- [ ] CHK010 Are RBAC requirements for future administrative API surfaces called out as needing
+      entries? [Consistency, Spec §FR-005 vs FR-006] — Resolved: FR-008a added (audit log read
+      restricted to administrator role, matching rbac-policy.md).
+- [x] CHK010 Are RBAC requirements for future administrative API surfaces called out as needing
       the same rbac-policy.md classification before they ship? [Traceability,
-      contracts/rbac-policy.md]
+      contracts/rbac-policy.md] — Resolved: rbac-policy.md already states this (line 6-7), no
+      change needed.
 
 ## Session & Account Lifecycle Requirements Quality
 
-- [ ] CHK011 Are the session idle-timeout and hard-cap values (FR-012, Spec §Assumptions) each
+- [x] CHK011 Are the session idle-timeout and hard-cap values (FR-012, Spec §Assumptions) each
       traceable to a stated rationale, and do they apply uniformly across all three roles?
-      [Consistency, Spec §Assumptions]
-- [ ] CHK012 Is the requirement that a role change invalidates active sessions (FR-007a) explicit
+      [Consistency, Spec §Assumptions] — Resolved: Assumptions now state uniformity across all
+      three roles explicitly; rationale was already present.
+- [x] CHK012 Is the requirement that a role change invalidates active sessions (FR-007a) explicit
       about whether the same rule applies uniformly to reactivation and other account-status
-      changes? [Consistency, Spec §FR-007a/FR-010]
-- [ ] CHK013 Is there a requirement covering what a user sees when their session is forcibly
-      invalidated mid-action, or is this left entirely to UX discretion? [Gap]
-- [ ] CHK014 Is the 15-minute account-lockout duration (Spec §Assumptions) coupled with a
+      changes? [Consistency, Spec §FR-007a/FR-010] — Resolved: FR-010a added (deactivation also
+      immediately invalidates active sessions). Edge Cases line 83 now answered.
+- [x] CHK013 Is there a requirement covering what a user sees when their session is forcibly
+      invalidated mid-action, or is this left entirely to UX discretion? [Gap] — Resolved:
+      deliberately left as a UX/plan-level detail; the behavioral requirement (reject request,
+      force re-auth) is already covered by FR-007a/FR-010a.
+- [x] CHK014 Is the 15-minute account-lockout duration (Spec §Assumptions) coupled with a
       requirement to notify the account owner, or is silent lockout the intended behavior?
-      [Ambiguity, Spec §Assumptions]
+      [Ambiguity, Spec §Assumptions] — Resolved: FR-011c added (email notification on lockout).
 
 ## Audit Logging Requirements Quality
 
-- [ ] CHK015 Is a retention period defined for audit log entries, consistent with the
-      constitution's retention-policy requirement? [Gap, constitution.md Principle II/III]
-- [ ] CHK016 Are requirements defined for who may read the audit log if the sole administrator
+- [x] CHK015 Is a retention period defined for audit log entries, consistent with the
+      constitution's retention-policy requirement? [Gap, constitution.md Principle II/III] —
+      Resolved: FR-018 (3-year retention).
+- [x] CHK016 Are requirements defined for who may read the audit log if the sole administrator
       account is protected from deactivation (FR-009a) but becomes otherwise unavailable (e.g.,
-      forgotten credentials)? [Gap, Coverage]
-- [ ] CHK017 Is the audit log event taxonomy (`event_type` enum) declared closed/exhaustive, with
+      forgotten credentials)? [Gap, Coverage] — Resolved: documented as an out-of-scope
+      Assumption; requires manual ops/DBA intervention outside the app, consistent with the
+      removal of break-glass for doctors.
+- [x] CHK017 Is the audit log event taxonomy (`event_type` enum) declared closed/exhaustive, with
       a requirement for how new event types get added without a spec/constitution review? [Gap,
-      Traceability]
-- [ ] CHK018 Are audit log query/read performance or pagination requirements specified, given the
-      SC-003 one-minute visibility target? [Gap, Spec §SC-003]
-- [ ] CHK019 Is it specified whether audit log metadata (e.g., request IP) is itself subject to a
+      Traceability] — Resolved: FR-018 states new event types require a spec.md/data-model.md
+      update via the standard /speckit-* process.
+- [x] CHK018 Are audit log query/read performance or pagination requirements specified, given the
+      SC-003 one-minute visibility target? [Gap, Spec §SC-003] — Resolved: contracts/auth-api.yaml
+      /audit-log endpoint already specifies a paginated response; no spec.md change needed.
+- [x] CHK019 Is it specified whether audit log metadata (e.g., request IP) is itself subject to a
       shorter retention or anonymization requirement, given it is personal data under RODO? [Gap,
-      Ambiguity]
+      Ambiguity] — Resolved: decision made to retain IP for the same 3-year period as the rest of
+      the entry (FR-018), no separate anonymization requirement.
 
 ## Data Protection & RODO/GDPR Requirements Quality
 
-- [ ] CHK020 Are RODO subject-rights (export/erasure) requirements defined for staff accounts'
+- [x] CHK020 Are RODO subject-rights (export/erasure) requirements defined for staff accounts'
       own personal data — not only patient data — consistent with the constitution's general
-      subject-rights mandate? [Gap, constitution.md Principle II]
-- [ ] CHK021 Is a data-retention requirement defined for deactivated staff accounts (how long PII
-      is kept before erasure)? [Gap]
-- [ ] CHK022 Is the encryption-at-rest requirement for MFA secrets (FR-013) equally explicit about
-      key-rotation requirements, or is rotation left unspecified? [Gap, Spec §FR-013]
-- [ ] CHK023 Are password-reset email requirements (FR-016) constrained to avoid leaking whether
+      subject-rights mandate? [Gap, constitution.md Principle II] — Resolved: explicitly deferred
+      to a future dedicated RODO-compliance feature, documented as an Assumption (not an oversight).
+- [x] CHK021 Is a data-retention requirement defined for deactivated staff accounts (how long PII
+      is kept before erasure)? [Gap] — Resolved: deferred alongside CHK020, same Assumption.
+- [x] CHK022 Is the encryption-at-rest requirement for MFA secrets (FR-013) equally explicit about
+      key-rotation requirements, or is rotation left unspecified? [Gap, Spec §FR-013] — Resolved:
+      deliberately left as infra/Terraform config detail, not a spec.md FR.
+- [x] CHK023 Are password-reset email requirements (FR-016) constrained to avoid leaking whether
       an email address has an associated account, consistent with FR-005's non-disclosure
-      principle? [Consistency, Spec §FR-005/FR-016]
-- [ ] CHK024 Is a minimum transport-security requirement (e.g., TLS version) for data in transit
+      principle? [Consistency, Spec §FR-005/FR-016] — Resolved: FR-016 amended with a
+      non-disclosure clause.
+- [x] CHK024 Is a minimum transport-security requirement (e.g., TLS version) for data in transit
       (FR-013) stated as a testable requirement, or only implied by the chosen infrastructure?
-      [Measurability, Spec §FR-013]
+      [Measurability, Spec §FR-013] — Resolved: FR-013 amended (TLS 1.2 minimum).
 
 ## Non-Functional / Compliance Gate Requirements
 
-- [ ] CHK025 Are all Success Criteria (SC-001–SC-007) stated so a security/compliance reviewer
+- [x] CHK025 Are all Success Criteria (SC-001–SC-007) stated so a security/compliance reviewer
       could verify them without consulting implementation code? [Measurability, Spec §Success
-      Criteria]
-- [ ] CHK026 Does the plan document which module boundary and failure-domain isolation applies to
+      Criteria] — Resolved: all seven are already stated as time/percentage/count thresholds,
+      verifiable without reading code.
+- [x] CHK026 Does the plan document which module boundary and failure-domain isolation applies to
       this feature, satisfying the constitution's high-risk-module documentation requirement?
-      [Traceability, plan.md §Risk Tier]
-- [ ] CHK027 Does the plan state that Terraform/Helm/CI changes introduced by this feature (e.g.,
+      [Traceability, plan.md §Risk Tier] — Resolved: plan.md §Risk Tier & Availability already
+      covers this in detail.
+- [x] CHK027 Does the plan state that Terraform/Helm/CI changes introduced by this feature (e.g.,
       the KMS key, IAM policy) go through the same security review as application code? [Gap,
-      constitution.md Principle VI]
-- [ ] CHK028 Are the constitution's "security/compliance review" and "code review by at least one
+      constitution.md Principle VI] — Resolved: plan.md Constitution Check section amended with an
+      explicit statement.
+- [x] CHK028 Are the constitution's "security/compliance review" and "code review by at least one
       other contributor" requirements distinguished as two separate, both-required gates, or
       could they be satisfied by the same single reviewer? [Ambiguity, constitution.md
-      §Development Workflow]
+      §Development Workflow] — Resolved via constitution amendment to v1.3.1: both checks are
+      conceptually distinct but MAY be satisfied by the same reviewer's approval.
 
 ## Ambiguities, Conflicts & Assumptions
 
-- [ ] CHK029 Is the single-clinic/centralized-account-base assumption validated against any known
+- [x] CHK029 Is the single-clinic/centralized-account-base assumption validated against any known
       near-term multi-clinic expansion plans that would invalidate the role-only RBAC boundary
-      (FR-014)? [Assumption, Spec §Assumptions]
-- [ ] CHK030 Are the independent 8-hour hard-cap and 15-minute idle-timeout session rules free of
+      (FR-014)? [Assumption, Spec §Assumptions] — Resolved: confirmed with stakeholder, no such
+      plans exist; Assumptions updated to record this as verified, not assumed.
+- [x] CHK030 Are the independent 8-hour hard-cap and 15-minute idle-timeout session rules free of
       conflict — e.g., could sliding idle-timeout renewal ever be read as extending a session past
-      its hard cap? [Conflict, Spec §Assumptions]
-- [ ] CHK031 Is it unambiguous whether FR-009a's "last active ADMINISTRATOR account" check counts
+      its hard cap? [Conflict, Spec §Assumptions] — Resolved: no change needed, spec.md Assumptions
+      already state the hard cap has "no possibility of extension", so no conflict can arise by
+      construction.
+- [x] CHK031 Is it unambiguous whether FR-009a's "last active ADMINISTRATOR account" check counts
       only currently-ACTIVE administrators, with no edge case around concurrent deactivation
-      requests? [Ambiguity, Spec §FR-009a]
-- [ ] CHK032 Is the FR-/SC- requirement ID scheme applied consistently across spec.md, plan.md,
+      requests? [Ambiguity, Spec §FR-009a] — Resolved: FR-009b added (atomicity requirement for
+      concurrent deactivation race condition).
+- [x] CHK032 Is the FR-/SC- requirement ID scheme applied consistently across spec.md, plan.md,
       data-model.md, and contracts/, with no orphaned or renumbered references after the FR-007a
-      and FR-009a additions? [Traceability]
+      and FR-009a additions? [Traceability] — Verified: no orphaned/broken/renumbered FR
+      references in plan.md, data-model.md, contracts/, or tasks.md as of this review. CAVEAT:
+      this review session added 13 new FR IDs (FR-002a, FR-008a, FR-009b, FR-010a, FR-011a/b/c,
+      FR-013 amendment, FR-015a/b, FR-016 amendment, FR-018) that are NOT yet reflected in
+      plan.md/data-model.md/contracts/tasks.md — those artifacts predate this review. This is a
+      known follow-up, not a silent gap: re-run `/speckit-analyze` (and likely `/speckit-tasks`)
+      before `/speckit-implement` to sync the downstream artifacts to the amended spec.md.
 
 ## Notes
 

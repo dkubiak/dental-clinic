@@ -54,6 +54,28 @@ account row.
 exposed (even to the owning user) after creation — only used server-side to verify a submitted
 6-digit TOTP code.
 
+**Admin-triggered reset (FR-015b)**: an administrator may delete a StaffAccount's `MfaEnrollment`
+row (via `POST /accounts/{id}/mfa-reset`) when the owner has lost their TOTP device; the account
+is treated as never-enrolled on its next login, re-running first-login enrollment. This action is
+always audit-logged (`MFA_RESET` event type) regardless of who performs it.
+
+### LoginAttemptByIp
+
+New entity backing FR-011b (distributed brute-force protection), deliberately kept in the same
+Postgres instance rather than introducing a new datastore (plan.md Constraints).
+
+| Field | Type | Notes |
+|---|---|---|
+| `ip_address` | inet, PK (part 1) | Source IP of the login attempt. |
+| `window_start` | timestamptz, PK (part 2) | Start of the current fixed time bucket (e.g. 1-minute buckets). |
+| `attempt_count` | int, not null, default 0 | Incremented per attempt from this IP in this window, across all target accounts. |
+
+**Validation rules**: `/auth/login` increments the row for `(ip_address, current window)` (upsert)
+before processing credentials; if `attempt_count` exceeds the configured threshold, the request is
+rejected with `429` and audit-logged, independent of and in addition to the per-account lockout in
+FR-011/FR-011a. Old windows are deleted opportunistically (no long-term retention needed — this
+table is not the audit log).
+
 ### Session
 
 Represents an authenticated, active connection (spec's "Sesja"). Backed by Spring Session JDBC
@@ -95,7 +117,7 @@ Spec's "Wpis logu audytowego" — append-only, hash-chained (research.md #7).
 | Field | Type | Notes |
 |---|---|---|
 | `id` | bigserial, PK | Monotonic — also gives a natural chain order. |
-| `event_type` | enum: `LOGIN_SUCCESS` \| `LOGIN_FAILURE` \| `LOGIN_DENIED_LOCKED` \| `LOGIN_DENIED_DEACTIVATED` \| `MFA_FAILURE` \| `ROLE_CHANGED` \| `ACCOUNT_CREATED` \| `ACCOUNT_DEACTIVATED` \| `ACCOUNT_REACTIVATED` \| `PASSWORD_RESET_REQUESTED` \| `PASSWORD_RESET_SUCCEEDED` \| `PASSWORD_RESET_FAILED` \| `PASSWORD_RESET_EXPIRED` \| `ACCESS_DENIED_OUT_OF_ROLE` | Covers every FR-006/007/010/011/017 and US2/US3 audit requirement. |
+| `event_type` | enum: `LOGIN_SUCCESS` \| `LOGIN_FAILURE` \| `LOGIN_DENIED_LOCKED` \| `LOGIN_DENIED_DEACTIVATED` \| `LOGIN_DENIED_RATE_LIMITED` \| `MFA_FAILURE` \| `MFA_RESET` \| `ROLE_CHANGED` \| `ACCOUNT_CREATED` \| `ACCOUNT_DEACTIVATED` \| `ACCOUNT_REACTIVATED` \| `PASSWORD_RESET_REQUESTED` \| `PASSWORD_RESET_SUCCEEDED` \| `PASSWORD_RESET_FAILED` \| `PASSWORD_RESET_EXPIRED` \| `ACCESS_DENIED_OUT_OF_ROLE` | Covers every FR-006/007/010/011/015b/017/018 and US2/US3 audit requirement. New values added per FR-018's governance clause (spec/data-model update required, not code-only). |
 | `actor_account_id` | UUID, FK → StaffAccount.id, nullable | Who performed the action; null when the actor isn't/can't be identified (e.g. failed login with an email that matches no account — FR-006 still requires an entry "if known"). |
 | `target_account_id` | UUID, FK → StaffAccount.id, nullable | The account affected, when different from the actor (e.g. admin changes another user's role). |
 | `occurred_at` | timestamptz, not null, default `now()` | |
@@ -107,7 +129,15 @@ Spec's "Wpis logu audytowego" — append-only, hash-chained (research.md #7).
 
 **Validation rules**: `INSERT`-only at the database grant level (no `UPDATE`/`DELETE` privilege
 for the application's DB role — research.md #7); no API endpoint or UI path exists to modify or
-remove a row, for any role including administrator (FR-008).
+remove a row, for any role including administrator (FR-008). Readable only via `GET /audit-log`,
+restricted to `ADMINISTRATOR` (FR-008a).
+
+**Retention (FR-018)**: rows older than 3 years from `occurred_at` are purged by a scheduled job
+(a privileged operation outside the application's normal `INSERT`-only DB role, since it performs
+`DELETE`) — see AuditLogRetentionJob in plan.md/tasks.md. This is the one sanctioned exception to
+"no delete path"; it is a scheduled infrastructure job, not an application user action, and is
+itself logged outside the audit log (e.g. job run logs) since logging a purge *inside* the log
+being purged is circular.
 
 ## Relationships
 

@@ -72,15 +72,30 @@ trivially by writing the audit entry synchronously in the same DB transaction as
 records, so no separate performance target is needed for this feature's expected clinic-scale
 traffic (tens of staff accounts, not a high-throughput API).
 
-**Constraints**: MFA mandatory for all three roles from day one (FR-015). Passwords and MFA
-secrets encrypted at rest and in transit (FR-013) — TLS terminated at the AWS Load Balancer
-Controller-managed ALB, Argon2id password hashing, encrypted MFA secret column (KMS-backed
-encryption, consistent with Principle II's at-rest encryption requirement for sensitive
-authentication data). Account lockout: 5 consecutive failed attempts → 15-minute lock (per spec
-Assumptions). Session idle timeout: 15 minutes (per spec Assumptions). Password-reset link:
-30-minute validity, single use (FR-016). Audit log entries MUST be append-only and tamper-evident
-(FR-008) — enforced both at the application layer and at the database layer (see research.md).
+**Constraints**: MFA mandatory for all three roles from day one (FR-015), based on TOTP with a
+5-minute pre-auth token validity between the password and MFA steps (FR-015a); admin-assisted MFA
+reset for lost devices (FR-015b). Passwords and MFA secrets encrypted at rest and in transit
+(FR-013) — TLS terminated at the AWS Load Balancer Controller-managed ALB with a minimum TLS 1.2
+listener policy (`ELBSecurityPolicy-TLS13-1-2-2021-06` or equivalent), Argon2id password hashing,
+encrypted MFA secret column (KMS-backed encryption, consistent with Principle II's at-rest
+encryption requirement for sensitive authentication data). Passwords MUST additionally satisfy
+NIST 800-63B: minimum 12 characters, rejected if present on a known-breached-password list, no
+forced character-class complexity (FR-002a). Account lockout: 5 consecutive failed attempts
+(password OR MFA, same shared counter — FR-011a) → 15-minute lock (per spec Assumptions), paired
+with an email notification to the account owner (FR-011c). Session idle timeout: 15 minutes (per
+spec Assumptions). Password-reset link: 30-minute validity, single use (FR-016), response uniform
+regardless of whether the email matches an account. Audit log entries MUST be append-only and
+tamper-evident (FR-008) — enforced both at the application layer and at the database layer (see
+research.md) — retained for 3 years then purged (FR-018), readable only by ADMINISTRATOR (FR-008a).
 RBAC-denied access MUST NOT reveal whether the target resource exists (FR-005).
+
+**Distributed brute-force protection (FR-011b)**: per-IP login-attempt rate limiting MUST be
+implemented as a Postgres-backed sliding-window counter (a new `login_attempt_by_ip` table keyed
+by source IP + time bucket, queried/incremented in the same transaction as the login attempt),
+consistent with the existing "no additional datastore" decision above — it deliberately does NOT
+introduce Redis/ElastiCache or any other new managed service. This works correctly across the
+≥2 auth-service replicas (Risk Tier section) because the counter lives in the shared RDS/Aurora
+instance already required for StaffAccount/Session state, not in per-pod memory.
 
 **Scale/Scope**: Single clinic, single location (per spec Assumptions — no multi-tenant/multi-site
 scoping in this feature). Expected tens of staff accounts, not thousands; this shapes storage and
@@ -100,6 +115,11 @@ performance choices toward simplicity over horizontal-scale optimization.
 | VI. Infrastructure & Delivery as Code (NON-NEGOTIABLE) | PASS | This is the first feature in the repo, so it also introduces the initial Terraform (VPC/EKS/RDS), Helm charts, Argo CD app definitions, and GitHub Actions workflows — all committed as code, no ClickOps. `/speckit-tasks` MUST enumerate this scaffolding as code-defined pipeline/infra tasks, not manual steps. |
 
 No unjustified violations — Complexity Tracking table is empty.
+
+The Terraform (KMS key, IAM policy, RDS, EKS/VPC baseline), Helm, and GitHub Actions changes this
+feature introduces touch authn/authz and encryption of sensitive authentication data directly, so
+they fall under the same "explicit security/compliance review before merge" gate as the
+application code (constitution.md Development Workflow) — not a lighter-weight infra-only review.
 
 ### Risk Tier & Availability (Principle V documentation)
 

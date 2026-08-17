@@ -1,16 +1,14 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 1.3.0
-- Modified principles:
-  - VI. Infrastructure as Code → VI. Infrastructure & Delivery as Code (expanded to
-    cover CI/CD pipeline definitions, not just infra/cluster state)
+- Version change: 1.3.1 → 1.4.0
+- Modified principles: none
 - Added principles: none
 - Modified sections:
-  - Technology Stack Constraints: added binding CI/CD tooling (GitHub Actions,
-    workflows stored in-repo under .github/workflows/)
-  - Development Workflow & Quality Gates: every change (app, infra, deployment
-    config) MUST run through the GitHub Actions pipeline; no manual/ClickOps steps
-    anywhere in the delivery path
+  - Development Workflow & Quality Gates: added a per-phase implementation gate —
+    during `/speckit-implement`, each task-plan phase MUST end with the full
+    automated test suite green and a commit of that phase's changes before the
+    next phase begins. Requested to keep implementation history granular and
+    reversible and to stop phase-to-phase progress with a broken test suite.
 - Added sections: none
 - Removed sections: none
 - Deferred TODOs: none
@@ -18,6 +16,31 @@ Sync Impact Report
 
 <!--
 Constitution amendment history (older Sync Impact Reports, newest first):
+
+1.3.0 → 1.3.1
+- Modified principles: none
+- Added principles: none
+- Modified sections:
+  - Development Workflow & Quality Gates: clarified that the "explicit
+    security/compliance review" requirement and the "code review by at least one
+    other contributor" requirement, while conceptually distinct, MAY be satisfied by
+    the same reviewer's approval — a separate second person is not mandated solely to
+    cover both checks. Raised during security checklist review for feature
+    001-staff-auth-rbac (CHK028).
+- Added sections: none
+- Removed sections: none
+- Deferred TODOs: none
+
+1.2.0 → 1.3.0
+- Modified principles:
+  - VI. Infrastructure as Code → VI. Infrastructure & Delivery as Code (expanded to
+    cover CI/CD pipeline definitions, not just infra/cluster state)
+- Modified sections:
+  - Technology Stack Constraints: added binding CI/CD tooling (GitHub Actions,
+    workflows stored in-repo under .github/workflows/)
+  - Development Workflow & Quality Gates: every change (app, infra, deployment
+    config) MUST run through the GitHub Actions pipeline; no manual/ClickOps steps
+    anywhere in the delivery path
 
 1.1.0 → 1.2.0
 - Added principles: VI. Infrastructure as Code
@@ -168,7 +191,17 @@ Principle III (Full Auditability).
 - Any change introducing or modifying a high-risk module (Principle V) MUST document
   its availability approach in the corresponding `/speckit-plan` output before
   `/speckit-implement` proceeds.
-- Code review by at least one other contributor is required before merge.
+- Code review by at least one other contributor is required before merge. This
+  requirement and the security/compliance review above are two conceptually distinct
+  checks, but a single reviewer's approval MAY satisfy both simultaneously — a
+  separate second person is not mandated solely to cover both checks.
+- During `/speckit-implement` execution, each task-plan phase (e.g. Setup, Tests,
+  Core, Integration, Polish, or the plan's equivalent breakdown) MUST end with the
+  full automated test suite (backend Java and frontend Angular, per Principle I)
+  passing before implementation proceeds to the next phase. Before moving to the
+  next phase, a commit capturing that phase's changes MUST be made. A phase MUST
+  NOT be left with a failing test suite or with uncommitted changes when work
+  moves on to the next phase.
 
 ## Governance
 
@@ -187,4 +220,4 @@ All pull requests and `/speckit-*` command outputs MUST be checked against these
 principles for compliance; unjustified complexity or deviation must be called out
 explicitly rather than silently introduced.
 
-**Version**: 1.3.0 | **Ratified**: 2026-08-16 | **Last Amended**: 2026-08-16
+**Version**: 1.4.0 | **Ratified**: 2026-08-16 | **Last Amended**: 2026-08-16

@@ -31,7 +31,7 @@ paths:
               required: [email, password]
               properties:
                 email: { type: string, format: email }
-                password: { type: string, format: password }
+                password: { type: string, format: password, minLength: 12 }
       responses:
         "200":
           description: Credentials valid; MFA challenge required.
@@ -47,9 +47,15 @@ paths:
             Invalid email or password. Response body deliberately does not indicate
             which was wrong (Acceptance Scenario US1-4).
         "423":
-          description: Account temporarily locked after 5 consecutive failed attempts (FR-011).
+          description: >
+            Account temporarily locked after 5 consecutive failed attempts, counting both
+            password and MFA failures (FR-011, FR-011a).
         "403":
           description: Account is deactivated (FR-010).
+        "429":
+          description: >
+            Source IP has exceeded the per-IP login-attempt rate limit (FR-011b); protects against
+            distributed brute-force across many accounts. Audit-logged.
 
   /auth/mfa/verify:
     post:
@@ -122,7 +128,7 @@ paths:
               required: [token, newPassword]
               properties:
                 token: { type: string }
-                newPassword: { type: string, format: password }
+                newPassword: { type: string, format: password, minLength: 12 }
       responses:
         "200":
           description: Password updated; audit-logged as PASSWORD_RESET_SUCCEEDED.
@@ -196,6 +202,23 @@ paths:
           description: >
             Target account is the last remaining active ADMINISTRATOR account —
             deactivation refused (FR-009a); the rejected attempt is audit-logged.
+
+  /accounts/{id}/mfa-reset:
+    post:
+      summary: >
+        Unlink a staff account's MFA (TOTP) enrollment (ADMINISTRATOR only, FR-015b) — for a
+        staff member who lost their MFA device.
+      description: >
+        Deletes the account's MfaEnrollment row. The account must complete MFA re-enrollment on
+        its next successful password login (FR-015). High-risk action — always audit-logged
+        (MFA_RESET) with actor, target account, and timestamp.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: MFA enrollment cleared; account must re-enroll MFA on next login.
+        "404":
+          description: Caller lacks ADMINISTRATOR role, or account does not exist.
 
   /accounts/{id}/reactivate:
     post:
