@@ -1,0 +1,67 @@
+# Local development stack.
+#
+# Convention: every new backend service or frontend module gets its own service block here, named
+# to match its Helm chart under helm/<name> (see auth-service / frontend below), so this file stays
+# a 1:1 mirror of what eventually ships to EKS. When adding one:
+#   - `build: ./<dir>` pointing at that module's own Dockerfile
+#   - env vars mirroring helm/<name>/values.yaml's `env:` block where applicable
+#   - `depends_on` on postgres and/or sibling services as needed
+#
+# AWS services (KMS, SES, ...) are not simulated here (no LocalStack) — auth-service instead runs
+# with SPRING_PROFILES_ACTIVE=e2e-seed, which swaps in in-process stubs
+# (backend/src/main/java/com/dentalclinic/auth/e2eseed/E2eStubAwsConfig.java) and auto-seeds the
+# three quickstart.md test accounts. Revisit LocalStack only if a future module needs an AWS
+# service this stub approach can't cover.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dental_clinic_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      AUTH_SERVICE_APP_PASSWORD: ${AUTH_SERVICE_APP_PASSWORD:-auth_service_app_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dental_clinic_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      # In-process AWS stubs + auto-seeded test accounts (quickstart.md) — see header comment.
+      SPRING_PROFILES_ACTIVE: e2e-seed
+      DB_URL: jdbc:postgresql://postgres:5432/dental_clinic_auth
+      DB_USERNAME: auth_service_app
+      DB_PASSWORD: ${AUTH_SERVICE_APP_PASSWORD:-auth_service_app_password}
+      # Flyway needs a role that already exists and can create tables on a fresh DB (V5 is what
+      # CREATEs auth_service_app) — the postgres superuser, same as PostgresIntegrationTestBase.
+      FLYWAY_DB_USERNAME: postgres
+      FLYWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      E2E_SEED_OUTPUT_PATH: /seed/seed-accounts.json
+      E2E_SEED_EMAILS_PATH: /seed/sent-emails.jsonl
+    volumes:
+      - ./.local/e2e-seed:/seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - auth-service
+
+volumes:
+  postgres-data:

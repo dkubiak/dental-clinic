@@ -33,3 +33,6 @@ infra/terraform/**/*.tfvars
 .env
 .env.*
 !.env.example
+
+# Local docker-compose stack (seeded accounts/captured emails volume, Postgres data)
+.local/
