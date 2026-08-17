@@ -2,9 +2,11 @@ package com.dentalclinic.auth.api;
 
 import com.dentalclinic.auth.account.AccountDeactivatedException;
 import com.dentalclinic.auth.account.AccountLockedException;
+import com.dentalclinic.auth.account.AccountNotFoundException;
 import com.dentalclinic.auth.account.InvalidCredentialsException;
 import com.dentalclinic.auth.account.InvalidMfaCodeException;
 import com.dentalclinic.auth.account.InvalidPreAuthTokenException;
+import com.dentalclinic.auth.account.LastAdministratorException;
 import com.dentalclinic.auth.account.PasswordPolicyException;
 import com.dentalclinic.auth.account.RateLimitExceededException;
 import com.dentalclinic.auth.passwordreset.PasswordResetTokenInvalidException;
@@ -31,10 +33,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(AccessDeniedException.class)
+  @ExceptionHandler({AccessDeniedException.class, AccountNotFoundException.class})
   public ResponseEntity<ErrorBody> handleAccessDenied() {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(new ErrorBody("NOT_FOUND", "The requested resource was not found.", Instant.now()));
+  }
+
+  @ExceptionHandler(LastAdministratorException.class)
+  public ResponseEntity<ErrorBody> handleLastAdministrator(LastAdministratorException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ErrorBody("LAST_ADMINISTRATOR", e.getMessage(), Instant.now()));
   }
 
   @ExceptionHandler({

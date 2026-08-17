@@ -20,4 +20,16 @@ public class TestOnlyAdminController {
   public ResponseEntity<String> adminOnly() {
     return ResponseEntity.ok("ok");
   }
+
+  /**
+   * Stands in for a future feature's patient-data endpoint (patient records, scheduling, billing —
+   * none exist yet in this repo) so this feature can already enforce and regression-test
+   * contracts/rbac-policy.md rule 3 ("No implicit admin clinical access") — see
+   * AdministratorNoClinicalAccessTest (T071).
+   */
+  @GetMapping("/test-support/clinical-data-only")
+  @PreAuthorize("hasAnyRole('RECEPTION', 'DOCTOR')")
+  public ResponseEntity<String> clinicalDataOnly() {
+    return ResponseEntity.ok("ok");
+  }
 }

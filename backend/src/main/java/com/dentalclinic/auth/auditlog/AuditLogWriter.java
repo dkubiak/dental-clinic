@@ -1,10 +1,6 @@
 package com.dentalclinic.auth.auditlog;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +37,7 @@ public class AuditLogWriter {
     Instant occurredAt = Instant.now();
     String previousHash = repository.findLatest().map(AuditLogEntry::getEntryHash).orElse(null);
     String entryHash =
-        computeHash(
+        AuditEntryHash.compute(
             previousHash,
             eventType,
             actorAccountId,
@@ -62,42 +58,5 @@ public class AuditLogWriter {
             previousHash,
             entryHash);
     return repository.save(entry);
-  }
-
-  /**
-   * {@code entry_hash = SHA-256(previous_entry_hash || event_type || actor_account_id ||
-   * target_account_id || occurred_at || before_state || after_state)} (data-model.md).
-   */
-  private String computeHash(
-      String previousHash,
-      AuditEventType eventType,
-      UUID actorAccountId,
-      UUID targetAccountId,
-      Instant occurredAt,
-      String beforeStateJson,
-      String afterStateJson) {
-    String payload =
-        String.join(
-            "|",
-            nullToEmpty(previousHash),
-            eventType.name(),
-            nullToEmpty(actorAccountId),
-            nullToEmpty(targetAccountId),
-            occurredAt.toString(),
-            nullToEmpty(beforeStateJson),
-            nullToEmpty(afterStateJson));
-    try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(payload.getBytes(StandardCharsets.UTF_8));
-      return HexFormat.of().formatHex(hash);
-    } catch (NoSuchAlgorithmException e) {
-      // SHA-256 is guaranteed available on every JVM (Java Cryptography Architecture standard
-      // algorithm) — this can only indicate a broken JVM installation.
-      throw new IllegalStateException("SHA-256 unavailable", e);
-    }
-  }
-
-  private static String nullToEmpty(Object value) {
-    return value == null ? "" : value.toString();
   }
 }

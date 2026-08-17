@@ -12,6 +12,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -93,6 +94,15 @@ public class SecurityConfig {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .securityContext(context -> context.securityContextRepository(securityContextRepository()))
         .addFilterAfter(sessionHardCapFilter, SecurityContextHolderFilter.class)
+        // Anchored at BasicAuthenticationFilter's position (Spring Security's own documented
+        // placement for this pattern — docs.spring.io "CSRF and Single Page Applications"), which
+        // is well after CsrfFilter (so the CsrfToken request attribute it resolves already
+        // exists) and close to the end of the chain, minimizing how many other filters run
+        // between this one and the controller — forces the XSRF-TOKEN cookie to actually be
+        // written, see CsrfCookieFilter javadoc. BasicAuthenticationFilter itself is not present
+        // in this chain (no .httpBasic()); Spring Security's FilterOrderRegistration still knows
+        // its position for anchoring purposes.
+        .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
         .exceptionHandling(
             ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .authorizeHttpRequests(

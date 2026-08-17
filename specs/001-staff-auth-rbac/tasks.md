@@ -259,39 +259,39 @@ User Story 2).
 
 ### Tests for User Story 2 ⚠️ Write first — confirm they FAIL before implementation
 
-- [ ] T054 [P] [US2] Contract test `GET /audit-log` (admin-only, `404` for non-admin caller) in
+- [X] T054 [P] [US2] Contract test `GET /audit-log` (admin-only, `404` for non-admin caller) in
       `backend/src/test/java/com/dentalclinic/auth/api/AuditLogControllerContractTest.java`
-- [ ] T055 [P] [US2] Integration test (Testcontainers): login success/failure produce correct
+- [X] T055 [P] [US2] Integration test (Testcontainers): login success/failure produce correct
       entries, and no entry ever contains the plaintext password (FR-006) in
       `backend/src/test/java/com/dentalclinic/auth/auditlog/AuditLogContentIntegrationTest.java`
-- [ ] T056 [P] [US2] Integration test (Testcontainers): admin role change produces `ROLE_CHANGED`
+- [X] T056 [P] [US2] Integration test (Testcontainers): admin role change produces `ROLE_CHANGED`
       with correct `before_state`/`after_state` (FR-007) in
       `backend/src/test/java/com/dentalclinic/auth/auditlog/RoleChangeAuditIntegrationTest.java`
-- [ ] T057 [P] [US2] Integration test (Testcontainers): direct SQL `UPDATE`/`DELETE` against the
+- [X] T057 [P] [US2] Integration test (Testcontainers): direct SQL `UPDATE`/`DELETE` against the
       audit log table fails under the application's own DB role, proving the T019 grant
       restriction holds (FR-008) in
       `backend/src/test/java/com/dentalclinic/auth/auditlog/AuditLogImmutabilityIntegrationTest.java`
-- [ ] T058 [P] [US2] Unit test: hash-chain verifier detects a tampered/missing row (research.md #7)
+- [X] T058 [P] [US2] Unit test: hash-chain verifier detects a tampered/missing row (research.md #7)
       in `backend/src/test/java/com/dentalclinic/auth/auditlog/AuditHashChainTest.java`
-- [ ] T059 [P] [US2] Vitest unit test for the audit log review table component in
+- [X] T059 [P] [US2] Vitest unit test for the audit log review table component in
       `frontend/src/app/features/admin/audit-log/audit-log.component.spec.ts`
-- [ ] T060 [P] [US2] Playwright e2e test covering spec.md US2 Acceptance Scenarios 1–4 in
+- [X] T060 [P] [US2] Playwright e2e test covering spec.md US2 Acceptance Scenarios 1–4 in
       `frontend/e2e/us2-audit-log.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T061 [US2] AuditLogQueryService (filter by date range/event type, pagination) in
+- [X] T061 [US2] AuditLogQueryService (filter by date range/event type, pagination) in
       `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditLogQueryService.java`
       (depends on T024)
-- [ ] T062 [US2] AuditHashChainVerifier utility in
+- [X] T062 [US2] AuditHashChainVerifier utility in
       `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditHashChainVerifier.java`
       (depends on T025)
-- [ ] T063 [US2] AuditLogController (`GET /audit-log`, admin-only via RBAC) in
+- [X] T063 [US2] AuditLogController (`GET /audit-log`, admin-only via RBAC) in
       `backend/src/main/java/com/dentalclinic/auth/api/AuditLogController.java`
       (depends on T047, T061)
-- [ ] T064 [P] [US2] Angular audit log review screen (filterable, paginated table, admin-only
+- [X] T064 [P] [US2] Angular audit log review screen (filterable, paginated table, admin-only
       route) in `frontend/src/app/features/admin/audit-log/audit-log.component.ts`
-- [ ] T065 [US2] Angular AuditLogService (`GET /audit-log`) in
+- [X] T065 [US2] Angular AuditLogService (`GET /audit-log`) in
       `frontend/src/app/features/admin/audit-log/audit-log.service.ts` (depends on T064)
 
 **Checkpoint**: User Stories 1 AND 2 both independently functional.
@@ -309,73 +309,73 @@ User Story 3).
 
 ### Tests for User Story 3 ⚠️ Write first — confirm they FAIL before implementation
 
-- [ ] T066 [P] [US3] Contract test `POST /accounts` (admin-only create) in
+- [X] T066 [P] [US3] Contract test `POST /accounts` (admin-only create) in
       `backend/src/test/java/com/dentalclinic/auth/api/AccountControllerContractTest.java`
-- [ ] T067 [P] [US3] Contract test `PATCH /accounts/{id}` (role change) in the same test class as
+- [X] T067 [P] [US3] Contract test `PATCH /accounts/{id}` (role change) in the same test class as
       T066
-- [ ] T068 [P] [US3] Contract test `POST /accounts/{id}/deactivate` and `/reactivate` in the same
+- [X] T068 [P] [US3] Contract test `POST /accounts/{id}/deactivate` and `/reactivate` in the same
       test class as T066
-- [ ] T068a [P] [US3] Contract test `POST /accounts/{id}/deactivate` returns `409` when the
+- [X] T068a [P] [US3] Contract test `POST /accounts/{id}/deactivate` returns `409` when the
       target is the last active `ADMINISTRATOR` account, and the attempt is audit-logged
       (FR-009a; Edge Cases, spec.md) in the same test class as T066
-- [ ] T068b [P] [US3] Contract test `POST /accounts/{id}/mfa-reset` (admin-only `404` for
+- [X] T068b [P] [US3] Contract test `POST /accounts/{id}/mfa-reset` (admin-only `404` for
       non-admin caller, `200` clears enrollment, audit-logged as `MFA_RESET`) (FR-015b) in the
       same test class as T066
-- [ ] T068c [P] [US3] Integration test (Testcontainers): two concurrent `POST
+- [X] T068c [P] [US3] Integration test (Testcontainers): two concurrent `POST
       /accounts/{id}/deactivate` requests targeting the two remaining active `ADMINISTRATOR`
       accounts result in exactly one succeeding and one refused with `409` — no window where both
       pass validation (FR-009b) in
       `backend/src/test/java/com/dentalclinic/auth/account/ConcurrentAdminDeactivationTest.java`
-- [ ] T069 [P] [US3] Integration test (Testcontainers): deactivating an account immediately
+- [X] T069 [P] [US3] Integration test (Testcontainers): deactivating an account immediately
       invalidates its active session (Edge Cases, spec.md) in
       `backend/src/test/java/com/dentalclinic/auth/account/DeactivateSessionInvalidationTest.java`
-- [ ] T069a [P] [US3] Integration test (Testcontainers): changing an account's role immediately
+- [X] T069a [P] [US3] Integration test (Testcontainers): changing an account's role immediately
       invalidates its active session(s) (FR-007a; Edge Cases, spec.md) in
       `backend/src/test/java/com/dentalclinic/auth/account/RoleChangeSessionInvalidationTest.java`
-- [ ] T070 [P] [US3] Integration test (Testcontainers): newly created account logs in with
+- [X] T070 [P] [US3] Integration test (Testcontainers): newly created account logs in with
       role-appropriate access within the same flow (US3 AC1) in
       `backend/src/test/java/com/dentalclinic/auth/account/AccountLifecycleIntegrationTest.java`
-- [ ] T071 [P] [US3] Unit test: RBAC policy matrix grants `ADMINISTRATOR` zero patient-data
+- [X] T071 [P] [US3] Unit test: RBAC policy matrix grants `ADMINISTRATOR` zero patient-data
       permissions (US3 AC3; contracts/rbac-policy.md rule 3) in
       `backend/src/test/java/com/dentalclinic/auth/role/AdministratorNoClinicalAccessTest.java`
-- [ ] T072 [P] [US3] Vitest unit tests for account management components in
+- [X] T072 [P] [US3] Vitest unit tests for account management components in
       `frontend/src/app/features/admin/accounts/accounts.component.spec.ts`
-- [ ] T073 [P] [US3] Playwright e2e test covering spec.md US3 Acceptance Scenarios 1–3 in
+- [X] T073 [P] [US3] Playwright e2e test covering spec.md US3 Acceptance Scenarios 1–3 in
       `frontend/e2e/us3-account-management.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T074 [US3] AccountAdminService (create/deactivate/reactivate/change-role, FR-009) in
+- [X] T074 [US3] AccountAdminService (create/deactivate/reactivate/change-role, FR-009) in
       `backend/src/main/java/com/dentalclinic/auth/account/AccountAdminService.java`
       (depends on T020)
-- [ ] T074a [US3] Guard in AccountAdminService.deactivate(): atomically (`SELECT ... FOR UPDATE`
+- [X] T074a [US3] Guard in AccountAdminService.deactivate(): atomically (`SELECT ... FOR UPDATE`
       or an equivalent serializable-transaction guard on the set of active ADMINISTRATOR accounts
       — FR-009b) reject with a `409`-mapped exception if the target is the last active
       `ADMINISTRATOR` account, and write an audit-log entry for the rejected attempt (FR-009a)
       (depends on T074)
-- [ ] T074b [US3] AccountAdminService.resetMfa(): delete the target account's `MfaEnrollment` row,
+- [X] T074b [US3] AccountAdminService.resetMfa(): delete the target account's `MfaEnrollment` row,
       forcing MFA re-enrollment on its next login (FR-015b) in `AccountAdminService.java`
       (depends on T074)
-- [ ] T075 [US3] Wire session invalidation into deactivate (kill all active Sessions for the
+- [X] T075 [US3] Wire session invalidation into deactivate (kill all active Sessions for the
       account) in `AccountAdminService.java` (depends on T027, T074)
-- [ ] T075a [US3] Wire session invalidation into change-role (kill all active Sessions for the
+- [X] T075a [US3] Wire session invalidation into change-role (kill all active Sessions for the
       account so the new role takes effect immediately, FR-007a) in `AccountAdminService.java`
       (depends on T027, T074)
-- [ ] T076 [US3] Wire audit logging (`ACCOUNT_CREATED`, `ACCOUNT_DEACTIVATED`,
+- [X] T076 [US3] Wire audit logging (`ACCOUNT_CREATED`, `ACCOUNT_DEACTIVATED`,
       `ACCOUNT_REACTIVATED`, `ROLE_CHANGED`) into T074 via AuditLogWriter (depends on T025, T074)
-- [ ] T076a [US3] Wire audit logging (`MFA_RESET`, actor/target/timestamp) into T074b via
+- [X] T076a [US3] Wire audit logging (`MFA_RESET`, actor/target/timestamp) into T074b via
       AuditLogWriter (FR-015b) (depends on T025, T074b)
-- [ ] T077 [US3] AccountController (`GET/POST /accounts`, `PATCH /accounts/{id}`,
+- [X] T077 [US3] AccountController (`GET/POST /accounts`, `PATCH /accounts/{id}`,
       `/deactivate`, `/reactivate`), admin-only via RBAC, per contracts/auth-api.yaml in
       `backend/src/main/java/com/dentalclinic/auth/api/AccountController.java`
       (depends on T047, T074)
-- [ ] T077a [US3] Add `POST /accounts/{id}/mfa-reset` to AccountController per
+- [X] T077a [US3] Add `POST /accounts/{id}/mfa-reset` to AccountController per
       contracts/auth-api.yaml (FR-015b) (depends on T047, T074b)
-- [ ] T078 [P] [US3] Angular admin accounts screens (list, create form, role-change,
+- [X] T078 [P] [US3] Angular admin accounts screens (list, create form, role-change,
       deactivate/reactivate actions) in `frontend/src/app/features/admin/accounts/`
-- [ ] T079 [US3] Angular AccountAdminService (calls `/accounts` endpoints) in
+- [X] T079 [US3] Angular AccountAdminService (calls `/accounts` endpoints) in
       `frontend/src/app/features/admin/accounts/account-admin.service.ts` (depends on T078)
-- [ ] T079a [P] [US3] Angular UI action for admin-triggered MFA reset (button + confirmation) in
+- [X] T079a [P] [US3] Angular UI action for admin-triggered MFA reset (button + confirmation) in
       the accounts screen (FR-015b) (depends on T078)
 
 **Checkpoint**: All three user stories independently functional.
@@ -384,17 +384,17 @@ User Story 3).
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T080 [P] Run full quickstart.md validation (Scenarios 1–3) against a locally-deployed stack
-- [ ] T081 Security/compliance review pass for auth, authz, and audit-logging changes — required
+- [X] T080 [P] Run full quickstart.md validation (Scenarios 1–3) against a locally-deployed stack
+- [X] T081 Security/compliance review pass for auth, authz, and audit-logging changes — required
       before merge (Development Workflow & Quality Gates)
-- [ ] T082 [P] Document the high-risk module boundary / availability approach (plan.md Risk Tier
+- [X] T082 [P] Document the high-risk module boundary / availability approach (plan.md Risk Tier
       section) in `backend/README.md` or an ops runbook (Principle V)
-- [ ] T083 [P] Mobile-viewport accessibility smoke check (WCAG-focused) across all new screens
+- [X] T083 [P] Mobile-viewport accessibility smoke check (WCAG-focused) across all new screens
       (Principle IV)
-- [ ] T084 Verify SC-001 through SC-007 against the running stack (spec.md Success Criteria)
+- [X] T084 Verify SC-001 through SC-007 against the running stack (spec.md Success Criteria)
 - [ ] T085 [P] Terraform DEV workspace `apply`, smoke test against it, then `destroy` (DEV is
       ephemeral per Environments & Release Process)
-- [ ] T085a [P] AuditLogRetentionJob — scheduled job (e.g. Spring `@Scheduled`) that deletes
+- [X] T085a [P] AuditLogRetentionJob — scheduled job (e.g. Spring `@Scheduled`) that deletes
       AuditLogEntry rows older than 3 years, running under a privileged DB role separate from the
       application's normal `INSERT`-only role (FR-018, data-model.md AuditLogEntry Retention) in
       `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditLogRetentionJob.java`
