@@ -30,7 +30,7 @@
     "@angular/build": "^21.0.0",
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "1.57.0",
     "@analogjs/vite-plugin-angular": "^2.1.0",
     "@vitest/browser": "^4.0.8",
     "eslint": "^9.16.0",

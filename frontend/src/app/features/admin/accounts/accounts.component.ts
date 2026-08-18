@@ -71,9 +71,12 @@ const ROLES: StaffRole[] = ['RECEPTION', 'DOCTOR', 'ADMINISTRATOR'];
             <th mat-header-cell *matHeaderCellDef>Rola</th>
             <td mat-cell *matCellDef="let account">
               <mat-form-field appearance="outline" class="role-select">
+                <!-- MatSelect computes its accessible name from a mat-label inside the
+                     form-field via aria-labelledby, overriding any aria-label set directly on
+                     it — an [attr.aria-label] here (as tried previously) is silently dropped. -->
+                <mat-label>Rola</mat-label>
                 <mat-select
                   [value]="account.role"
-                  [attr.aria-label]="'Rola dla ' + account.email"
                   (selectionChange)="changeRole(account, $event.value)"
                 >
                   @for (role of roles; track role) {
