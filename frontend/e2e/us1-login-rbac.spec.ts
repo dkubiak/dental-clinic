@@ -60,6 +60,29 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await expect(page.locator('mat-toolbar')).toHaveText('Panel — Administrator');
   });
 
+  test('SC-001: login-to-role-home-screen completes within 10 seconds', async ({ page }) => {
+    const account = seedAccounts.reception;
+    await page.goto('/login');
+    await page.getByLabel('Adres e-mail').fill(account.email);
+    await page.getByLabel('Hasło').fill(account.password);
+
+    // Timer starts at submission of correct credentials, per spec.md SC-001 ("w mniej niż 10
+    // sekund od podania poprawnych danych"), and ends once the role-appropriate home screen is
+    // visible — covering both the MFA challenge round trip and the post-MFA redirect.
+    const start = Date.now();
+    await page.getByRole('button', { name: 'Zaloguj się' }).click();
+
+    await page.waitForURL('**/login/mfa');
+    await page.getByLabel('6-cyfrowy kod').fill(currentTotpCode(account.totpSecret));
+    await page.getByRole('button', { name: 'Potwierdź' }).click();
+
+    await page.waitForURL('**/reception');
+    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Recepcja');
+    const elapsedMs = Date.now() - start;
+
+    expect(elapsedMs).toBeLessThan(10_000);
+  });
+
   test('Scenario 4: wrong password is denied without revealing which field was wrong', async ({
     page,
   }) => {
