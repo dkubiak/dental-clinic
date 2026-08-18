@@ -49,18 +49,31 @@ test.describe('US3 — admin account lifecycle', () => {
     const uniqueEmail = `lifecycle-e2e-${Date.now()}@dentalclinic.example`;
     const offsetBefore = fileSizeOrZero(emailsPath);
 
-    await page.goto('/admin/accounts');
+    // In-app navigation (not page.goto) — a hard navigation reloads the SPA and drops
+    // AuthState (role.guard.ts's client-side role, held only in memory), bouncing this
+    // admin-only route back to /login even with a valid session cookie.
+    await page.getByRole('link', { name: 'Zarządzanie kontami' }).click();
     await page.getByLabel('Adres e-mail').fill(uniqueEmail);
     // Role select already defaults to RECEPTION.
     await page.getByRole('button', { name: 'Utwórz konto' }).click();
     await expect(page.locator('tr', { hasText: uniqueEmail })).toBeVisible();
 
-    const appended = readFileSync(emailsPath, 'utf-8').slice(offsetBefore);
-    const ownLine = appended
-      .trim()
-      .split('\n')
-      .find((line) => line.includes(uniqueEmail));
-    expect(ownLine, 'expected a captured set-password email for the new account').toBeDefined();
+    // The set-password email is written by the backend slightly after the 201 response that
+    // makes the row above appear, so poll instead of reading the file exactly once.
+    let ownLine: string | undefined;
+    await expect
+      .poll(
+        () => {
+          const appended = readFileSync(emailsPath, 'utf-8').slice(offsetBefore);
+          ownLine = appended
+            .trim()
+            .split('\n')
+            .find((line) => line.includes(uniqueEmail));
+          return ownLine;
+        },
+        { message: 'expected a captured set-password email for the new account', timeout: 10_000 },
+      )
+      .toBeDefined();
     const tokenMatch = JSON.parse(ownLine!).body.match(/token=([\w-]+)/);
     expect(tokenMatch).not.toBeNull();
     const token = tokenMatch![1];
@@ -95,7 +108,8 @@ test.describe('US3 — admin account lifecycle', () => {
     await page.waitForURL('**/admin');
 
     const uniqueEmail = `deactivate-e2e-${Date.now()}@dentalclinic.example`;
-    await page.goto('/admin/accounts');
+    // In-app navigation — see the Scenario 1 comment above on why not page.goto.
+    await page.getByRole('link', { name: 'Zarządzanie kontami' }).click();
     await page.getByLabel('Adres e-mail').fill(uniqueEmail);
     await page.getByRole('button', { name: 'Utwórz konto' }).click();
     const row = page.locator('tr', { hasText: uniqueEmail });
@@ -115,8 +129,17 @@ test.describe('US3 — admin account lifecycle', () => {
     );
     await expect(page).toHaveURL(/\/login$/);
 
-    await page.goto('/admin/audit-log');
-    await page.getByLabel('Typ zdarzenia').click();
+    // The failed-login attempt above was itself a hard navigation to /login, which already
+    // dropped AuthState (see the Scenario 1 comment) — re-authenticate as admin rather than
+    // page.goto-ing straight to the admin-only audit log.
+    await loginWithMfa(page, seedAccounts.admin);
+    await page.waitForURL('**/admin');
+    await page.getByRole('link', { name: 'Log audytowy' }).click();
+    // force: true — Angular Material's own compiled CSS gives the floating label
+    // `pointer-events: all` (it forwards the click to the select natively), which Playwright's
+    // strict actionability check flags as "intercepts pointer events" even though the click does
+    // reach the select (verified: a raw page.mouse.click at the same point opens the panel fine).
+    await page.getByLabel('Typ zdarzenia').click({ force: true });
     await page.getByRole('option', { name: 'LOGIN_DENIED_DEACTIVATED', exact: true }).click();
     await expect(page.locator('table tbody tr').first()).toBeVisible();
   });

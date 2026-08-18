@@ -136,12 +136,22 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await page.getByRole('button', { name: 'Wyślij link resetujący' }).click();
     await expect(page.getByText(/wysłaliśmy na niego link/)).toBeVisible();
 
-    const appended = readFileSync(emailsPath, 'utf-8').slice(offsetBefore);
-    const ownLine = appended
-        .trim()
-        .split('\n')
-        .find((line) => line.includes(resetAccount.email));
-    expect(ownLine, 'expected a captured email for this test run').toBeDefined();
+    // The email is written by the backend slightly after the confirmation text above appears,
+    // so poll instead of reading the file exactly once.
+    let ownLine: string | undefined;
+    await expect
+      .poll(
+        () => {
+          const appended = readFileSync(emailsPath, 'utf-8').slice(offsetBefore);
+          ownLine = appended
+            .trim()
+            .split('\n')
+            .find((line) => line.includes(resetAccount.email));
+          return ownLine;
+        },
+        { message: 'expected a captured email for this test run', timeout: 10_000 },
+      )
+      .toBeDefined();
     const resetEmail = JSON.parse(ownLine!) as { body: string };
     const tokenMatch = resetEmail.body.match(/token=([\w-]+)/);
     expect(tokenMatch).not.toBeNull();
