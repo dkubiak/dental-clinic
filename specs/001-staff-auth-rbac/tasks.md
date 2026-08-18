@@ -405,6 +405,15 @@ User Story 3).
 
 ---
 
+## Phase 7: Convergence
+
+- [X] T086 [P] Add a Playwright timing assertion to the US1 login e2e test asserting the
+      role-appropriate home screen renders within 10 seconds of successful MFA verification
+      (SC-001, partial — T084 verified this manually once but no automated regression guard
+      exists) in `frontend/e2e/us1-login-rbac.spec.ts` (or equivalent)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
