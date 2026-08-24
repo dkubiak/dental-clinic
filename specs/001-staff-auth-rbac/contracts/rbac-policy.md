@@ -13,20 +13,27 @@ changes touching authz require security/compliance review).
 | `RECEPTION` | recepcja | Appointments and patient contact details, for all patients. No clinical/medical data. |
 | `DOCTOR` | lekarz | Medical records and treatment history, for all patients (clinic-wide, not per-doctor assignment — FR-014). No account/config administration. |
 | `ADMINISTRATOR` | administrator | User accounts and system configuration. No default access to clinical patient data (contact, medical, or otherwise). |
+| `ASSISTANT` | asystent/asystentka | *Added by feature 002 (002-patient-records).* Chairside assistant. Read-only patient basic data (identification only) + view/edit the tooth chart alongside `DOCTOR`. No account/config administration, no basic-data write, no audit/export/erasure access. |
 
 ## Permission matrix
 
-| Resource / action | RECEPTION | DOCTOR | ADMINISTRATOR |
-|---|---|---|---|
-| View/manage appointments | ✅ | ❌ | ❌ |
-| View/manage patient contact details | ✅ | ❌ | ❌ |
-| View/manage medical records & treatment history (any patient) | ❌ | ✅ | ❌ |
-| Create / deactivate / reactivate staff accounts | ❌ | ❌ | ✅ |
-| Assign / change staff roles | ❌ | ❌ | ✅ |
-| Reset another account's MFA enrollment (FR-015b) | ❌ | ❌ | ✅ |
-| System configuration | ❌ | ❌ | ✅ |
-| Read audit log | ❌ | ❌ | ✅ |
-| Write/edit/delete audit log (any role, any endpoint) | ❌ | ❌ | ❌ (no such capability exists — FR-008) |
+| Resource / action | RECEPTION | DOCTOR | ASSISTANT | ADMINISTRATOR |
+|---|---|---|---|---|
+| View/manage appointments | ✅ | ❌ | ❌ | ❌ |
+| View/manage patient contact details | ✅ | ❌ | ❌ | ❌ |
+| View/manage medical records & treatment history (any patient) | ❌ | ✅ | ❌ | ❌ |
+| Create / deactivate / reactivate staff accounts | ❌ | ❌ | ❌ | ✅ |
+| Assign / change staff roles | ❌ | ❌ | ❌ | ✅ |
+| Reset another account's MFA enrollment (FR-015b) | ❌ | ❌ | ❌ | ✅ |
+| System configuration | ❌ | ❌ | ❌ | ✅ |
+| Read audit log | ❌ | ❌ | ❌ | ✅ |
+| Write/edit/delete audit log (any role, any endpoint) | ❌ | ❌ | ❌ | ❌ (no such capability exists — FR-008) |
+| *Added by feature 002 (002-patient-records):* | | | | |
+| Create / edit patient basic data (kartoteka) | ✅ | ✅ | ❌ | ❌ |
+| Read patient basic data (identification only) | ✅ | ✅ | ✅ | ❌ |
+| View / edit tooth chart | ❌ | ✅ | ✅ | ❌ |
+| View visit-history placeholder | ✅ | ✅ | ❌ | ❌ |
+| Export / erase patient data (RODO, FR-009/FR-010 of 002) | ❌ | ✅ | ❌ | ❌ |
 
 ## Enforcement rules
 
@@ -47,3 +54,8 @@ changes touching authz require security/compliance review).
 5. **Every denial and every permission change is audited**, per FR-006/FR-007 and the
    AuditLogEntry `event_type` enum in data-model.md (`ACCESS_DENIED_OUT_OF_ROLE`, `ROLE_CHANGED`,
    etc.).
+6. **`ADMINISTRATOR` clinical-data exclusion extends to patient records (feature 002).** Rule 3
+   above applies unchanged to the rows feature 002 added: `ADMINISTRATOR` has zero rows granting
+   patient basic-data, tooth-chart, or export/erasure access. `DOCTOR` — not `ADMINISTRATOR` —
+   owns RODO export/erasure (002's research.md #6), specifically to avoid a quiet violation of
+   rule 3.

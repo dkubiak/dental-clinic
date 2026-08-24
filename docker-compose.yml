@@ -22,6 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       AUTH_SERVICE_APP_PASSWORD: ${AUTH_SERVICE_APP_PASSWORD:-auth_service_app_password}
       AUTH_SERVICE_RETENTION_PASSWORD: ${AUTH_SERVICE_RETENTION_PASSWORD:-auth_service_retention_password}
+      PATIENT_SERVICE_APP_PASSWORD: ${PATIENT_SERVICE_APP_PASSWORD:-patient_service_app_password}
     ports:
       - "5432:5432"
     volumes:
@@ -60,6 +61,26 @@ services:
       postgres:
         condition: service_healthy
 
+  patient-service:
+    build:
+      context: ./patient-service
+    ports:
+      - "8081:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/dental_clinic_auth
+      DB_USERNAME: patient_service_app
+      DB_PASSWORD: ${PATIENT_SERVICE_APP_PASSWORD:-patient_service_app_password}
+      # Flyway needs a role that already exists and can create tables on a fresh DB (own
+      # migration history, separate from auth-service's) — the postgres superuser, same pattern
+      # as auth-service.
+      FLYWAY_DB_USERNAME: postgres
+      FLYWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
   frontend:
     build:
       context: ./frontend
@@ -67,6 +88,7 @@ services:
       - "4200:80"
     depends_on:
       - auth-service
+      - patient-service
 
 volumes:
   postgres-data:

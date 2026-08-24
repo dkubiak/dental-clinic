@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: patient-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dental_clinic_auth}
+    username: ${DB_USERNAME:patient_service_app}
+    password: ${DB_PASSWORD:}
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    # Own Flyway schema-history table (research.md #7) — separate from auth-service's. Needs a
+    # role that can already create tables/roles on a fresh database, so it cannot authenticate as
+    # spring.datasource.username (patient_service_app) until after its own V1 migration runs
+    # (mirrors backend/src/main/resources/application.yml's FLYWAY_DB_* split).
+    url: ${FLYWAY_DB_URL:${DB_URL:jdbc:postgresql://localhost:5432/dental_clinic_auth}}
+    user: ${FLYWAY_DB_USERNAME:${DB_USERNAME:patient_service_app}}
+    password: ${FLYWAY_DB_PASSWORD:${DB_PASSWORD:}}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    com.dentalclinic.patient: INFO
