@@ -232,48 +232,70 @@ checksum, reject duplicate PESEL, deny non-RECEPTION/DOCTOR/ADMINISTRATOR roles 
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T028 [P] [US1] Write a failing contract test
+- [X] T028 [P] [US1] Write a failing contract test
       `patient-service/src/test/java/com/dentalclinic/patient/api/PatientCreateApiTest.java`:
       `POST /patients` — `201` with and without PESEL, `400` on bad checksum, `409` on duplicate
-      PESEL, `404` for an `ASSISTANT` caller
-- [ ] T029 [P] [US1] Write a failing contract test
+      PESEL, `404` for an `ASSISTANT` caller, `401` unauthenticated (6/6)
+- [X] T029 [P] [US1] Write a failing contract test
       `patient-service/src/test/java/com/dentalclinic/patient/api/PatientSearchApiTest.java`:
       `GET /patients?q=` — matches by last-name fragment and by exact PESEL, `404` for
       `ADMINISTRATOR`; a successful search writes one `PATIENT_RECORD_VIEWED` audit entry for the
-      call (FR-007/SC-003)
-- [ ] T030 [P] [US1] Write a failing contract test
+      call (FR-007/SC-003) (4/4)
+- [X] T030 [P] [US1] Write a failing contract test
       `patient-service/src/test/java/com/dentalclinic/patient/api/PatientDetailApiTest.java`:
       `GET /patients/{id}` readable by `RECEPTION`/`DOCTOR`/`ASSISTANT`, and writes a
       `PATIENT_RECORD_VIEWED` audit entry (FR-007/SC-003); `PATCH /patients/{id}`
-      only by `RECEPTION`/`DOCTOR`, `404` otherwise, `400`/`409` mirrored from create
-- [ ] T031 [P] [US1] Write a failing Vitest test
+      only by `RECEPTION`/`DOCTOR`, `404` otherwise, `400`/`409` mirrored from create (7/7)
+- [X] T031 [P] [US1] Write a failing Vitest test
       `frontend/src/app/features/patients/patient-create/patient-create.component.spec.ts`
-- [ ] T032 [P] [US1] Write a failing Vitest test
-      `frontend/src/app/features/patients/patient-search/patient-search.component.spec.ts`
-- [ ] T033 [P] [US1] Write a failing Playwright e2e test `frontend/e2e/us1-patient-create.spec.ts`
-      covering spec.md US1 Acceptance Scenarios 1–6
+      (5/5 — includes client-side PESEL-checksum rejection and 409-duplicate error mapping)
+- [X] T032 [P] [US1] Write a failing Vitest test
+      `frontend/src/app/features/patients/patient-search/patient-search.component.spec.ts` (3/3)
+- [X] T033 [P] [US1] Write a failing Playwright e2e test `frontend/e2e/us1-patient-create.spec.ts`
+      covering spec.md US1 Acceptance Scenarios 1–6 (Scenario 6's ASSISTANT half is deferred to
+      T061, Phase 6, which adds the seed account; its server-side denial is already proven by
+      `PatientCreateApiTest#assistant_isDenied404`). Also fixed `frontend/e2e/us1-login-rbac.spec.ts`
+      (001), whose Scenarios 1/2/SC-001/5/6/7 asserted the old `/reception`/`/doctor` placeholder
+      routes T016/T040 replaced with the shared `/patients` screen. Verified: `npx playwright test
+      --list` parses both files (56 tests across projects); full execution needs the live
+      docker-compose stack, same as the rest of this suite (frontend-e2e CI job still `if: false`).
+- [X] Bonus (not separately ticketed, needed for FR-011 to be reachable at all and for T050/T056's
+      "wire into the patient-detail view" instructions to make sense):
+      `frontend/src/app/features/patients/patient-detail/{patient-detail.component.ts,patient-detail.component.spec.ts}`
+      — basic-data view/edit (2/2 tests) plus the empty tab shells US2/US3 fill in.
 
 ### Implementation for User Story 1
 
-- [ ] T034 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PatientCreateService.java`
-      (PESEL validation via T025, duplicate check via the T017 partial unique index, audit via
-      T027) (depends on T023, T025, T027)
-- [ ] T035 [US1] Add search query methods to `PatientRecordRepository` (case-insensitive
-      last-name match, exact-PESEL match) and a `PatientSearchService`
-- [ ] T036 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PatientUpdateService.java`
-      (edit basic data + audit)
-- [ ] T037 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/api/PatientController.java`:
+- [X] T034 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PatientCreateService.java`
+      (PESEL validation via T025, duplicate check via the T017 partial unique index + a
+      `DataIntegrityViolationException` catch as the race-condition backstop, audit via T027)
+      (depends on T023, T025, T027)
+- [X] T035 [US1] Add search query methods to `PatientRecordRepository` (case-insensitive
+      last-name match via `findByLastNameIgnoreCaseContaining`, exact-PESEL match) and
+      `PatientSearchService` (also handles `GET /patients/{id}`'s read + audit)
+- [X] T036 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PatientUpdateService.java`
+      (edit basic data + before/after audit; duplicate-PESEL check excludes the record's own id)
+- [X] T037 [US1] Implement `patient-service/src/main/java/com/dentalclinic/patient/api/PatientController.java`
+      + `GlobalExceptionHandler`/`PatientCreateRequest`/`PatientSummaryResponse`/`PatientDetailResponse`:
       `POST /patients`, `GET /patients`, `GET /patients/{id}`, `PATCH /patients/{id}`, with
       `@PreAuthorize` per `rbac-policy.md` — makes T028–T030 pass (depends on T034–T036).
       `GET /patients` and `GET /patients/{id}` additionally write a `PATIENT_RECORD_VIEWED` audit
       entry via `PatientAuditWriter` (T027) — one entry per search call (with query/hit-count in
-      `metadata`) or per detail read (FR-007/SC-003, data-model.md)
-- [ ] T038 [P] [US1] Implement `frontend/src/app/features/patients/patient-search/patient-search.component.ts` —
+      `metadata`) or per detail read (FR-007/SC-003, data-model.md). Audit before/after snapshots
+      use Jackson's `ObjectMapper` (Jackson 3 / `tools.jackson.*` packages under Spring Boot 4.1,
+      not the legacy `com.fasterxml.jackson.databind` — its `writeValueAsString` is unchecked now)
+      rather than hand-built JSON strings, since patient names/addresses are free text where
+      string concatenation risked invalid JSON.
+- [X] T038 [P] [US1] Implement `frontend/src/app/features/patients/patient-search/patient-search.component.ts` —
       makes T032 pass
-- [ ] T039 [P] [US1] Implement `frontend/src/app/features/patients/patient-create/patient-create.component.ts`
-      (mirrors the PESEL checksum check client-side for UX only) — makes T031 pass
-- [ ] T040 [US1] Wire the patient-search/patient-create routes into `features/patients` routing
-      and the shell's "Nowy pacjent" FAB (depends on T015, T016, T038, T039) — makes T033 pass
+- [X] T039 [P] [US1] Implement `frontend/src/app/features/patients/patient-create/patient-create.component.ts`
+      (mirrors the PESEL checksum check client-side for UX only, via new `pesel-validator.ts`) —
+      makes T031 pass
+- [X] T040 [US1] Wire the patient-search/patient-create/patient-detail routes into
+      `app.routes.ts` under the existing `AppShellComponent` group (depends on T015, T016, T038,
+      T039) — makes T033 pass. Retired the placeholder `/reception`/`/doctor`/`/assistant` paths
+      (`roleHomeRoute()` now points RECEPTION/DOCTOR/ASSISTANT at the shared `/patients` screen).
+      Verified: `npm run lint`, `npm test` (34/34), `npm run build` all pass.
 
 **Checkpoint**: User Story 1 is fully functional and independently testable — deployable as the MVP.
 

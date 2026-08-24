@@ -40,18 +40,26 @@ async function loginWithMfa(
 }
 
 test.describe('US1 — staff login with role-scoped access', () => {
-  test('Scenario 1: reception logs in and lands on the reception home screen', async ({ page }) => {
+  test('Scenario 1: reception logs in and lands on the shared patient-search screen', async ({
+    page,
+  }) => {
+    // 002-patient-records (T040): the shared shell/patient-search screen replaced the
+    // per-role placeholder home screen this scenario originally asserted against.
     await loginWithMfa(page, seedAccounts.reception);
-    await page.waitForURL('**/reception');
-    // The role name legitimately appears twice on this screen (toolbar title + welcome text) —
-    // target the toolbar specifically to avoid a Playwright strict-mode ambiguity.
-    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Recepcja');
+    await page.waitForURL('**/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
+    // FR-001 — RECEPTION can create patient records.
+    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
   });
 
-  test('Scenario 2: doctor logs in and lands on the doctor home screen', async ({ page }) => {
+  test('Scenario 2: doctor logs in and lands on the shared patient-search screen', async ({
+    page,
+  }) => {
     await loginWithMfa(page, seedAccounts.doctor);
-    await page.waitForURL('**/doctor');
-    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Lekarz');
+    await page.waitForURL('**/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
+    // FR-001 — DOCTOR can create patient records.
+    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
   });
 
   test('Scenario 3: administrator logs in and lands on the admin home screen', async ({ page }) => {
@@ -76,8 +84,8 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await page.getByLabel('6-cyfrowy kod').fill(currentTotpCode(account.totpSecret));
     await page.getByRole('button', { name: 'Potwierdź' }).click();
 
-    await page.waitForURL('**/reception');
-    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Recepcja');
+    await page.waitForURL('**/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
     const elapsedMs = Date.now() - start;
 
     expect(elapsedMs).toBeLessThan(10_000);
@@ -99,7 +107,7 @@ test.describe('US1 — staff login with role-scoped access', () => {
     page,
   }) => {
     await loginWithMfa(page, seedAccounts.reception);
-    await page.waitForURL('**/reception');
+    await page.waitForURL('**/patients');
 
     await page.goto('/admin');
 
@@ -115,8 +123,8 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await page.getByRole('button', { name: 'Zaloguj się' }).click();
 
     await page.waitForURL('**/login/mfa');
-    // Never submits a TOTP code — navigating straight to a role-home route must not succeed.
-    await page.goto('/doctor');
+    // Never submits a TOTP code — navigating straight to a protected route must not succeed.
+    await page.goto('/patients');
     await expect(page).toHaveURL(/\/login$/);
   });
 
@@ -166,7 +174,7 @@ test.describe('US1 — staff login with role-scoped access', () => {
 
     // Log in with the new password to prove the reset actually took effect end to end.
     await loginWithMfa(page, { ...resetAccount, password: newPassword });
-    await page.waitForURL('**/reception');
+    await page.waitForURL('**/patients');
 
     // The link is single-use (FR-016) — reusing it must fail.
     await page.goto(`/password-reset/confirm?token=${token}`);

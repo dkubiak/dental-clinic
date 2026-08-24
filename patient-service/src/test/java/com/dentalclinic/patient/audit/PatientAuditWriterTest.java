@@ -29,41 +29,18 @@ class PatientAuditWriterTest extends PostgresIntegrationTestBase {
 
   @Autowired private PatientAuditWriter patientAuditWriter;
 
+  // The table itself is created by PostgresIntegrationTestBase's own createSharedAuditLogTable()
+  // (@BeforeEach, runs before this one) — this just isolates each test method from the others'
+  // rows within that shared table.
   @BeforeEach
-  void createSharedAuditLogTable() {
+  void truncateAuditLog() {
     try (Connection connection =
             DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
         Statement statement = connection.createStatement()) {
-      statement.execute(
-          "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_type WHERE typname ="
-              + " 'audit_event_type') THEN CREATE TYPE audit_event_type AS ENUM"
-              + " ('PATIENT_RECORD_CREATED', 'PATIENT_RECORD_UPDATED', 'PATIENT_RECORD_VIEWED',"
-              + " 'TOOTH_STATE_CHANGED', 'TOOTH_CHART_VIEWED', 'PATIENT_DATA_EXPORTED',"
-              + " 'PATIENT_DATA_ERASURE_REQUESTED', 'PATIENT_DATA_ERASURE_COMPLETED',"
-              + " 'LOGIN_SUCCESS'); END IF; END $$;");
-      statement.execute(
-          """
-          CREATE TABLE IF NOT EXISTS audit_log_entry (
-              id                       BIGSERIAL PRIMARY KEY,
-              event_type               audit_event_type NOT NULL,
-              actor_account_id         UUID,
-              target_account_id        UUID,
-              target_patient_record_id UUID,
-              occurred_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
-              before_state             JSONB,
-              after_state              JSONB,
-              metadata                 JSONB,
-              previous_entry_hash      CHAR(64),
-              entry_hash               CHAR(64) NOT NULL
-          )
-          """);
-      statement.execute("GRANT SELECT, INSERT ON audit_log_entry TO patient_service_app");
-      statement.execute(
-          "GRANT USAGE, SELECT ON SEQUENCE audit_log_entry_id_seq TO patient_service_app");
-      statement.execute("TRUNCATE audit_log_entry"); // isolate each test method
+      statement.execute("TRUNCATE audit_log_entry");
     } catch (SQLException e) {
-      throw new IllegalStateException("Failed to create shared audit_log_entry table", e);
+      throw new IllegalStateException("Failed to truncate audit_log_entry", e);
     }
   }
 

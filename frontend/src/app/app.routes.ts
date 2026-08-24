@@ -8,6 +8,9 @@ import { PasswordResetRequestComponent } from './features/auth/password-reset/pa
 import { RoleHomeComponent } from './features/home/role-home.component';
 import { AuditLogComponent } from './features/admin/audit-log/audit-log.component';
 import { AccountsComponent } from './features/admin/accounts/accounts.component';
+import { PatientSearchComponent } from './features/patients/patient-search/patient-search.component';
+import { PatientCreateComponent } from './features/patients/patient-create/patient-create.component';
+import { PatientDetailComponent } from './features/patients/patient-detail/patient-detail.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -16,34 +19,29 @@ export const routes: Routes = [
   { path: 'password-reset/request', component: PasswordResetRequestComponent },
   { path: 'password-reset/confirm', component: PasswordResetConfirmComponent },
   // RECEPTION/DOCTOR/ASSISTANT all share the persistent, mobile-first AppShellComponent
-  // (core/shell, T015) — replacing RoleHomeComponent's placeholder body as the routed shell.
-  // Each child route keeps its own precise per-role canMatch (unchanged from before T016), so
-  // this wrapping doesn't loosen who can reach which path. The child bodies are still
-  // RoleHomeComponent for now — features/patients (US1, T038-T040) replaces them with the real
-  // patient-search default landing screen; ADMINISTRATOR is a separate tier (no clinical-data
-  // access, data-model.md) and deliberately stays outside this shell.
+  // (core/shell, T015). The patient-search screen is the shared default landing view (T040);
+  // ADMINISTRATOR is a separate tier (no clinical-data access, data-model.md) and deliberately
+  // stays outside this shell.
   {
     path: '',
     component: AppShellComponent,
     children: [
       {
-        path: 'reception',
-        component: RoleHomeComponent,
-        data: { roleLabel: 'Recepcja' },
-        canMatch: [roleGuard(['RECEPTION'])],
+        path: 'patients',
+        component: PatientSearchComponent,
+        canMatch: [roleGuard(['RECEPTION', 'DOCTOR', 'ASSISTANT'])],
+      },
+      // FR-001 — creation is RECEPTION/DOCTOR only; ASSISTANT has read-only basic-data access
+      // (FR-006a). Must precede 'patients/:id' so the literal segment matches first.
+      {
+        path: 'patients/new',
+        component: PatientCreateComponent,
+        canMatch: [roleGuard(['RECEPTION', 'DOCTOR'])],
       },
       {
-        path: 'doctor',
-        component: RoleHomeComponent,
-        data: { roleLabel: 'Lekarz' },
-        canMatch: [roleGuard(['DOCTOR'])],
-      },
-      // 002-patient-records (FR-006a) — new ASSISTANT role, read-only basic data + tooth-chart.
-      {
-        path: 'assistant',
-        component: RoleHomeComponent,
-        data: { roleLabel: 'Asystent/asystentka' },
-        canMatch: [roleGuard(['ASSISTANT'])],
+        path: 'patients/:id',
+        component: PatientDetailComponent,
+        canMatch: [roleGuard(['RECEPTION', 'DOCTOR', 'ASSISTANT'])],
       },
     ],
   },
