@@ -71,15 +71,20 @@ the base `PatientRecord` entity.
 
 ### `auth-service` RBAC + audit extension (modifies already-shipped 001 code)
 
-- [ ] T006 `auth-service` migration `backend/src/main/resources/db/migration/V9__staff_role_assistant.sql`:
+- [X] T006 `auth-service` migration `backend/src/main/resources/db/migration/V9__staff_role_assistant.sql`:
       `ALTER TYPE staff_role ADD VALUE 'ASSISTANT'` (research.md #4; own migration/transaction so
       it commits before any later migration/code references the value)
-- [ ] T007 [P] Update `backend/src/main/java/com/dentalclinic/auth/role/Role.java`: add
+- [X] T007 [P] Update `backend/src/main/java/com/dentalclinic/auth/role/Role.java`: add
       `ASSISTANT` (depends on T006)
-- [ ] T008 [P] Update `frontend/src/app/core/auth/role.guard.ts` and the `core/rbac` UI-visibility
+- [X] T008 [P] Update `frontend/src/app/core/auth/role.guard.ts` and the `core/rbac` UI-visibility
       helpers to recognize `ASSISTANT`; add an `/assistant` route with
-      `canMatch: [roleGuard(['ASSISTANT'])]` in `frontend/src/app/app.routes.ts`
-- [ ] T009 `auth-service` migration `backend/src/main/resources/db/migration/V10__patient_service_role.sql`:
+      `canMatch: [roleGuard(['ASSISTANT'])]` in `frontend/src/app/app.routes.ts`. No standalone
+      `core/rbac` directory actually exists (plan.md's Project Structure was aspirational) — the
+      real UI-visibility helpers are `auth-state.ts` (`StaffRole` type), `role-home-route.ts`, and
+      `accounts.component.ts`'s role dropdown (`ROLES` constant, needed so admins can actually
+      assign `ASSISTANT` via the UI). `role.guard.ts` itself needed no change (role-parametric
+      already). Verified: `npm run lint` and `npm test` (24/24) pass.
+- [X] T009 `auth-service` migration `backend/src/main/resources/db/migration/V10__patient_service_role.sql`:
       idempotently `CREATE ROLE patient_service_app` (mirrors the `DO $$ ... IF NOT EXISTS`
       pattern already used for `auth_service_app`/`auth_service_retention` in `V5__audit_log.sql`/
       `V8__audit_log_retention_role.sql`)
@@ -89,13 +94,13 @@ the base `PatientRecord` entity.
       (`ADMINISTRATOR` clinical-data exclusion extends to patient records) — tracked here for
       traceability even though this is a cross-feature (001-owned) file, per the constitution's
       phase-end commit discipline
-- [ ] T010 `auth-service` migration `backend/src/main/resources/db/migration/V11__audit_event_type_patient.sql`:
+- [X] T010 `auth-service` migration `backend/src/main/resources/db/migration/V11__audit_event_type_patient.sql`:
       `ALTER TYPE audit_event_type ADD VALUE` for `PATIENT_RECORD_CREATED`,
       `PATIENT_RECORD_UPDATED`, `PATIENT_RECORD_VIEWED`, `TOOTH_STATE_CHANGED`,
       `TOOTH_CHART_VIEWED`, `PATIENT_DATA_EXPORTED`, `PATIENT_DATA_ERASURE_REQUESTED`,
       `PATIENT_DATA_ERASURE_COMPLETED` (data-model.md; `PATIENT_RECORD_VIEWED`/`TOOTH_CHART_VIEWED`
       added for FR-007/SC-003 read-audit coverage)
-- [ ] T011 `auth-service` migration `backend/src/main/resources/db/migration/V12__audit_log_entry_patient_target.sql`:
+- [X] T011 `auth-service` migration `backend/src/main/resources/db/migration/V12__audit_log_entry_patient_target.sql`:
       `ALTER TABLE audit_log_entry ADD COLUMN target_patient_record_id UUID` (nullable, **no FK**
       — research.md #5); `GRANT SELECT, INSERT ON audit_log_entry TO patient_service_app` plus a
       separate `GRANT USAGE, SELECT ON SEQUENCE audit_log_entry_id_seq TO patient_service_app`
@@ -106,81 +111,111 @@ the base `PatientRecord` entity.
 
 ### Audit hash-chain concurrency fix (research.md #5a)
 
-- [ ] T012 [P] Write a failing Testcontainers test
+- [X] T012 [P] Write a failing Testcontainers test
       `backend/src/test/java/com/dentalclinic/auth/auditlog/AuditLogWriterConcurrencyTest.java`:
       instantiate **two separate** `AuditLogWriter` objects sharing one Testcontainers Postgres
       instance (simulating two writers — today's `synchronized` only serializes calls within one
-      JVM object), fire concurrent `append()` calls from both, and assert
-      `AuditHashChainVerifier` reports an unbroken chain — this MUST fail against the current
-      implementation
-- [ ] T013 Fix `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditLogWriter.java`: replace
-      the `synchronized` keyword with `pg_advisory_xact_lock(<fixed key>)` held around
-      "read chain tail → compute hash → insert" — makes T012 pass (depends on T012)
+      JVM object), fire concurrent `append()` calls from both, and assert the resulting chain
+      segment is unbroken — this MUST fail against the current implementation. "Fail" here is a
+      compile error against the old 1-arg constructor (the fix's explicit-transaction design
+      necessarily changes the constructor signature) rather than a runtime race — verified by
+      temporarily stashing the T013 fix and confirming non-compilation, then restoring it.
+      Verifies only the entries this test itself wrote (not `AuditHashChainVerifier.verifyAll()`
+      against the whole shared-Postgres-container table), since `AuditLogRetentionJobTest`
+      legitimately deletes an old row elsewhere in that shared chain.
+- [X] T013 Fix `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditLogWriter.java`: replace
+      `synchronized` + `@Transactional` with an explicit `TransactionTemplate`-demarcated
+      transaction holding `pg_advisory_xact_lock(<fixed key>)` around "read chain tail → compute
+      hash → insert" (via `JdbcTemplate`, participating in the same transaction through Spring's
+      `DataSource`-synchronized `JpaTransactionManager`) — makes T012 pass (depends on T012).
+      Verified: full `./gradlew build` (65 tests + checkstyle + spotless) passes.
 
 ### Frontend shell (needed before any patient-facing screen)
 
-- [ ] T014 [P] Write a failing Vitest test
+- [X] T014 [P] Write a failing Vitest test
       `frontend/src/app/core/shell/app-shell.component.spec.ts`: renders a persistent toolbar,
-      role-aware nav, and a "Nowy pacjent" FAB/toolbar button
-- [ ] T015 Implement `frontend/src/app/core/shell/app-shell.component.ts`: mobile-first persistent
-      toolbar/nav (bottom-nav on mobile, expanded toolbar/side-nav on desktop) wrapping
-      `<router-outlet>`, with the "Nowy pacjent" primary action — makes T014 pass
-- [ ] T016 Update `frontend/src/app/app.routes.ts`: nest the `RECEPTION`/`DOCTOR`/`ASSISTANT`
-      role routes under `AppShellComponent`, replacing `RoleHomeComponent`'s placeholder body;
-      default landing route → patient search (depends on T008, T015)
+      role-aware nav, and a "Nowy pacjent" FAB/toolbar button (shown for RECEPTION/DOCTOR per
+      FR-001, hidden for ASSISTANT). Verified failing (module-not-found) before T015.
+- [X] T015 Implement `frontend/src/app/core/shell/app-shell.component.ts`: mobile-first persistent
+      toolbar/nav (bottom-nav below 768px, expanded toolbar links at/above it — CSS breakpoint,
+      no separate desktop component) wrapping `<router-outlet>`, with the "Nowy pacjent" primary
+      action (FAB on mobile, toolbar button on desktop) — makes T014 pass (5/5).
+- [X] T016 Update `frontend/src/app/app.routes.ts`: nest the `RECEPTION`/`DOCTOR`/`ASSISTANT`
+      role routes under `AppShellComponent`, replacing `RoleHomeComponent`'s placeholder body
+      (depends on T008, T015). Each child route keeps its own precise per-role `canMatch` (not
+      loosened by the wrapping); `ADMINISTRATOR` deliberately stays outside this shell (separate
+      tier, no clinical-data access). Default landing route → patient search is **not yet wired**
+      — children still render `RoleHomeComponent`; `features/patients` (US1, T038-T040) replaces
+      that placeholder body once the real patient-search component exists. Verified: `npm run
+      lint`, `npm test` (24/24), and `npm run build` all pass.
 
 ### `patient-service` schema, cross-service session auth, and base entity
 
-- [ ] T017 Create `patient-service` Flyway migration
+- [X] T017 Create `patient-service` Flyway migration
       `patient-service/src/main/resources/db/migration/V1__patient_record.sql`: `CREATE TABLE
       patient_record` (fields per data-model.md: id, first_name, last_name, date_of_birth, pesel,
       address_street/building_no/postal_code/city, created_at/by, updated_at/by), partial unique
-      index on `pesel WHERE pesel IS NOT NULL`, btree index on `last_name`; idempotently `CREATE
-      ROLE patient_service_app` (belt-and-suspenders with T009 — research.md #7); `GRANT SELECT,
-      INSERT, UPDATE, DELETE ON patient_record TO patient_service_app` — `id` is a UUID PK
-      (data-model.md, default `gen_random_uuid()`), so **no backing sequence exists**; do not
-      grant on a sequence for this table
-- [ ] T018 Create `patient-service` Flyway migration
+      index on `pesel WHERE pesel IS NOT NULL`, btree index on `lower(last_name)`; idempotently
+      `CREATE ROLE patient_service_app` (belt-and-suspenders with T009 — research.md #7); `GRANT
+      SELECT, INSERT, UPDATE, DELETE ON patient_record TO patient_service_app` — `id` is a UUID
+      PK, no sequence grant
+- [X] T018 Create `patient-service` Flyway migration
       `patient-service/src/main/resources/db/migration/V2__tooth_state.sql`: `CREATE TABLE
       tooth_state` (id, patient_record_id FK → patient_record.id, tooth_number, status enum
       `HEALTHY`/`SICK` default `HEALTHY`, updated_at, updated_by), unique index on
       `(patient_record_id, tooth_number)`, index on `patient_record_id`; `GRANT SELECT, INSERT,
-      UPDATE, DELETE ON tooth_state TO patient_service_app` — same UUID-PK reasoning as T017, no
-      sequence grant needed (depends on T017)
-- [ ] T019 [P] Write a failing integration test suite:
+      UPDATE, DELETE ON tooth_state TO patient_service_app` (depends on T017)
+- [X] T019 [P] Write a failing integration test suite:
       `patient-service/src/test/java/com/dentalclinic/patient/PostgresIntegrationTestBase.java`
       (Testcontainers base class, mirroring `auth-service`'s own) and
       `patient-service/src/test/java/com/dentalclinic/patient/session/SessionAuthenticationFilterTest.java`:
       a pre-seeded `spring_session`/`spring_session_attributes` row for a `DOCTOR` principal lets
-      a protected endpoint succeed; no/invalid session ⇒ `401`
-- [ ] T020 Implement
+      a protected endpoint succeed (a test-only `/test-support/authenticated` controller, mirroring
+      auth-service's `TestOnlyAdminController` pattern); no/invalid/expired session ⇒ `401`. Since
+      auth-service's session tables aren't created by patient-service's own migrations, the test
+      creates a structural copy of them itself (mirroring V3__session.sql) after Flyway runs.
+      Verified failing (compile error — filter/config classes didn't exist) before T020.
+- [X] T020 Implement
       `patient-service/src/main/java/com/dentalclinic/patient/session/{SessionAuthenticationFilter.java,SecurityConfig.java}`:
-      reads the `SESSION` cookie, looks up `spring_session`/`spring_session_attributes`,
-      deserializes the same Spring Security principal `auth-service` writes, populates
-      `SecurityContext` — makes T019 pass (depends on T011, T017 — needs the `spring_session*`
-      grant and the `patient-service` migration history to exist; no dependency on `tooth_state`/T018)
-- [ ] T021 [P] Create `patient-service/src/main/java/com/dentalclinic/patient/session/StaffRole.java`
+      reads the `SESSION` cookie, looks up `spring_session`/`spring_session_attributes` via
+      `JdbcTemplate`, deserializes the same JDK-serialized Spring Security `SecurityContext`
+      auth-service writes, populates `SecurityContextHolder`, bumps `last_access_time`. Security
+      chain is `SessionCreationPolicy.STATELESS` (this service never creates its own `HttpSession`)
+      with CSRF wired via the same `CookieCsrfTokenRepository` auth-service uses (same-origin
+      XSRF-TOKEN cookie covers both services). `/actuator/health/**` is `permitAll` for k8s probes
+      — note: `spring-boot-starter-actuator` itself isn't yet a dependency of either service
+      (pre-existing gap carried over from 001, not introduced here). Makes T019 pass (4/4)
+      (depends on T011, T017).
+- [X] T021 [P] Create `patient-service/src/main/java/com/dentalclinic/patient/session/StaffRole.java`
       (`RECEPTION`, `DOCTOR`, `ASSISTANT`, `ADMINISTRATOR`) — intentionally duplicated from
       `auth-service`'s `Role` enum, not shared code (plan.md — no shared library exists between
       the two services yet)
-- [ ] T022 [P] Write a failing test
+- [X] T022 [P] Write a failing test
       `patient-service/src/test/java/com/dentalclinic/patient/record/PatientRecordRepositoryTest.java`:
       save/find round-trip; the partial-unique-PESEL constraint is enforced at the DB level
-- [ ] T023 Implement
+      (`DataIntegrityViolationException`)
+- [X] T023 Implement
       `patient-service/src/main/java/com/dentalclinic/patient/record/{PatientRecord.java,PatientRecordRepository.java}` —
-      makes T022 pass (depends on T017)
-- [ ] T024 [P] Write a failing unit test
+      makes T022 pass (4/4) (depends on T017). `id` is application-generated (`UUID.randomUUID()`
+      at construction), matching `StaffAccount`'s precedent in auth-service rather than relying on
+      the DB's `gen_random_uuid()` default.
+- [X] T024 [P] Write a failing unit test
       `patient-service/src/test/java/com/dentalclinic/patient/record/PeselValidatorTest.java`:
       valid checksum accepted, invalid format/checksum rejected, `null` accepted (research.md #1)
-- [ ] T025 Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PeselValidator.java` —
-      makes T024 pass
-- [ ] T026 [P] Write a failing Testcontainers test
+- [X] T025 Implement `patient-service/src/main/java/com/dentalclinic/patient/record/PeselValidator.java` —
+      makes T024 pass (6/6)
+- [X] T026 [P] Write a failing Testcontainers test
       `patient-service/src/test/java/com/dentalclinic/patient/audit/PatientAuditWriterTest.java`:
       `append()` from `patient-service` correctly continues an existing, pre-seeded
-      (auth-service-style) hash chain in the shared `audit_log_entry` table
-- [ ] T027 Implement `patient-service/src/main/java/com/dentalclinic/patient/audit/PatientAuditWriter.java`
-      (same `pg_advisory_xact_lock` pattern as T013, writes to the shared `audit_log_entry` table,
-      populates `target_patient_record_id`) — makes T026 pass (depends on T011, T013)
+      (auth-service-style) hash chain in the shared `audit_log_entry` table, and always leaves
+      `target_account_id` null / `target_patient_record_id` populated. Table structure (owned by
+      auth-service) is recreated locally in the test, mirroring V5/V12, minus the `staff_account`
+      FK (out of scope for this test).
+- [X] T027 Implement `patient-service/src/main/java/com/dentalclinic/patient/audit/{PatientAuditEventType.java,PatientAuditEntryHash.java,PatientAuditWriter.java}`
+      (same `pg_advisory_xact_lock` pattern and **identical fixed lock key** as T013's
+      `AuditLogWriter`, plain `JdbcTemplate` — no JPA entity for `audit_log_entry` since this
+      service doesn't own that table's migration history — writes to the shared table, populates
+      `target_patient_record_id`) — makes T026 pass (depends on T011, T013).
 
 **Checkpoint**: Foundation ready — `auth-service` knows about `ASSISTANT`, the audit trail is
 multi-writer-safe, `patient-service` can authenticate requests and persist a `PatientRecord`, and

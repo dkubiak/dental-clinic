@@ -9,5 +9,7 @@ export function roleHomeRoute(role: StaffRole): string {
       return '/doctor';
     case 'ADMINISTRATOR':
       return '/admin';
+    case 'ASSISTANT':
+      return '/assistant';
   }
 }

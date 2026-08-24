@@ -21,5 +21,16 @@ public enum AuditEventType {
   PASSWORD_RESET_SUCCEEDED,
   PASSWORD_RESET_FAILED,
   PASSWORD_RESET_EXPIRED,
-  ACCESS_DENIED_OUT_OF_ROLE
+  ACCESS_DENIED_OUT_OF_ROLE,
+
+  // 002-patient-records (data-model.md AuditLogEntry extension) — written by patient-service via
+  // its own PatientAuditWriter, sharing this single hash-chained table (research.md #5).
+  PATIENT_RECORD_CREATED,
+  PATIENT_RECORD_UPDATED,
+  PATIENT_RECORD_VIEWED,
+  TOOTH_STATE_CHANGED,
+  TOOTH_CHART_VIEWED,
+  PATIENT_DATA_EXPORTED,
+  PATIENT_DATA_ERASURE_REQUESTED,
+  PATIENT_DATA_ERASURE_COMPLETED
 }

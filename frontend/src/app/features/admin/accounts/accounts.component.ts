@@ -11,7 +11,9 @@ import type { StaffRole } from '../../../core/auth/auth-state';
 import { AccountAdminService } from './account-admin.service';
 import { StaffAccountSummary } from './accounts.models';
 
-const ROLES: StaffRole[] = ['RECEPTION', 'DOCTOR', 'ADMINISTRATOR'];
+// 002-patient-records FR-006a — ASSISTANT included so administrators can create/reassign it via
+// this existing account-management UI, same as the three original roles.
+const ROLES: StaffRole[] = ['RECEPTION', 'DOCTOR', 'ADMINISTRATOR', 'ASSISTANT'];
 
 /**
  * T078/T079a — admin-only account management screen (US3): list, create, role-change,
