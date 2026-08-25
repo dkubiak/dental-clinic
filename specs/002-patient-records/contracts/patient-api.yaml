@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  title: Dental Clinic - Patient Records API
+  version: "0.1.0"
+  description: >
+    REST API served by the independent `patient-service` deployable (own Helm release, own
+    Deployment — plan.md Risk Tier & Availability) for the patient-records (kartoteka) module:
+    basic patient data, tooth-chart view/edit, and the read-only visit-history placeholder.
+    Authorization is enforced server-side only (@PreAuthorize), same as auth-service's
+    auth-api — the Angular frontend's route/UI guards are UX-only. patient-service validates
+    the caller by reading the same session table auth-service writes (research.md #7) — no
+    separate login endpoint exists here. See rbac-policy.md (updated by this feature) for the
+    authoritative permission matrix; RECEPTION/DOCTOR/ADMINISTRATOR are defined in 001,
+    ASSISTANT is introduced by this feature.
+servers:
+  - url: /
+    description: >
+      No /api prefix — matches the existing bare-path convention (/accounts, /audit-log) that
+      nginx/proxy.conf.json already route to auth-service; this feature adds a sibling
+      /patients route to patient-service the same way.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /patients:
+    get:
+      summary: Search existing patient records (FR-012).
+      description: >
+        Available to RECEPTION, DOCTOR, ASSISTANT (basic-data read access). Matches by
+        last name (case-insensitive, partial) or exact PESEL.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+          description: Last-name fragment or exact PESEL.
+      responses:
+        "200":
+          description: Matching patient records (basic data only).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PatientSummary" }
+        "404":
+          description: Caller's role has no read access to patient basic data (deny → 404, per 001's rbac-policy.md rule 2).
+    post:
+      summary: Create a new patient record (FR-001).
+      description: Available to RECEPTION, DOCTOR only. Audit-logged as PATIENT_RECORD_CREATED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatientCreateRequest" }
+      responses:
+        "201":
+          description: Record created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatientDetail" }
+        "400":
+          description: Invalid PESEL format/checksum, or missing required basic-data field (US1 Acceptance Scenario 3).
+        "409":
+          description: PESEL already exists on another record (FR-003, US1 Acceptance Scenario 4).
+        "404":
+          description: Caller's role is not RECEPTION/DOCTOR (deny → 404).
+
+  /patients/{patientId}:
+    get:
+      summary: Read a patient's basic data (FR-001, identification use).
+      description: Available to RECEPTION, DOCTOR, ASSISTANT.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatientDetail" }
+        "404":
+          description: Not found, or caller's role has no read access (both cases return 404, per 001's rbac-policy.md rule 2).
+    patch:
+      summary: Edit a patient's basic data (FR-011).
+      description: Available to RECEPTION, DOCTOR only. Audit-logged as PATIENT_RECORD_UPDATED with before/after state.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatientUpdateRequest" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatientDetail" }
+        "400":
+          description: Invalid PESEL format/checksum.
+        "409":
+          description: PESEL already exists on another record.
+        "404":
+          description: Not found, or caller's role is not RECEPTION/DOCTOR.
+
+  /patients/{patientId}/tooth-chart:
+    get:
+      summary: Read a patient's full tooth chart (32 teeth) (FR-005).
+      description: Available to DOCTOR, ASSISTANT only — RECEPTION has no access, per FR-006.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ToothState" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/tooth-chart/{toothNumber}:
+    patch:
+      summary: Set a single tooth's state to HEALTHY or SICK (FR-006).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Audit-logged as TOOTH_STATE_CHANGED with
+        before/after state.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - name: toothNumber
+          in: path
+          required: true
+          schema: { type: integer, enum: [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [HEALTHY, SICK] }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothState" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/visit-history:
+    get:
+      summary: Read the (placeholder) visit-history section (FR-004).
+      description: >
+        Available to RECEPTION, DOCTOR. Always returns an empty list in this version —
+        no write endpoint exists yet; this section is superseded by the future, separately
+        specified visits module.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          description: Always an empty array in this version (US3 Acceptance Scenario 1/2).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+                maxItems: 0
+        "404":
+          description: Not found, or caller's role is not RECEPTION/DOCTOR.
+
+  /patients/{patientId}/export:
+    post:
+      summary: Export a patient's full data (RODO subject-access request, FR-009).
+      description: >
+        Available to DOCTOR only (research.md #6 — deliberately not ADMINISTRATOR, to avoid
+        silently granting clinical-data access to a role rbac-policy.md excludes from it).
+        Audit-logged as PATIENT_DATA_EXPORTED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          description: Full patient data export (basic data + tooth chart; visit-history is empty in this version).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatientFullExport" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR.
+
+  /patients/{patientId}/erasure-request:
+    post:
+      summary: Request erasure/anonymization of a patient's data (RODO, FR-010).
+      description: >
+        Available to DOCTOR only (same rationale as /export). Subject to legal medical-record
+        retention requirements (spec.md Assumptions) — does not guarantee immediate deletion.
+        Audit-logged as PATIENT_DATA_ERASURE_REQUESTED, then PATIENT_DATA_ERASURE_COMPLETED
+        once actually applied.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "202":
+          description: Erasure request accepted for processing.
+        "404":
+          description: Not found, or caller's role is not DOCTOR.
+
+components:
+  parameters:
+    PatientId:
+      name: patientId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    PatientSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        firstName: { type: string }
+        lastName: { type: string }
+        dateOfBirth: { type: string, format: date }
+        pesel: { type: string, nullable: true }
+
+    PatientDetail:
+      allOf:
+        - $ref: "#/components/schemas/PatientSummary"
+        - type: object
+          properties:
+            addressStreet: { type: string }
+            addressBuildingNo: { type: string }
+            addressPostalCode: { type: string }
+            addressCity: { type: string }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    PatientCreateRequest:
+      type: object
+      required: [firstName, lastName, dateOfBirth, addressStreet, addressBuildingNo, addressPostalCode, addressCity]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        dateOfBirth: { type: string, format: date }
+        pesel: { type: string, nullable: true, minLength: 11, maxLength: 11 }
+        addressStreet: { type: string }
+        addressBuildingNo: { type: string }
+        addressPostalCode: { type: string }
+        addressCity: { type: string }
+
+    PatientUpdateRequest:
+      $ref: "#/components/schemas/PatientCreateRequest"
+
+    ToothState:
+      type: object
+      properties:
+        toothNumber: { type: integer }
+        status: { type: string, enum: [HEALTHY, SICK] }
+        updatedAt: { type: string, format: date-time, nullable: true }
+
+    PatientFullExport:
+      type: object
+      properties:
+        patient: { $ref: "#/components/schemas/PatientDetail" }
+        toothChart:
+          type: array
+          items: { $ref: "#/components/schemas/ToothState" }
+        visitHistory:
+          type: array
+          items: {}
+          maxItems: 0
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: SESSION

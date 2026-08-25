@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: patient-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dental_clinic_auth}
+    username: ${DB_USERNAME:patient_service_app}
+    password: ${DB_PASSWORD:}
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Own Flyway schema-history table (research.md #7) — both services share the same database
+    # and default (public) schema, so without an explicit, distinct table name here Flyway would
+    # silently reuse auth-service's own "flyway_schema_history" table: patient-service would read
+    # auth-service's migration version (already far ahead of patient-service's own V1/V2) and
+    # conclude it never needs to migrate at all, leaving patient_record/tooth_state never created.
+    table: flyway_schema_history_patient
+    # baseline-on-migrate/baseline-version: whichever of the two services' Flyway runs SECOND
+    # against a fresh database finds a non-empty "public" schema (the other service's tables) but
+    # no history table under ITS OWN name — Flyway's default safety check refuses to proceed in
+    # that situation ("Found non-empty schema(s) but no schema history table"), since it can't
+    # tell "a sibling service's independent migration history already lives here" apart from "this
+    # schema was modified outside Flyway's control" (T063 finding). baseline-version 0 (below this
+    # service's own V1) means baselining never skips any of patient-service's own migrations —
+    # V1/V2 always run in full regardless of which service happens to start first.
+    baseline-on-migrate: true
+    baseline-version: 0
+    # Needs a role that can already create tables/roles on a fresh database, so it cannot
+    # authenticate as spring.datasource.username (patient_service_app) until after its own V1
+    # migration runs (mirrors backend/src/main/resources/application.yml's FLYWAY_DB_* split).
+    url: ${FLYWAY_DB_URL:${DB_URL:jdbc:postgresql://localhost:5432/dental_clinic_auth}}
+    user: ${FLYWAY_DB_USERNAME:${DB_USERNAME:patient_service_app}}
+    password: ${FLYWAY_DB_PASSWORD:${DB_PASSWORD:}}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    com.dentalclinic.patient: INFO

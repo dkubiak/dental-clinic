@@ -22,6 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       AUTH_SERVICE_APP_PASSWORD: ${AUTH_SERVICE_APP_PASSWORD:-auth_service_app_password}
       AUTH_SERVICE_RETENTION_PASSWORD: ${AUTH_SERVICE_RETENTION_PASSWORD:-auth_service_retention_password}
+      PATIENT_SERVICE_APP_PASSWORD: ${PATIENT_SERVICE_APP_PASSWORD:-patient_service_app_password}
     ports:
       - "5432:5432"
     volumes:
@@ -59,6 +60,45 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Both services' Flyway histories live in the same database's public schema (research.md #7),
+    # and each runs its own migrations independently at startup — patient-service's own V1/V2
+    # would otherwise race auth-service's V1-V12 on a fresh database (whichever's Flyway sees the
+    # schema first): if patient-service's tables land first, auth-service's Flyway then finds a
+    # non-empty "public" schema with no flyway_schema_history table and refuses to start
+    # (T063 finding). Tomcat only starts accepting connections after the full ApplicationContext
+    # refresh completes — which Flyway migration is part of — so a plain TCP check on 8080 is a
+    # precise "migrations are done" signal without needing spring-boot-starter-actuator (not yet a
+    # dependency of either service, T020) or a curl/wget binary (not in this minimal JRE image).
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080'"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  patient-service:
+    build:
+      context: ./patient-service
+    ports:
+      - "8081:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/dental_clinic_auth
+      DB_USERNAME: patient_service_app
+      DB_PASSWORD: ${PATIENT_SERVICE_APP_PASSWORD:-patient_service_app_password}
+      # Flyway needs a role that already exists and can create tables on a fresh DB (own
+      # migration history, separate from auth-service's) — the postgres superuser, same pattern
+      # as auth-service.
+      FLYWAY_DB_USERNAME: postgres
+      FLYWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # service_healthy, not just service_started (T063 finding — see auth-service's healthcheck
+      # comment): waiting only for the container to start doesn't wait for its Flyway migrations
+      # to finish, so patient-service's own Flyway could still win the race to migrate an empty
+      # "public" schema first and leave auth-service unable to start.
+      auth-service:
+        condition: service_healthy
 
   frontend:
     build:
@@ -67,6 +107,7 @@ services:
       - "4200:80"
     depends_on:
       - auth-service
+      - patient-service
 
 volumes:
   postgres-data:

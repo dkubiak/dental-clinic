@@ -57,6 +57,9 @@ public class E2eSeedRunner implements ApplicationRunner {
             seed("reception@clinic.test", Role.RECEPTION),
             seed("doctor@clinic.test", Role.DOCTOR),
             seed("admin@clinic.test", Role.ADMINISTRATOR),
+            // 002-patient-records T061 — lets the e2e suites prove the ASSISTANT half of
+            // US1/US2 scenarios end to end (tooth-chart access, read-only basic data).
+            seed("assistant@clinic.test", Role.ASSISTANT),
             // Dedicated account for the password-reset e2e scenario, which mutates its password —
             // kept separate from reception@clinic.test so parallel Playwright tests that log in
             // with that account's fixed original password aren't affected (test isolation).

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type StaffRole = 'RECEPTION' | 'DOCTOR' | 'ADMINISTRATOR';
+export type StaffRole = 'RECEPTION' | 'DOCTOR' | 'ADMINISTRATOR' | 'ASSISTANT';
 
 /**
  * Holds the currently authenticated user's role for UX purposes only (route guards, nav

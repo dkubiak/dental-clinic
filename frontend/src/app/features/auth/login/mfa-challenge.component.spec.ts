@@ -63,7 +63,8 @@ describe('MfaChallengeComponent', () => {
 
     expect(authService.verifyMfa).toHaveBeenCalledWith('token-abc', '123456');
     expect(loginFlowState.current()).toBeNull();
-    expect(router.navigate).toHaveBeenCalledWith(['/doctor']);
+    // DOCTOR's role home is the shared patient-search screen (T040, US1) — not a per-role route.
+    expect(router.navigate).toHaveBeenCalledWith(['/patients']);
   });
 
   it('on an invalid code, shows an error and keeps the challenge pending', () => {
@@ -76,6 +77,6 @@ describe('MfaChallengeComponent', () => {
 
     expect(component.errorMessage()).toContain('Nieprawidłowy');
     expect(loginFlowState.current()).not.toBeNull();
-    expect(router.navigate).not.toHaveBeenCalledWith(['/doctor']);
+    expect(router.navigate).not.toHaveBeenCalledWith(['/patients']);
   });
 });

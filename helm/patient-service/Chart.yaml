@@ -1,0 +1,13 @@
+apiVersion: v2
+name: patient-service
+description: >
+  Patient records backend (feature 002-patient-records). Its own Helm release, deliberately
+  separate from auth-service and any future lower-tier module chart (plan.md Risk Tier &
+  Availability, constitution Principle V) — patient records is a high-risk module and must not
+  share a failure domain with any other module, including auth-service.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - patient-records
+  - high-risk-module

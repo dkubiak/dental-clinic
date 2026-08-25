@@ -8,9 +8,13 @@
 backend/.gradle/
 backend/build/
 backend/out/
+patient-service/.gradle/
+patient-service/build/
+patient-service/out/
 *.class
 *.jar
 !backend/gradle/wrapper/gradle-wrapper.jar
+!patient-service/gradle/wrapper/gradle-wrapper.jar
 
 # Frontend (Angular/Node)
 frontend/node_modules/
