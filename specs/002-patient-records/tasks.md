@@ -508,10 +508,12 @@ and end-to-end hardening.
       mirrors 001's T086 precedent for its own SC-001 latency assertion. Verified: `npx playwright
       test --list` parses (120 tests across projects); full execution needs the live
       docker-compose stack (T063).
-- [ ] T064 Document the security/compliance self-review in the PR description (Development
+- [X] T064 Document the security/compliance self-review in the PR description (Development
       Workflow gate — this change touches patient data, authz, and audit logging; per
       constitution.md's solo-contributor risk-tiering, self-attested review is sufficient but MUST
-      be documented, and auto-merge MUST NOT be enabled for this PR)
+      be documented, and auto-merge MUST NOT be enabled for this PR). Documented in
+      https://github.com/dkubiak/dental-clinic/pull/7's description (Phase 6 commit message
+      carries the same content).
 
 ---
 
