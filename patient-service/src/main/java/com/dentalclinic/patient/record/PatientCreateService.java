@@ -2,6 +2,7 @@ package com.dentalclinic.patient.record;
 
 import com.dentalclinic.patient.audit.PatientAuditEventType;
 import com.dentalclinic.patient.audit.PatientAuditWriter;
+import com.dentalclinic.patient.toothchart.ToothChartInitializer;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,9 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * FR-001/FR-002/FR-003 — creates a new patient record for RECEPTION/DOCTOR (RBAC enforced by {@code
- * PatientController}'s {@code @PreAuthorize}, not here).
+ * PatientController}'s {@code @PreAuthorize}, not here). Also triggers {@link
+ * ToothChartInitializer} (FR-005/research.md #3, US2 Acceptance Scenario 3) so every new record
+ * starts with a full 32-tooth, all-healthy chart.
  */
 @Service
 public class PatientCreateService {
@@ -18,14 +21,17 @@ public class PatientCreateService {
   private final PatientRecordRepository repository;
   private final PatientAuditWriter auditWriter;
   private final ObjectMapper objectMapper;
+  private final ToothChartInitializer toothChartInitializer;
 
   public PatientCreateService(
       PatientRecordRepository repository,
       PatientAuditWriter auditWriter,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      ToothChartInitializer toothChartInitializer) {
     this.repository = repository;
     this.auditWriter = auditWriter;
     this.objectMapper = objectMapper;
+    this.toothChartInitializer = toothChartInitializer;
   }
 
   /**
@@ -72,6 +78,7 @@ public class PatientCreateService {
     } catch (DataIntegrityViolationException e) {
       throw new DuplicatePeselException();
     }
+    toothChartInitializer.initialize(record.getId());
 
     auditWriter.append(
         PatientAuditEventType.PATIENT_RECORD_CREATED,

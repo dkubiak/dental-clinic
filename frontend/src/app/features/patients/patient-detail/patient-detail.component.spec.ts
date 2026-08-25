@@ -8,7 +8,11 @@ import { PatientDetailComponent } from './patient-detail.component';
 
 describe('PatientDetailComponent', () => {
   let fixture: ComponentFixture<PatientDetailComponent>;
-  let patientsService: { get: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  let patientsService: {
+    get: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    getToothChart: ReturnType<typeof vi.fn>;
+  };
 
   const patient = {
     id: 'p1',
@@ -25,7 +29,11 @@ describe('PatientDetailComponent', () => {
   };
 
   beforeEach(async () => {
-    patientsService = { get: vi.fn().mockReturnValue(of(patient)), update: vi.fn() };
+    patientsService = {
+      get: vi.fn().mockReturnValue(of(patient)),
+      update: vi.fn(),
+      getToothChart: vi.fn().mockReturnValue(of([])),
+    };
 
     await TestBed.configureTestingModule({
       imports: [PatientDetailComponent],

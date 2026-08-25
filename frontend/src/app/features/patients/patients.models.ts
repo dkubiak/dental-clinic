@@ -28,3 +28,13 @@ export interface PatientWriteRequest {
   addressPostalCode: string;
   addressCity: string;
 }
+
+/** Binary tooth state (FR-006, spec.md Assumptions — colors/disease codes deferred). */
+export type ToothStatus = 'HEALTHY' | 'SICK';
+
+/** Mirrors backend ToothStateResponse (contracts/patient-api.yaml ToothState schema). */
+export interface ToothStateEntry {
+  toothNumber: number;
+  status: ToothStatus;
+  updatedAt: string | null;
+}

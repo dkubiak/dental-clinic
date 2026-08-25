@@ -1,13 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
+import { AuthState } from '../../../core/auth/auth-state';
 import { peselChecksumValidator } from '../pesel-validator';
 import { PatientDetail } from '../patients.models';
 import { PatientsService } from '../patients.service';
+import { ToothChartComponent } from '../tooth-chart/tooth-chart.component';
+import { VisitHistoryComponent } from '../visit-history/visit-history.component';
 
 /**
  * Patient detail host — basic-data view/edit (FR-001/FR-011) plus the tabs later phases plug
@@ -17,7 +20,15 @@ import { PatientsService } from '../patients.service';
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatTabsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTabsModule,
+    ToothChartComponent,
+    VisitHistoryComponent,
+  ],
   template: `
     @if (patient(); as p) {
       <h1>{{ p.lastName }} {{ p.firstName }}</h1>
@@ -90,12 +101,20 @@ import { PatientsService } from '../patients.service';
             }
           </div>
         </mat-tab>
-        <mat-tab label="Stan uzębienia">
-          <div class="tab-content"><!-- US2, T050 --></div>
-        </mat-tab>
-        <mat-tab label="Historia wizyt">
-          <div class="tab-content"><!-- US3, T056 --></div>
-        </mat-tab>
+        @if (canViewToothChart()) {
+          <mat-tab label="Stan uzębienia">
+            <div class="tab-content">
+              <app-tooth-chart [patientId]="p.id" />
+            </div>
+          </mat-tab>
+        }
+        @if (canViewVisitHistory()) {
+          <mat-tab label="Historia wizyt">
+            <div class="tab-content">
+              <app-visit-history [patientId]="p.id" />
+            </div>
+          </mat-tab>
+        }
       </mat-tab-group>
     }
   `,
@@ -123,10 +142,26 @@ export class PatientDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly patientsService = inject(PatientsService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authState = inject(AuthState);
 
   readonly patient = signal<PatientDetail | null>(null);
   readonly editing = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  // FR-006 — tooth-chart access is DOCTOR/ASSISTANT only (rbac-policy.md); RECEPTION never sees
+  // the tab. UX-only mirror of the backend's @PreAuthorize — the 404 it returns is the real
+  // boundary (US2 Acceptance Scenario 4).
+  readonly canViewToothChart = computed(() => {
+    const role = this.authState.currentRole();
+    return role === 'DOCTOR' || role === 'ASSISTANT';
+  });
+
+  // FR-004 — visit-history placeholder is RECEPTION/DOCTOR only (rbac-policy.md); ASSISTANT
+  // never sees the tab. UX-only mirror of the backend's @PreAuthorize.
+  readonly canViewVisitHistory = computed(() => {
+    const role = this.authState.currentRole();
+    return role === 'RECEPTION' || role === 'DOCTOR';
+  });
 
   readonly form = this.formBuilder.nonNullable.group({
     firstName: ['', Validators.required],
