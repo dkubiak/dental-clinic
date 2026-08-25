@@ -5,11 +5,17 @@ import com.dentalclinic.auth.account.LoginResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-/** T044 — {@code POST /auth/login}, {@code POST /auth/logout} per contracts/auth-api.yaml. */
+/**
+ * T044 — {@code POST /auth/login}, {@code POST /auth/logout}, {@code GET /auth/session} per
+ * contracts/auth-api.yaml.
+ */
 @RestController
 public class LoginController {
 
@@ -26,6 +32,25 @@ public class LoginController {
         authService.login(request.email(), request.password(), clientIp(httpRequest));
     return ResponseEntity.ok(
         new LoginResponse(result.preAuthToken(), true, result.mfaSecret(), result.mfaOtpAuthUri()));
+  }
+
+  /**
+   * Lets the frontend rehydrate {@code AuthState.currentRole} from a still-valid session after a
+   * full page reload/deep link, where the in-memory role set right after login/MFA is otherwise
+   * lost (discovered as a live gap during 002-patient-records' quickstart validation, T063). No
+   * request body needed — {@code Authentication} is already resolved by the security filter chain
+   * from the SESSION cookie; an invalid/missing session never reaches this method at all ({@code
+   * .anyRequest().authenticated()}, SecurityConfig), so no explicit 401 branch exists here.
+   */
+  @GetMapping("/auth/session")
+  public ResponseEntity<SessionInfoResponse> session(Authentication authentication) {
+    String role =
+        authentication.getAuthorities().stream()
+            .findFirst()
+            .map(GrantedAuthority::getAuthority)
+            .map(authority -> authority.replaceFirst("^ROLE_", ""))
+            .orElseThrow();
+    return ResponseEntity.ok(new SessionInfoResponse(role));
   }
 
   @PostMapping("/auth/logout")

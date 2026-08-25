@@ -23,7 +23,7 @@ import { PatientSummary } from '../patients.models';
   ],
   template: `
     <h1>Pacjenci</h1>
-    <form class="search-form" (ngSubmit)="search()">
+    <form class="search-form" (submit)="onSubmit($event)">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Nazwisko lub PESEL</mat-label>
         <input matInput [formControl]="searchControl" data-testid="search-input" />
@@ -71,6 +71,17 @@ export class PatientSearchComponent {
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly results = signal<PatientSummary[]>([]);
   readonly searched = signal(false);
+
+  // Plain (submit), not (ngSubmit): only ReactiveFormsModule is imported here (no [formGroup]
+  // on this bare-FormControl search box), and (ngSubmit) is an NgForm/FormGroupDirective output
+  // — neither is attached to this <form>, so (ngSubmit) never actually bound to anything and the
+  // click fell through to the browser's native, un-prevented GET form submission (discovered as
+  // a live gap while running 002-patient-records' quickstart validation, T063 — no prior test
+  // exercised the real DOM submit event, only component.search() directly).
+  onSubmit(event: Event): void {
+    event.preventDefault();
+    this.search();
+  }
 
   search(): void {
     const q = this.searchControl.value.trim();

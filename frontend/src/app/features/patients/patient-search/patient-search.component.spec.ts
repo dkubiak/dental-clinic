@@ -70,4 +70,25 @@ describe('PatientSearchComponent', () => {
 
     expect(patientsService.search).not.toHaveBeenCalled();
   });
+
+  it('triggers a search on a real form submit event (not just calling component.search()) — T063 finding', () => {
+    // Only ReactiveFormsModule is imported (no [formGroup] on this bare-FormControl form), so
+    // (ngSubmit) never actually bound to anything and the browser's native, un-prevented GET
+    // form submission fired instead — this test drives the actual DOM <form> submit event to
+    // catch that class of bug, which calling component.search()/onSubmit() directly cannot.
+    patientsService.search.mockReturnValue(of([]));
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="search-input"]');
+    input.value = 'Kowalski';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+    const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+    form.dispatchEvent(submitEvent);
+
+    expect(patientsService.search).toHaveBeenCalledWith('Kowalski');
+    expect(submitEvent.defaultPrevented).toBe(true);
+  });
 });

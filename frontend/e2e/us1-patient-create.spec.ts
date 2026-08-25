@@ -6,10 +6,10 @@ import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
  * (auth-service + patient-service) running locally with `-Dspring.profiles.active=e2e-seed` (see
  * quickstart.md Prerequisites) so the seeded role accounts exist with MFA already enrolled.
  *
- * <p>Scenario 6 ("any role other than rejestrator/lekarz/administrator is denied") is only
- * partially covered here: no ASSISTANT seed account exists yet (that's T061, Phase 6 Polish) — the
- * server-side denial itself is already proven by PatientCreateApiTest#assistant_isDenied404
- * (backend contract test); this suite re-proves it end-to-end once T061 adds the seed account.
+ * <p>Scenario 6 ("any role other than rejestrator/lekarz/administrator is denied") is covered by
+ * both the ADMINISTRATOR and ASSISTANT cases below (T061 added the ASSISTANT seed account); the
+ * server-side denial itself is proven by PatientCreateApiTest#assistant_isDenied404 (backend
+ * contract test).
  */
 
 const seedAccounts = loadSeedAccounts();
@@ -141,14 +141,64 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
     await expect(page.getByRole('heading', { name: /Testowy-E2E-5/ })).toBeVisible();
   });
 
+  test('SC-001: patient creation completes within 2 minutes', async ({ page }) => {
+    await loginWithMfa(page, seedAccounts.reception);
+
+    await page.getByTestId('new-patient-action').first().click();
+    await page.waitForURL('**/patients/new');
+
+    // Timer starts at form submission (data already filled in, per SC-001's "kompletem danych
+    // podstawowych") and ends once the created record's confirmation view is visible.
+    await page.getByLabel('Imię').fill('Czas');
+    await page.getByLabel('Nazwisko').fill('Testowy-E2E-SC001');
+    await page.getByLabel('Data urodzenia').fill('1990-01-15');
+    await page.getByLabel('Ulica').fill('Polna');
+    await page.getByLabel('Numer budynku').fill('1');
+    await page.getByLabel('Kod pocztowy').fill('00-001');
+    await page.getByLabel('Miasto').fill('Warszawa');
+
+    const start = Date.now();
+    await page.getByTestId('create-submit').click();
+    await page.waitForURL(/\/patients\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole('heading', { name: /Testowy-E2E-SC001/ })).toBeVisible();
+    const elapsedMs = Date.now() - start;
+
+    expect(elapsedMs).toBeLessThan(120_000);
+  });
+
+  test('SC-004: patient search returns within 10 seconds', async ({ page }) => {
+    await loginWithMfa(page, seedAccounts.reception);
+
+    await page.getByTestId('new-patient-action').first().click();
+    await page.waitForURL('**/patients/new');
+    await page.getByLabel('Imię').fill('Wyszukiwanie');
+    await page.getByLabel('Nazwisko').fill('Testowy-E2E-SC004');
+    await page.getByLabel('Data urodzenia').fill('1990-01-15');
+    await page.getByLabel('Ulica').fill('Polna');
+    await page.getByLabel('Numer budynku').fill('1');
+    await page.getByLabel('Kod pocztowy').fill('00-001');
+    await page.getByLabel('Miasto').fill('Warszawa');
+    await page.getByTestId('create-submit').click();
+    await page.waitForURL(/\/patients\/[0-9a-f-]{36}$/);
+
+    await page.goto('/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
+    await page.getByTestId('search-input').fill('Testowy-E2E-SC004');
+
+    const start = Date.now();
+    await page.getByTestId('search-submit').click();
+    await expect(page.getByText('Testowy-E2E-SC004')).toBeVisible();
+    const elapsedMs = Date.now() - start;
+
+    expect(elapsedMs).toBeLessThan(10_000);
+  });
+
   test('Scenario 6 (client-side half): ADMINISTRATOR cannot reach the create-patient route', async ({
     page,
   }) => {
-    // The ASSISTANT case (also denied by FR-001/rbac-policy.md) is proven server-side by
-    // PatientCreateApiTest#assistant_isDenied404 — no ASSISTANT seed account exists yet for an
-    // end-to-end login here (T061, Phase 6 Polish, adds it). ADMINISTRATOR has zero patient-facing
-    // shell access at all (data-model.md), so it's used here to prove the route-guard half of the
-    // denial client-side, complementing the backend's 404-not-403 enforcement.
+    // ADMINISTRATOR has zero patient-facing shell access at all (data-model.md), so it's used
+    // here to prove the route-guard half of the denial client-side, complementing the backend's
+    // 404-not-403 enforcement.
     await page.goto('/login');
     await page.getByLabel('Adres e-mail').fill(seedAccounts.admin.email);
     await page.getByLabel('Hasło').fill(seedAccounts.admin.password);
@@ -158,6 +208,25 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
     await page.getByRole('button', { name: 'Potwierdź' }).click();
     await page.waitForURL('**/admin');
 
+    await page.goto('/patients/new');
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test('Scenario 6: ASSISTANT (read-only basic data, FR-006a) cannot reach the create-patient route', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await page.getByLabel('Adres e-mail').fill(seedAccounts.assistant.email);
+    await page.getByLabel('Hasło').fill(seedAccounts.assistant.password);
+    await page.getByRole('button', { name: 'Zaloguj się' }).click();
+    await page.waitForURL('**/login/mfa');
+    await page.getByLabel('6-cyfrowy kod').fill(currentTotpCode(seedAccounts.assistant.totpSecret));
+    await page.getByRole('button', { name: 'Potwierdź' }).click();
+    await page.waitForURL('**/patients');
+
+    // ASSISTANT shares the shell with RECEPTION/DOCTOR but has no create action (app-shell.
+    // component.ts's canCreatePatient) and the route guard itself denies a direct navigation too.
+    await expect(page.getByTestId('new-patient-action')).toHaveCount(0);
     await page.goto('/patients/new');
     await expect(page).toHaveURL(/\/login$/);
   });

@@ -6,7 +6,7 @@ export interface SeedAccount {
   email: string;
   password: string;
   totpSecret: string;
-  role: 'RECEPTION' | 'DOCTOR' | 'ADMINISTRATOR';
+  role: 'RECEPTION' | 'DOCTOR' | 'ADMINISTRATOR' | 'ASSISTANT';
 }
 
 const SEED_FILE_PATH = path.resolve(__dirname, '../.generated/seed-accounts.json');
@@ -17,7 +17,7 @@ const SEED_FILE_PATH = path.resolve(__dirname, '../.generated/seed-accounts.json
  * Run the backend with that profile active before `npm run e2e`.
  */
 export function loadSeedAccounts(): Record<
-  'reception' | 'doctor' | 'admin' | 'passwordResetTest',
+  'reception' | 'doctor' | 'admin' | 'assistant' | 'passwordResetTest',
   SeedAccount
 > {
   let raw: string;
@@ -34,6 +34,7 @@ export function loadSeedAccounts(): Record<
     reception: accounts.find((a) => a.email === 'reception@clinic.test')!,
     doctor: accounts.find((a) => a.email === 'doctor@clinic.test')!,
     admin: accounts.find((a) => a.email === 'admin@clinic.test')!,
+    assistant: accounts.find((a) => a.email === 'assistant@clinic.test')!,
     // A dedicated RECEPTION-role account, separate from `reception` above, reserved for the
     // password-reset scenario, which mutates its password — see E2eSeedRunner.
     passwordResetTest: accounts.find((a) => a.email === 'password-reset-test@clinic.test')!,

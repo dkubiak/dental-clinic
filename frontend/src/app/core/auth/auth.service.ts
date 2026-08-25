@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { AuthState } from './auth-state';
-import { LoginResponse, MfaVerifyResponse } from './auth.models';
+import { LoginResponse, MfaVerifyResponse, SessionInfoResponse } from './auth.models';
 
 /**
  * T052 — calls the three login-flow endpoints (contracts/auth-api.yaml). This is UX convenience
@@ -29,5 +29,20 @@ export class AuthService {
     return this.http
       .post<void>('/auth/logout', {})
       .pipe(tap(() => this.authState.setRole(null)));
+  }
+
+  /**
+   * Rehydrates {@link AuthState} from a still-valid session cookie — called once at app bootstrap
+   * (app.config.ts) so a full page reload/deep link doesn't lose the in-memory role {@link
+   * verifyMfa} set (discovered as a live gap during 002-patient-records' quickstart validation,
+   * T063). No session (401) is an entirely normal "not logged in" outcome, not an error — swallowed
+   * rather than propagated, leaving {@link AuthState.currentRole} at its default {@code null}.
+   */
+  rehydrateSession(): Observable<void> {
+    return this.http.get<SessionInfoResponse>('/auth/session').pipe(
+      tap((response) => this.authState.setRole(response.role)),
+      map(() => undefined),
+      catchError(() => of(undefined)),
+    );
   }
 }

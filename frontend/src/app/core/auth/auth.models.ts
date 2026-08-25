@@ -13,3 +13,8 @@ export interface LoginResponse {
 export interface MfaVerifyResponse {
   role: StaffRole;
 }
+
+/** Mirrors backend SessionInfoResponse ({@code GET /auth/session}). */
+export interface SessionInfoResponse {
+  role: StaffRole;
+}
