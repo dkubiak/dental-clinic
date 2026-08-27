@@ -16,11 +16,44 @@ directory (scripts, templates, memory) and generally shouldn't be edited by hand
 
 ## Project state
 
-This repository currently contains only the [Spec Kit](https://github.com/github/spec-kit) (`speckit`)
-scaffolding — no application source code has been written yet (no frontend, backend, infra, or
-CI/CD config exists). Work here proceeds through Spec-Driven Development (SDD): specs and plans are
-authored via `/speckit-*` slash commands before any implementation code is written. Do not assume
-directories like `frontend/`, `backend/`, `infra/`, or `.github/workflows/` exist — check first.
+The application is real and partly built. Two features are implemented and a third is specified,
+planned and broken into tasks but not yet started.
+
+| Feature | State |
+| --- | --- |
+| `specs/001-staff-auth-rbac` | Implemented. Two tasks remain, both Terraform-only (DEV workspace apply/destroy, ALB TLS policy pin). |
+| `specs/002-patient-records` | Implemented, all tasks done. |
+| `specs/003-brand-ui-theme` | Spec, plan and 64 tasks ready. No implementation yet. |
+
+### Layout
+
+| Path | What it is |
+| --- | --- |
+| `backend/` | **Auth service** — Java 25, Spring Boot 4.1, Gradle Kotlin DSL, package `com.dentalclinic.auth`. Despite the generic directory name, this is one service, not a monolith. |
+| `patient-service/` | Patient records service — same stack, package `com.dentalclinic.patient`. |
+| `frontend/` | Angular 21 + Angular Material 21 (Material 3), standalone components with inline `styles:`. Vitest for unit tests, Playwright for e2e. |
+| `infra/terraform/` | All AWS resources. |
+| `helm/` | Three charts: `frontend`, `auth-service`, `patient-service`. |
+| `docker/postgres/` | Local Postgres for development. |
+| `.github/workflows/` | `ci.yml`, `deploy.yml`, `terraform.yml`. |
+| `design/brand/` | Approved colour system (`_pu-tokens.scss`) — feature 003 consumes it. |
+
+**Naming trap**: the directory is `backend/`, but the Helm chart, the deploy workflow and the
+Kubernetes service all call it `auth-service`. Both names refer to the same thing.
+
+### Build and test
+
+```bash
+cd backend && ./gradlew build          # JUnit 5 + Testcontainers + checkstyle
+cd patient-service && ./gradlew build  # same
+cd frontend && npm ci && npm run lint && npm test   # Vitest
+cd frontend && npm run e2e             # Playwright — needs a running backend
+```
+
+CI runs three jobs: `backend`, `patient-service`, `frontend-unit`. A fourth job, `frontend-e2e`,
+is **disabled** (`if: false` in `ci.yml`) because it needs Postgres and LocalStack, which the job
+does not yet provision. Anything that must actually be gated therefore has to be reachable from
+one of the three live jobs — putting a check only in Playwright means it never runs in CI.
 
 ## Spec-Driven Development workflow
 
@@ -46,7 +79,10 @@ step's output. Run them in this order for a new feature:
     implementing directly.
 
 Each feature's artifacts live under a feature directory resolved via `.specify/feature.json`
-(`FEATURE_DIR`, containing `spec.md`, `plan.md`, `tasks.md`, etc.) — see
+(`FEATURE_DIR`, containing `spec.md`, `plan.md`, `tasks.md`, etc.). **`feature.json` is
+gitignored**, so a fresh clone has none and the `/speckit-*` commands cannot tell which feature is
+active — write it before running them, e.g.
+`echo '{"feature_directory": "specs/003-brand-ui-theme"}' > .specify/feature.json`. See
 `.specify/scripts/bash/common.sh:get_feature_paths` for the resolution logic (env var override →
 `feature.json` → error). Helper scripts (`create-new-feature.sh`, `setup-plan.sh`,
 `setup-tasks.sh`, `check-prerequisites.sh`) back the slash commands and generally shouldn't be
@@ -58,7 +94,7 @@ in `.specify/templates/overrides/` → installed presets in `.specify/presets/` 
 
 ## Constitution — binding project rules
 
-`.specify/memory/constitution.md` is the authoritative source of truth (currently v1.3.1) and
+`.specify/memory/constitution.md` is the authoritative source of truth (currently v1.5.0) and
 supersedes any other convention. Every `/speckit-*` output and every PR must be checked against it.
 Key points future work must honor:
 
@@ -83,9 +119,11 @@ decision):**
   to fail before implementation (Red-Green-Refactor). No merging implementation without a
   preceding failing test.
 - **Patient Data Protection & RODO/GDPR compliance**: patient health data is GDPR Art. 9 special
-  category data — encrypted at rest and in transit, RBAC scoped to job function (recepcja, lekarz,
-  administrator) on least-privilege, and subject-rights (export/erasure/retention) satisfied before
-  a feature touching patient data is "done".
+  category data — encrypted at rest and in transit, RBAC scoped to job function on least-privilege,
+  and subject-rights (export/erasure/retention) satisfied before a feature touching patient data is
+  "done". The constitution names recepcja, lekarz and administrator as examples; feature 002 added
+  a fourth role, so the implemented set is `RECEPTION | DOCTOR | ADMINISTRATOR | ASSISTANT`
+  (`frontend/src/app/core/auth/auth-state.ts`).
 - **Full Auditability**: every create/read/update/delete on patient or clinical data must go to an
   append-only, tamper-evident audit log (who/what/when/before-after state); audit logs are never
   editable or deletable through normal app flows, even by admins.
@@ -115,9 +153,16 @@ decision):**
   review before merge.
 - Changes introducing/modifying a high-risk module must document their availability approach in the
   `/speckit-plan` output before `/speckit-implement` proceeds.
-- At least one other contributor must review before merge. This and the security/compliance
-  review above are conceptually distinct checks, but MAY be satisfied by the same reviewer's
-  approval — a separate second person is not mandated solely to cover both.
+- Code review is **risk-tiered** for the project's current solo-developer phase (v1.5.0 replaced
+  the earlier blanket "one other contributor must review" rule, which was unworkable with a single
+  contributor since GitHub forbids self-approval):
+  - Changes **not** touching patient data, auth, authz or audit logging: a green CI run is enough
+    to merge. Self-merge is permitted and auto-merge-on-green MAY be enabled.
+  - Changes that **do** touch those areas: the security/compliance review above must still be
+    documented in the PR before merge, self-attested by the sole contributor. Auto-merge MUST NOT
+    be enabled on these paths — merge stays a deliberate manual action after that review.
+  - `TODO(SECOND_CONTRIBUTOR)`: reinstate independent two-person review once a second contributor
+    joins.
 
 When a `/speckit-plan` or implementation decision would conflict with any of the above, call out the
 conflict explicitly rather than silently deviating — per Governance, amendments require documented
