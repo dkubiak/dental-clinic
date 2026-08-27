@@ -9,6 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "serve:dist": "http-server dist/dental-clinic-frontend/browser -p 4200",
+    "e2e:theme": "playwright test e2e/us2-theme-toggle.spec.ts e2e/us5-theme-contrast.spec.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -27,19 +29,20 @@
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.1.0",
     "@angular/build": "^21.0.0",
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
     "@playwright/test": "1.57.0",
-    "@analogjs/vite-plugin-angular": "^2.1.0",
     "@vitest/browser": "^4.0.8",
-    "eslint": "^9.16.0",
     "angular-eslint": "^19.0.0",
-    "typescript-eslint": "^8.18.0",
+    "eslint": "^9.16.0",
+    "http-server": "^14.1.1",
     "jsdom": "^25.0.0",
     "otpauth": "^9.3.4",
     "prettier": "^3.4.0",
     "typescript": "~5.9.0",
+    "typescript-eslint": "^8.18.0",
     "vitest": "^4.0.8"
   }
 }

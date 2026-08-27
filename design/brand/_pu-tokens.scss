@@ -46,25 +46,46 @@ $pu-warning:      #9A5B00; $pu-warning-dark: #E8A33D; // 5.08 / 6.43
 $pu-error:        #A33A32; $pu-error-dark:   #E88178; // 6.12 / 5.18
 $pu-info:         #3B5A7A; $pu-info-dark:    #8FB2D6; // 6.71 / 6.28
 
+// ── schemat uzębienia (stan chory NIE może być kodowany wyłącznie kolorem —
+// wypełnienia zdrowy/chory dają 1.23:1 jasny / 1.09:1 ciemny; potrzebny drugi
+// sygnał niezależny od koloru, zob. contracts/design-tokens.md §2) ───────────
+$pu-tooth-diseased-fill:       #F7E3E1; $pu-tooth-diseased-fill-dark: #5A2B27;
+
 // ── role semantyczne ─────────────────────────────────────────────────────────
 :root {
   --pu-bg:          #{$pu-paper};
   --pu-surface:     #FFFFFF;
   --pu-border:      #{$pu-sand-200};
+  --pu-border-strong: #7D746F; // obrys kontrolki (WCAG 1.4.11); 4.27:1 na bg
   --pu-text:        #{$pu-ink};
   --pu-text-muted:  #{$pu-stone-700};
   --pu-accent:      #{$pu-gold-400}; // tylko płaszczyzna
   --pu-accent-text: #{$pu-gold-800}; // tekst i linki
   --pu-on-accent:   #{$pu-ink};
+  --pu-focus-ring:            #{$pu-gold-800}; // 5.90:1 na bg
+  --pu-focus-ring-on-accent:  #{$pu-gold-900}; // 5.07:1 na accent
+  --pu-tooth-healthy-fill:    #FFFFFF;
+  --pu-tooth-healthy-stroke:  #{$pu-stone-700}; // 7.21:1 na tooth-healthy-fill
+  --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill};
+  --pu-tooth-diseased-stroke: #{$pu-error}; // 5.31:1 na tooth-diseased-fill
+  --pu-tooth-selected-stroke: #{$pu-gold-800}; // 6.31:1 na tooth-healthy-fill; zastępuje obcy marce #1a73e8
 }
 
 [data-theme='dark'] {
   --pu-bg:          #{$pu-graphite-900};
   --pu-surface:     #{$pu-graphite-700};
   --pu-border:      #{$pu-graphite-500};
+  --pu-border-strong: #8C8480; // 4.82:1 na bg
   --pu-text:        #EAE4DC;
   --pu-text-muted:  #A79E96;
   --pu-accent:      #{$pu-gold-400};
   --pu-accent-text: #{$pu-gold-300}; // na graficie złoto może być tekstem
   --pu-on-accent:   #{$pu-graphite-900};
+  --pu-focus-ring:            #{$pu-gold-300}; // 11.08:1 na bg
+  --pu-focus-ring-on-accent:  #{$pu-graphite-900}; // 8.31:1 na accent
+  --pu-tooth-healthy-fill:    #{$pu-graphite-600};
+  --pu-tooth-healthy-stroke:  #A79E96; // 4.80:1 na tooth-healthy-fill
+  --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill-dark};
+  --pu-tooth-diseased-stroke: #{$pu-error-dark}; // 4.33:1 na tooth-diseased-fill
+  --pu-tooth-selected-stroke: #{$pu-gold-300}; // 7.93:1 na tooth-healthy-fill
 }
