@@ -52,9 +52,9 @@ US4 (audyt)  ──►  US1 (przekolorowanie)  ──┬──►  US2 (przełą
 **Purpose**: Wygenerowanie palet tonalnych i uzbrojenie projektu w to, czego brakuje do
 uruchomienia weryfikacji bez backendu.
 
-- [ ] T001 Wygeneruj palety tonalne M3 zasiane kolorami marki do `frontend/src/styles/_pu-palettes.scss` poleceniem `npx ng generate @angular/material:theme-color --isScss --directory=src/styles --primaryColor=#CBAD89 --secondaryColor=#3E7A72 --tertiaryColor=#3E7A72 --neutralColor=#2E2C2D --neutralVariantColor=#5C5654 --errorColor=#A33A32` (research.md R4)
-- [ ] T002 [P] Dodaj devDependency `http-server` oraz skrypty `serve:dist` i `e2e:theme` w `frontend/package.json`, tak aby specyfikacje motywu dało się uruchomić przeciwko zbudowanej aplikacji bez backendu (research.md R6)
-- [ ] T003 [P] Uzupełnij `design/brand/_pu-tokens.scss` o siedem brakujących ról: `border-strong`, `focus-ring`, `focus-ring-on-accent`, `tooth-healthy-fill`, `tooth-healthy-stroke`, `tooth-diseased-fill`, `tooth-diseased-stroke`, `tooth-selected-stroke` — wartości wg `contracts/design-tokens.md` §1
+- [X] T001 Wygeneruj palety tonalne M3 zasiane kolorami marki do `frontend/src/styles/_pu-palettes.scss` poleceniem `npx ng generate @angular/material:theme-color --isScss --directory=src/styles --primaryColor=#CBAD89 --secondaryColor=#3E7A72 --tertiaryColor=#3E7A72 --neutralColor=#2E2C2D --neutralVariantColor=#5C5654 --errorColor=#A33A32` (research.md R4)
+- [X] T002 [P] Dodaj devDependency `http-server` oraz skrypty `serve:dist` i `e2e:theme` w `frontend/package.json`, tak aby specyfikacje motywu dało się uruchomić przeciwko zbudowanej aplikacji bez backendu (research.md R6)
+- [X] T003 [P] Uzupełnij `design/brand/_pu-tokens.scss` o siedem brakujących ról: `border-strong`, `focus-ring`, `focus-ring-on-accent`, `tooth-healthy-fill`, `tooth-healthy-stroke`, `tooth-diseased-fill`, `tooth-diseased-stroke`, `tooth-selected-stroke` — wartości wg `contracts/design-tokens.md` §1
 
 ---
 
@@ -65,8 +65,8 @@ historia nie ma jak się zweryfikować.
 
 **⚠️ CRITICAL**: Żadna historia nie może ruszyć przed ukończeniem tej fazy.
 
-- [ ] T004 Napisz **czerwony** test narzędzia kontrastu w `frontend/src/styles/contrast.spec.ts` — znane pary kontrolne: `#000000`/`#FFFFFF` = 21.00, `#FFFFFF`/`#FFFFFF` = 1.00, `#7A5A2E`/`#FAF7F2` = 5.90, `#CBAD89`/`#FAF7F2` = 1.99 (tolerancja ±0.01)
-- [ ] T005 Zaimplementuj `frontend/src/styles/contrast.ts` — luminancja względna sRGB i współczynnik kontrastu wg WCAG 2.1; T004 zielenieje
+- [X] T004 Napisz **czerwony** test narzędzia kontrastu w `frontend/src/styles/contrast.spec.ts` — znane pary kontrolne: `#000000`/`#FFFFFF` = 21.00, `#FFFFFF`/`#FFFFFF` = 1.00, `#7A5A2E`/`#FAF7F2` = 5.90, `#CBAD89`/`#FAF7F2` = 1.99 (tolerancja ±0.01)
+- [X] T005 Zaimplementuj `frontend/src/styles/contrast.ts` — luminancja względna sRGB i współczynnik kontrastu wg WCAG 2.1; T004 zielenieje
 
 **Checkpoint**: Narzędzie pomiarowe działa i samo jest przetestowane. Można budować audyt.
 
