@@ -1,14 +1,22 @@
 @use '@angular/material' as mat;
+@use './styles/pu-palettes' as pu-palettes;
+@use './styles/pu-theme' as pu-theme;
 
-// Angular Material default theme — no custom branding/theme (deferred to feature 002, see
-// tasks.md T049 note).
+// Motyw marki Projekt Uśmiech. `theme-type: color-scheme` (domyślny) emituje każdy token
+// koloru jako light-dark($jasny, $ciemny) — przełączanie motywu sprowadza się do ustawienia
+// właściwości CSS `color-scheme` na `<html>` (research.md R1), bez drugiego wywołania
+// mat.theme() i bez klas motywu.
 html {
   @include mat.theme(
     (
-      color: mat.$violet-palette,
+      color: (
+        primary: pu-palettes.$primary-palette,
+        tertiary: pu-palettes.$tertiary-palette,
+      ),
       typography: Roboto,
       density: 0,
-    )
+    ),
+    $overrides: pu-theme.$overrides
   );
 }
 

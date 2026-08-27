@@ -169,7 +169,7 @@ const ROLES: StaffRole[] = ['RECEPTION', 'DOCTOR', 'ADMINISTRATOR', 'ASSISTANT']
       width: 160px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
     }
   `,
 })

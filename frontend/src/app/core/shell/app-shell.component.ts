@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../auth/auth.service';
 import { AuthState, StaffRole } from '../auth/auth-state';
+import { BrandMarkComponent } from '../../shared/brand-mark/brand-mark.component';
 
 /**
  * Persistent, mobile-first shell (research.md #8, #9; Principle IV) wrapping every authenticated
@@ -21,9 +22,17 @@ import { AuthState, StaffRole } from '../auth/auth-state';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterLink, RouterOutlet, MatButtonModule, MatIconModule, MatToolbarModule],
+  imports: [
+    RouterLink,
+    RouterOutlet,
+    MatButtonModule,
+    MatIconModule,
+    MatToolbarModule,
+    BrandMarkComponent,
+  ],
   template: `
     <mat-toolbar color="primary" class="toolbar">
+      <app-brand-mark class="brand-mark" />
       <span class="title">Kartoteka pacjentów</span>
       <span class="spacer"></span>
       <nav class="nav-desktop">
@@ -71,6 +80,10 @@ import { AuthState, StaffRole } from '../auth/auth-state';
       padding-bottom: 56px; /* room for the mobile bottom nav */
     }
 
+    .brand-mark {
+      margin-right: 8px;
+    }
+
     .title {
       font-size: 1.1rem;
     }
@@ -95,8 +108,8 @@ import { AuthState, StaffRole } from '../auth/auth-state';
       right: 0;
       display: flex;
       justify-content: space-around;
-      background: white;
-      border-top: 1px solid rgba(0, 0, 0, 0.12);
+      background: var(--mat-sys-surface);
+      border-top: 1px solid var(--mat-sys-outline-variant);
       z-index: 10;
     }
 

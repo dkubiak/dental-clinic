@@ -96,7 +96,7 @@ import { LoginFlowState } from './login-flow-state';
       margin-bottom: 8px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
       margin: 0 0 12px;
     }
     .enrollment-setup {
@@ -105,7 +105,7 @@ import { LoginFlowState } from './login-flow-state';
     .secret {
       display: block;
       padding: 8px;
-      background: var(--mat-sys-surface-container, #f2f2f2);
+      background: var(--mat-sys-surface-container);
       word-break: break-all;
     }
   `,

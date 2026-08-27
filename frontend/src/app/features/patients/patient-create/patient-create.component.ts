@@ -93,7 +93,7 @@ import { PatientsService } from '../patients.service';
       margin-bottom: 8px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
     }
   `,
 })

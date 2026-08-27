@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
+import { BrandMarkComponent } from '../../../shared/brand-mark/brand-mark.component';
 import { LoginFlowState } from './login-flow-state';
 
 /**
@@ -27,11 +28,13 @@ import { LoginFlowState } from './login-flow-state';
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    BrandMarkComponent,
   ],
   template: `
     <div class="login-page">
       <mat-card class="login-card">
         <mat-card-header>
+          <app-brand-mark class="brand-mark" />
           <mat-card-title>Logowanie personelu</mat-card-title>
         </mat-card-header>
         <mat-card-content>
@@ -87,12 +90,15 @@ import { LoginFlowState } from './login-flow-state';
       width: 100%;
       max-width: 420px;
     }
+    .brand-mark {
+      margin-bottom: 8px;
+    }
     .full-width {
       width: 100%;
       margin-bottom: 8px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
       margin: 0 0 12px;
     }
     .forgot-password {

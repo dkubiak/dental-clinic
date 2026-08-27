@@ -116,28 +116,28 @@ prezentuje koloru spoza systemu, a `no-literal-colors.spec.ts` jest zielony.
 
 > **Napisz przed implementacją. MUSI czerwienić.**
 
-- [ ] T014 [P] [US1] Napisz **czerwony** test obecności znaku marki — rozszerz `frontend/src/app/features/auth/login/login.component.spec.ts` oraz `frontend/src/app/core/shell/app-shell.component.spec.ts` o asercję, że znak marki jest obecny w drzewie DOM z tekstem alternatywnym i renderuje się poprawnie w obu motywach (FR-023). Oba pliki już istnieją — rozszerzasz je, nie tworzysz
+- [X] T014 [P] [US1] Napisz **czerwony** test obecności znaku marki — rozszerz `frontend/src/app/features/auth/login/login.component.spec.ts` oraz `frontend/src/app/core/shell/app-shell.component.spec.ts` o asercję, że znak marki jest obecny w drzewie DOM z tekstem alternatywnym i renderuje się poprawnie w obu motywach (FR-023). Oba pliki już istnieją — rozszerzasz je, nie tworzysz
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Utwórz `frontend/src/styles/_pu-theme.scss` — mapa `$overrides` odwzorowująca role marki na zmienne `--mat-sys-*`, **każda wartość jako `light-dark(#jasny, #ciemny)`** wg `contracts/design-tokens.md` §3 (research.md R2 — zwykła wartość zabiłaby zmienność motywu)
-- [ ] T016 [US1] Dodaj do `frontend/src/styles/_pu-theme.scss` trzy obowiązkowe nadpisania komponentowe: `--mat-button-text-label-text-color`, `--mat-button-outlined-label-text-color`, `--mat-button-protected-label-text-color` na `light-dark(#7A5A2E, #E3C9A6)` (research.md R3 — bez nich złoto stałoby się etykietą przycisku tekstowego przy 1.99:1)
-- [ ] T017 [US1] Przepisz `frontend/src/styles.scss` — `mat.theme()` z paletami z `_pu-palettes.scss` i nadpisaniami z `_pu-theme.scss`; usuń `mat.$violet-palette` i komentarz odraczający brandowanie
-- [ ] T018 [US1] Dodaj `<meta name="color-scheme" content="light dark">` do `<head>` w `frontend/src/index.html`, aby przeglądarka znała obsługiwane schematy przed załadowaniem CSS
-- [ ] T019 [P] [US1] Przekoloruj `frontend/src/app/core/shell/app-shell.component.ts` na role systemu; usuń wszelkie literalne wartości
-- [ ] T020 [P] [US1] Przekoloruj `frontend/src/app/features/auth/login/login.component.ts`; usuń fallback `var(--mat-sys-error, #b3261e)`
-- [ ] T021 [P] [US1] Przekoloruj `frontend/src/app/features/auth/login/mfa-challenge.component.ts`; usuń fallbacki `#b3261e` i `#f2f2f2`
-- [ ] T022 [P] [US1] Przekoloruj `frontend/src/app/features/auth/password-reset/password-reset-request.component.ts`
-- [ ] T023 [P] [US1] Przekoloruj `frontend/src/app/features/auth/password-reset/password-reset-confirm.component.ts`; usuń fallback `#b3261e`
-- [ ] T024 [P] [US1] Przekoloruj `frontend/src/app/features/home/role-home.component.ts`
-- [ ] T025 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-search/patient-search.component.ts`
-- [ ] T026 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-create/patient-create.component.ts`; usuń fallback `#b3261e`
-- [ ] T027 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-detail/patient-detail.component.ts`; usuń fallback `#b3261e`
-- [ ] T028 [P] [US1] Przekoloruj `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` — zastąp `fill: #ffffff`, `stroke: #666`, `fill: #f3b0ae` i `stroke: #1a73e8` rolami `tooth-*`; zaznaczenie przechodzi z obcego marce błękitu na złoto (research.md R9)
-- [ ] T029 [P] [US1] Przekoloruj `frontend/src/app/features/admin/accounts/accounts.component.ts`; usuń fallback `#b3261e`
-- [ ] T030 [P] [US1] Przekoloruj `frontend/src/app/features/admin/audit-log/audit-log.component.ts`
-- [ ] T031 [US1] Osadź znak marki na ekranie logowania w `frontend/src/app/features/auth/login/login.component.ts` i w pasku `frontend/src/app/core/shell/app-shell.component.ts`, w wariancie czytelnym na jasnym i ciemnym tle (FR-023)
-- [ ] T032 [US1] Uruchom `npm test` w `frontend/` i potwierdź, że `frontend/src/styles/no-literal-colors.spec.ts` **zzieleniał**, a `frontend/src/styles/contrast-audit.spec.ts` nadal jest zielony
+- [X] T015 [US1] Utwórz `frontend/src/styles/_pu-theme.scss` — mapa `$overrides` odwzorowująca role marki na zmienne `--mat-sys-*`, **każda wartość jako `light-dark(#jasny, #ciemny)`** wg `contracts/design-tokens.md` §3 (research.md R2 — zwykła wartość zabiłaby zmienność motywu)
+- [X] T016 [US1] Dodaj do `frontend/src/styles/_pu-theme.scss` trzy obowiązkowe nadpisania komponentowe: `--mat-button-text-label-text-color`, `--mat-button-outlined-label-text-color`, `--mat-button-protected-label-text-color` na `light-dark(#7A5A2E, #E3C9A6)` (research.md R3 — bez nich złoto stałoby się etykietą przycisku tekstowego przy 1.99:1)
+- [X] T017 [US1] Przepisz `frontend/src/styles.scss` — `mat.theme()` z paletami z `_pu-palettes.scss` i nadpisaniami z `_pu-theme.scss`; usuń `mat.$violet-palette` i komentarz odraczający brandowanie
+- [X] T018 [US1] Dodaj `<meta name="color-scheme" content="light dark">` do `<head>` w `frontend/src/index.html`, aby przeglądarka znała obsługiwane schematy przed załadowaniem CSS
+- [X] T019 [P] [US1] Przekoloruj `frontend/src/app/core/shell/app-shell.component.ts` na role systemu; usuń wszelkie literalne wartości
+- [X] T020 [P] [US1] Przekoloruj `frontend/src/app/features/auth/login/login.component.ts`; usuń fallback `var(--mat-sys-error, #b3261e)`
+- [X] T021 [P] [US1] Przekoloruj `frontend/src/app/features/auth/login/mfa-challenge.component.ts`; usuń fallbacki `#b3261e` i `#f2f2f2`
+- [X] T022 [P] [US1] Przekoloruj `frontend/src/app/features/auth/password-reset/password-reset-request.component.ts`
+- [X] T023 [P] [US1] Przekoloruj `frontend/src/app/features/auth/password-reset/password-reset-confirm.component.ts`; usuń fallback `#b3261e`
+- [X] T024 [P] [US1] Przekoloruj `frontend/src/app/features/home/role-home.component.ts`
+- [X] T025 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-search/patient-search.component.ts`
+- [X] T026 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-create/patient-create.component.ts`; usuń fallback `#b3261e`
+- [X] T027 [P] [US1] Przekoloruj `frontend/src/app/features/patients/patient-detail/patient-detail.component.ts`; usuń fallback `#b3261e`
+- [X] T028 [P] [US1] Przekoloruj `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` — zastąp `fill: #ffffff`, `stroke: #666`, `fill: #f3b0ae` i `stroke: #1a73e8` rolami `tooth-*`; zaznaczenie przechodzi z obcego marce błękitu na złoto (research.md R9)
+- [X] T029 [P] [US1] Przekoloruj `frontend/src/app/features/admin/accounts/accounts.component.ts`; usuń fallback `#b3261e`
+- [X] T030 [P] [US1] Przekoloruj `frontend/src/app/features/admin/audit-log/audit-log.component.ts`
+- [X] T031 [US1] Osadź znak marki na ekranie logowania w `frontend/src/app/features/auth/login/login.component.ts` i w pasku `frontend/src/app/core/shell/app-shell.component.ts`, w wariancie czytelnym na jasnym i ciemnym tle (FR-023)
+- [X] T032 [US1] Uruchom `npm test` w `frontend/` i potwierdź, że `frontend/src/styles/no-literal-colors.spec.ts` **zzieleniał**, a `frontend/src/styles/contrast-audit.spec.ts` nadal jest zielony
 
 **Checkpoint**: MVP osiągnięty. Aplikacja wygląda jak Projekt Uśmiech, cały zestaw testów
 jednostkowych jest zielony. Nadaje się do pokazania właścicielowi.

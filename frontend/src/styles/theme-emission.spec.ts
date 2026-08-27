@@ -42,7 +42,7 @@ function parseThemeScss(source: string): ParsedThemeScss {
   const overrides: ParsedThemeScss['overrides'] = {};
   const overridesBlock = source.match(/\$overrides:\s*\(([\s\S]*?)\n\);/);
   if (overridesBlock) {
-    const entryRe = /['"]?([a-z-]+)['"]?\s*:\s*([^,\n]+),?/gi;
+    const entryRe = /['"]?([a-z-]+)['"]?\s*:\s*(light-dark\([^)]*\)|[^,\n]+),?/gi;
     let m: RegExpExecArray | null;
     while ((m = entryRe.exec(overridesBlock[1])) !== null) {
       const key = m[1];

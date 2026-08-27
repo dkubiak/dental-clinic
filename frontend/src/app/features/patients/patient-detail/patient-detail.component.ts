@@ -134,7 +134,7 @@ import { VisitHistoryComponent } from '../visit-history/visit-history.component'
       margin-bottom: 8px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
     }
   `,
 })

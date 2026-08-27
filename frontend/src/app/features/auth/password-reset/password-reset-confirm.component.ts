@@ -101,7 +101,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
       margin-bottom: 8px;
     }
     .error {
-      color: var(--mat-sys-error, #b3261e);
+      color: var(--mat-sys-error);
       margin: 0 0 12px;
     }
   `,

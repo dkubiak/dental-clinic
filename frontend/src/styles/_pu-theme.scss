@@ -1,0 +1,39 @@
+// Projekt Uśmiech — nadpisania systemu Material 3 (contracts/design-tokens.md §3).
+//
+// $overrides trafia do mat.theme() w styles.scss. Każda wartość MUSI być zapisana jako
+// light-dark(#jasny, #ciemny) — mat.theme() podstawia nadpisanie dosłownie, zastępując cały
+// wygenerowany token; zwykła wartość usunęłaby light-dark() i zamroziłaby token względem
+// motywu (research.md R2).
+$overrides: (
+  primary: light-dark(#CBAD89, #CBAD89),
+  on-primary: light-dark(#1F1D1E, #1A1819),
+  surface: light-dark(#FFFFFF, #2E2C2D),
+  surface-container: light-dark(#F2EDE6, #363233),
+  background: light-dark(#FAF7F2, #1A1819),
+  on-surface: light-dark(#1F1D1E, #EAE4DC),
+  on-surface-variant: light-dark(#5C5654, #A79E96),
+  outline: light-dark(#7D746F, #8C8480),
+  outline-variant: light-dark(#E6DFD5, #504C4B),
+  error: light-dark(#A33A32, #E88178),
+  on-error: light-dark(#FAF7F2, #1A1819),
+  tertiary: light-dark(#3E7A72, #7FB3AA),
+);
+
+// Nadpisania komponentowe — obowiązkowe. `--mat-sys-primary` (złoto) jest jednocześnie źródłem
+// tła przycisku WYPEŁNIONEGO (poprawne) i etykiety przycisku TEKSTOWEGO/OBRYSOWANEGO/"protected"
+// (błędne — 1.99:1 na papierze). Material czyta te trzy zmienne komponentowe osobno od
+// $overrides, więc nadpisujemy je wprost jako zwykłe deklaracje CSS (research.md R3).
+:root,
+html {
+  --mat-button-text-label-text-color: light-dark(#7A5A2E, #E3C9A6);
+  --mat-button-outlined-label-text-color: light-dark(#7A5A2E, #E3C9A6);
+  --mat-button-protected-label-text-color: light-dark(#7A5A2E, #E3C9A6);
+
+  // Schemat uzębienia — role klinicznie znaczące, poza zestawem tokenów Material (contracts/
+  // design-tokens.md §1). Zaznaczenie przechodzi z obcego marce błękitu #1a73e8 na złoto/brąz.
+  --pu-tooth-healthy-fill: light-dark(#FFFFFF, #363233);
+  --pu-tooth-healthy-stroke: light-dark(#5C5654, #A79E96);
+  --pu-tooth-diseased-fill: light-dark(#F7E3E1, #5A2B27);
+  --pu-tooth-diseased-stroke: light-dark(#A33A32, #E88178);
+  --pu-tooth-selected-stroke: light-dark(#7A5A2E, #E3C9A6);
+}
