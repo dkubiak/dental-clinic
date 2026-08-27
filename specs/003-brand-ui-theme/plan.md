@@ -146,10 +146,11 @@ frontend/
 ├── src/styles/
 │   ├── contrast-audit.spec.ts              # NOWY: progi WCAG, obie palety (FR-017, FR-018)
 │   ├── token-parity.spec.ts                # NOWY: .ts ↔ .scss, komplet ról (FR-002, FR-007)
-│   └── no-literal-colors.spec.ts           # NOWY: statyczny skan komponentów (FR-001)
+│   ├── no-literal-colors.spec.ts           # NOWY: statyczny skan komponentów (FR-001)
+│   └── theme-emission.spec.ts              # NOWY: $overrides jako light-dark(), meta color-scheme (R2, R3)
 └── e2e/
     ├── us2-theme-toggle.spec.ts            # NOWY: przełącznik, trwałość, brak błysku
-    └── us2-theme-contrast.spec.ts          # NOWY: realny kontrast, 320 px, oba motywy
+    └── us5-theme-contrast.spec.ts          # NOWY: realny kontrast, 320 px, oba motywy
 
 .github/workflows/ci.yml                    # ZMIANA: nowe zadanie frontend-e2e-theme (R6)
 
@@ -169,7 +170,7 @@ systemu kolorystycznego, nie żadnego pojedynczego widoku.
 ### Kolejność wdrożenia wymuszona przez Principle I
 
 ```text
-1. Testy (czerwone)   → contrast-audit, token-parity, no-literal-colors, theme.service
+1. Testy (czerwone)   → contrast-audit, token-parity, no-literal-colors, theme-emission, theme.service
 2. Tokeny             → brand-tokens.ts + uzupełnienie _pu-tokens.scss  → testy 1 zielenieją
 3. Motyw Material     → _pu-palettes, _pu-theme, styles.scss            → skan kolorów zielenieje
 4. Usługa i przełącznik → theme.service, theme-toggle, index.html

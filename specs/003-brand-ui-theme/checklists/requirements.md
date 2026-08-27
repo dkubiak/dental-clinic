@@ -102,3 +102,37 @@ FR-001 … FR-028), 10 kryteriów sukcesu (SC-001 … SC-010), 1 encja, 0 marker
   (komponenty przeglądarki zgodne z motywem aplikacji) to dwa miejsca, w których "przełącznik
   motywu" bywa wdrażany pozornie i psuje się dopiero u użytkownika. Warto, by plan wskazał dla
   nich konkretny mechanizm, a nie potraktował ich jako detal implementacyjny.
+
+### Iteracja 4 (2026-08-27) — `/speckit-analyze` + naprawy
+
+Nieniszcząca analiza spójności spec/plan/tasks wykryła 13 ustaleń, w tym **jeden krytyczny**.
+Cztery naprawione, dziewięć otwartych.
+
+#### Naprawione
+
+| ID | Waga | Co było nie tak | Naprawa |
+| --- | --- | --- | --- |
+| C1 | CRITICAL | Naruszenie Principle I (NON-NEGOTIABLE): konfiguracja motywu i znak marki miały implementację bez poprzedzającego czerwonego testu | Nowe T009 (`theme-emission.spec.ts`) i nowa sekcja *Tests for User Story 1* z T014 |
+| I1 | HIGH | `research.md` R2 twierdził, że pułapka `light-dark()` jest objęta testem parzystości — a ten parsuje `_pu-tokens.scss`, nie `_pu-theme.scss`. Najbardziej prawdopodobny błąd wdrożeniowy był nieosłonięty | T009 skanuje `$overrides` na płaskie wartości |
+| G1 | HIGH | FR-011 (wybór motywu przetrwa wylogowanie) miał wyłącznie sprawdzenie ręczne w ostatnim zadaniu feature'u | Asercja dopisana do T033 |
+| I3 | MEDIUM | `us2-theme-contrast.spec.ts` to deliverable US5, nie US2; glob CI milcząco zależał od tej pomyłki | Zmiana na `us5-theme-contrast.spec.ts`, glob na `e2e/us[25]-theme-*.spec.ts`, zsynchronizowane w plan.md i quickstart.md |
+
+Skutek: zadań 62 → **64** (pełne przenumerowanie), pokrycie FR testem automatycznym **86% → 96%**,
+problemów krytycznych **1 → 0**.
+
+#### Otwarte — nie blokują `/speckit-implement`
+
+| ID | Waga | Ustalenie | Sugerowana naprawa |
+| --- | --- | --- | --- |
+| G2 | MEDIUM | FR-022 („co najwyżej jedna akcja akcentowa na ekran") nie ma żadnego zadania | Test statyczny albo pozycja kontrolna w T032 |
+| G3 | MEDIUM | FR-020 pokryty tylko dla przełącznika i tokenów, nie dla dwunastu komponentów | Sprawdzenie fokusu w T052 |
+| U1 | MEDIUM | Pięć zadań (T045, T047, T049–T051) odwołuje się do `frontend/src/app/shared/status/` — katalogu nieobecnego w Project Structure w plan.md | Uzupełnić drzewo w plan.md albo przenieść komponent do `core/` |
+| I2 | MEDIUM | Lista ról w data-model.md pomija `focus-ring-on-accent` i `tooth-diseased-stroke`, obecne w contracts/design-tokens.md | Zsynchronizować data-model.md z kontraktem (kontrakt jest źródłem prawdy dla T011) |
+| G4 | MEDIUM | SC-007 (test z personelem na tablecie) nie ma zadania ani kroku w quickstart | Zaplanować albo oznaczyć jako miarę porealizacyjną |
+| A1 | MEDIUM | T048 nie mówi, jaki ma być drugi sygnał na schemacie uzębienia | Ustalić formę w T046, zanim T048 ruszy |
+| A2 | LOW | T055 bez kryterium mierzalnego („rozpoznawalny, gdy zasłonięty palcem") | Doprecyzować jako zmianę widoczną poza obrysem elementu |
+| G5 | LOW | SC-008 pokryty tylko pośrednio przez T013 | Rozszerzyć T013 o potwierdzenie propagacji |
+| U2 | LOW | T062 (naprawa nieaktualnego `CLAUDE.md`) wykracza poza zakres feature'u | Zostawić jako higienę repo, nie deliverable |
+
+**Duplikacji: 0.** Żadne ustalenie nie podważa specyfikacji ani architektury — `/speckit-specify`
+i `/speckit-plan` nie wymagają ponownego uruchomienia.

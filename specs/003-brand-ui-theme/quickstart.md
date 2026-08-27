@@ -25,13 +25,14 @@ cd frontend
 npm test
 ```
 
-Cztery zestawy, wszystkie w Vitest, wszystkie uruchamiane przez zadanie `frontend-unit`:
+Pięć zestawów, wszystkie w Vitest, wszystkie uruchamiane przez zadanie `frontend-unit`:
 
 | Plik | Co sprawdza | Wymagania |
 | --- | --- | --- |
 | `src/styles/contrast-audit.spec.ts` | progi WCAG dla każdej pary, osobno w obu motywach | FR-017, FR-018 |
 | `src/styles/token-parity.spec.ts` | zgodność `brand-tokens.ts` z `_pu-tokens.scss`, komplet ról | FR-002, FR-007 |
 | `src/styles/no-literal-colors.spec.ts` | brak literalnych kolorów w komponentach | FR-001 |
+| `src/styles/theme-emission.spec.ts` | wartości `$overrides` zapisane jako `light-dark()`, nadpisania przycisków, meta `color-scheme` | FR-007, FR-017, FR-027 |
 | `src/app/core/theme/theme.service.spec.ts` | zapis, odczyt, degradacja, propagacja między kartami | FR-010 … FR-014 |
 
 ### Oczekiwany wynik porażki
@@ -68,7 +69,7 @@ To samo dla parzystości ról — usuń wartość `dark` dowolnej roli i sprawd�
 cd frontend
 npm run build
 npx http-server dist/dental-clinic-frontend/browser -p 4200 &
-E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/us2-theme-*.spec.ts
+E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/us[25]-theme-*.spec.ts
 ```
 
 Domyślnie uruchamia się to na czterech projektach skonfigurowanych w `playwright.config.ts`
@@ -78,7 +79,7 @@ pierwsze — zgodnie z Principle IV.
 | Plik | Co sprawdza | Wymagania |
 | --- | --- | --- |
 | `e2e/us2-theme-toggle.spec.ts` | przełącznik na ekranie logowania, trwałość po odświeżeniu, brak błysku, dwie karty | FR-008 … FR-013, FR-027 |
-| `e2e/us2-theme-contrast.spec.ts` | realny kontrast na wyrenderowanym ekranie, 320 px, oba motywy | FR-024, FR-026 |
+| `e2e/us5-theme-contrast.spec.ts` | realny kontrast na wyrenderowanym ekranie, 320 px, oba motywy | FR-024, FR-026 |
 
 ### Test braku błysku (FR-027)
 
