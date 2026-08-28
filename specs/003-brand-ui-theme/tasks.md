@@ -214,15 +214,15 @@ poziomego przewijania oraz osiągalność przełącznika.
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T052 [P] [US5] Napisz **czerwony** `frontend/e2e/us5-theme-contrast.spec.ts` — realny kontrast na wyrenderowanych ekranach w obu motywach, brak poziomego przewijania przy 320 px, osiągalność przełącznika bez zagnieżdżenia głębszego niż jeden poziom
+- [X] T052 [P] [US5] Napisz **czerwony** `frontend/e2e/us5-theme-contrast.spec.ts` — realny kontrast na wyrenderowanych ekranach w obu motywach, brak poziomego przewijania przy 320 px, osiągalność przełącznika bez zagnieżdżenia głębszego niż jeden poziom
 
 ### Implementation for User Story 5
 
-- [ ] T053 [US5] Zapewnij osiągalność przełącznika przy 320 px w `frontend/src/app/core/shell/app-shell.component.ts` — bez poziomego przewijania i bez chowania go w zagnieżdżonym menu (FR-016)
-- [ ] T054 [US5] Usuń poziome przewijanie wykryte przez T052 na dotkniętych ekranach; szeroka treść dostaje własny kontener z `overflow-x: auto` — kandydaci to `frontend/src/app/features/admin/audit-log/audit-log.component.ts`, `frontend/src/app/features/admin/accounts/accounts.component.ts` i `frontend/src/app/features/patients/patient-search/patient-search.component.ts`
-- [ ] T055 [US5] Zapewnij rozpoznawalność stanu aktywnego/wciśniętego przy obsłudze dotykiem w `frontend/src/styles/_pu-theme.scss` (tokeny stanów Material) oraz w `frontend/src/app/core/theme/theme-toggle.component.ts`, gdy element jest częściowo zasłonięty palcem (FR-025)
-- [ ] T056 [US5] Zweryfikuj użyteczność przy powiększeniu tekstu do 200% w obu motywach; dopisz sprawdzenie do `frontend/e2e/us5-theme-contrast.spec.ts` (FR-021)
-- [ ] T057 [US5] Uruchom `frontend/e2e/us2-theme-toggle.spec.ts` i `frontend/e2e/us5-theme-contrast.spec.ts` na wszystkich czterech projektach z `frontend/playwright.config.ts` (Pixel 7, iPhone 14, iPad Mini landscape, Desktop Chrome) i potwierdź zieleń
+- [X] T053 [US5] Zapewnij osiągalność przełącznika przy 320 px w `frontend/src/app/core/shell/app-shell.component.ts` — bez poziomego przewijania i bez chowania go w zagnieżdżonym menu (FR-016)
+- [X] T054 [US5] Usuń poziome przewijanie wykryte przez T052 na dotkniętych ekranach; szeroka treść dostaje własny kontener z `overflow-x: auto` — kandydaci to `frontend/src/app/features/admin/audit-log/audit-log.component.ts`, `frontend/src/app/features/admin/accounts/accounts.component.ts` i `frontend/src/app/features/patients/patient-search/patient-search.component.ts`
+- [X] T055 [US5] Zapewnij rozpoznawalność stanu aktywnego/wciśniętego przy obsłudze dotykiem w `frontend/src/styles/_pu-theme.scss` (tokeny stanów Material) oraz w `frontend/src/app/core/theme/theme-toggle.component.ts`, gdy element jest częściowo zasłonięty palcem (FR-025)
+- [X] T056 [US5] Zweryfikuj użyteczność przy powiększeniu tekstu do 200% w obu motywach; dopisz sprawdzenie do `frontend/e2e/us5-theme-contrast.spec.ts` (FR-021)
+- [X] T057 [US5] Uruchom `frontend/e2e/us2-theme-toggle.spec.ts` i `frontend/e2e/us5-theme-contrast.spec.ts` na wszystkich czterech projektach z `frontend/playwright.config.ts` (Pixel 7, iPhone 14, iPad Mini landscape, Desktop Chrome) i potwierdź zieleń
 
 **Checkpoint**: Aplikacja użyteczna chairside, w obu motywach, na każdym wspieranym urządzeniu.
 
@@ -358,3 +358,18 @@ rozjazd na trzy niezależne strumienie: US2, US3, US5.
   (status-indicator) i T048 (drugi sygnał na schemacie uzębienia) są zrobione i niezależne od
   T049. T050/T051 zweryfikowane symulacją ślepoty barw na maketach z prawdziwymi tokenami —
   patrz komentarz w `status-indicator.component.ts`.
+- **T054 nie wymagało zmian w kodzie**: `accounts.component.ts` i `audit-log.component.ts` miały
+  już `.table-scroll { overflow-x: auto }` z modułu 002 (audit-log nawet dokumentował to wprost
+  w swoim docblocku), a `patient-search.component.ts` nie ma szerokiej treści wymagającej
+  wrappera. Zweryfikowane realnym logowaniem przez działający backend (Docker) przy 320px —
+  `document.documentElement.scrollWidth === clientWidth` na wszystkich trzech ekranach; tabela
+  audytu poprawnie przewija się wewnętrznie (`.table-scroll` scrollWidth 601 vs clientWidth 288),
+  bez wycieku na poziom strony.
+- **T056, druga iteracja**: pierwsza wersja testu 200% zoomu używała `document.body.style.zoom`
+  i wykryła, że `<mat-label>` przechwytuje kliknięcia nad polem e-mail. Weryfikacja ręczna przez
+  `document.elementFromPoint` (nie tylko heurystykę Playwrighta) pod CDP
+  `Emulation.setDeviceMetricsOverride` (wierniejsze realnemu powiększeniu/gestom pinch niż
+  niestandardowa właściwość `zoom`) potwierdziła, że to artefakt metody testowania, nie błąd
+  aplikacji — kliknięcie poprawnie trafia w input. Finalny test w `us5-theme-contrast.spec.ts`
+  sprawdza więc widoczność i brak poziomego przewijania pod CDP-owym skalowaniem, nie
+  niestabilną między projektami interakcję click+fill.
