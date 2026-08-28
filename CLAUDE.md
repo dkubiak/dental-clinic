@@ -23,7 +23,7 @@ planned and broken into tasks but not yet started.
 | --- | --- |
 | `specs/001-staff-auth-rbac` | Implemented. Two tasks remain, both Terraform-only (DEV workspace apply/destroy, ALB TLS policy pin). |
 | `specs/002-patient-records` | Implemented, all tasks done. |
-| `specs/003-brand-ui-theme` | Spec, plan and 64 tasks ready. No implementation yet. |
+| `specs/003-brand-ui-theme` | Implemented (Phases 1–8). One task remains blocked (T049: depends on a patient "allergy" field that doesn't exist in feature 002's data model — see `specs/003-brand-ui-theme/tasks.md` Notes). |
 
 ### Layout
 
@@ -53,7 +53,39 @@ cd frontend && npm run e2e             # Playwright — needs a running backend
 CI runs three jobs: `backend`, `patient-service`, `frontend-unit`. A fourth job, `frontend-e2e`,
 is **disabled** (`if: false` in `ci.yml`) because it needs Postgres and LocalStack, which the job
 does not yet provision. Anything that must actually be gated therefore has to be reachable from
-one of the three live jobs — putting a check only in Playwright means it never runs in CI.
+one of the three live jobs — putting a check only in Playwright means it never runs in CI. A fifth
+job, `frontend-e2e-theme` (added by feature 003), is live — see Theming below for why it's a
+separate job from the disabled `frontend-e2e` rather than an unblocking of it.
+
+### Theming
+
+Feature `003-brand-ui-theme` replaced Angular Material's default purple with the Projekt Uśmiech
+brand palette and added a light/dark toggle available on every screen, including the four
+pre-auth ones (login, MFA challenge, both password-reset screens).
+
+- **Switching**: click the toggle (`data-testid="theme-toggle"`, in the app shell and on the
+  pre-auth screens). The only state carrier in the DOM is the CSS `color-scheme` property on
+  `<html>` — no theme class, no `data-*` attribute (`ThemeService`,
+  `frontend/src/app/core/theme/theme.service.ts`, FR-026). The choice persists to `localStorage`
+  under `pu.theme`; absent that key, the app follows `prefers-color-scheme` and reacts live to it
+  changing.
+- **Source of truth for tokens**: `design/brand/_pu-tokens.scss` is the design proposal — role
+  names, hex values, and the contrast rationale live in its comments.
+  `frontend/src/styles/brand-tokens.ts` mirrors it as the machine-readable source the contrast
+  audit consumes; `frontend/src/styles/token-parity.spec.ts` fails the build if the two drift.
+  `frontend/src/styles/_pu-theme.scss` maps those roles onto Angular Material's `--mat-sys-*`
+  variables — each value as `light-dark(#light, #dark)`, because a plain value would freeze the
+  token against theme switching — and that file is what `frontend/src/styles.scss` actually feeds
+  into `mat.theme()`.
+- **Why the contrast audit lives in Vitest, not Playwright**: `frontend-e2e` (see above) is
+  disabled in CI, so a check that only ran there would never actually gate anything.
+  `frontend/src/styles/contrast-audit.spec.ts` computes WCAG 2.1 contrast ratios directly from
+  `brand-tokens.ts` in plain TypeScript, so it runs under `frontend-unit`, which is live.
+  Browser-rendered checks that need an actual layout (real contrast on rendered buttons, 320px
+  width, no flash of the wrong theme on load) still need a browser; those live in
+  `frontend/e2e/us2-theme-toggle.spec.ts` and `frontend/e2e/us5-theme-contrast.spec.ts`, gated by
+  the separate `frontend-e2e-theme` job (build + static file server, no backend — the toggle works
+  pre-auth, so the whole feature is verifiable without Postgres or LocalStack).
 
 ## Spec-Driven Development workflow
 

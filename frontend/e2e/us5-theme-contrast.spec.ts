@@ -82,6 +82,29 @@ test.describe('realny kontrast na wyrenderowanym ekranie (FR-017, FR-024) — ni
   }
 });
 
+test.describe('kontrolki przeglądarki podążają za motywem aplikacji, nie systemu (FR-026)', () => {
+  // Jedyny nośnik stanu jest `color-scheme` na `<html>` (research.md R1, theme.service.ts).
+  // Kontrolki natywne (pola formularza, autouzupełnianie, paski przewijania, okna dialogowe) nie
+  // są renderowane przez aplikację — dziedziczą tę właściwość z przeglądarki, więc to jest
+  // jedyny weryfikowalny sygnał, że podążają za wyborem w aplikacji, a nie za systemem: po
+  // jawnym wyborze `color-scheme` musi być wąską, jawną wartością (`light`/`dark`), a nie
+  // pozostawioną systemowi wartością `light dark`.
+  for (const dark of [false, true]) {
+    test(`po jawnym wyborze motywu ${dark ? 'ciemnego' : 'jasnego'} document.documentElement ma color-scheme='${dark ? 'dark' : 'light'}'`, async ({
+      page,
+    }) => {
+      await page.goto('/login');
+      await page.getByTestId('theme-toggle').click(); // domyślnie system -> jasny -> pierwsze kliknięcie: ciemny
+      if (!dark) {
+        await page.getByTestId('theme-toggle').click(); // drugie kliknięcie: z powrotem na jasny
+      }
+
+      const colorScheme = await page.evaluate(() => document.documentElement.style.colorScheme);
+      expect(colorScheme).toBe(dark ? 'dark' : 'light');
+    });
+  }
+});
+
 test.describe('powiększenie tekstu do 200% (FR-021)', () => {
   // CDP Emulation.setDeviceMetricsOverride (skalowanie na poziomie renderowania), nie
   // `document.body.style.zoom` — ta druga, niestandardowa właściwość CSS rozjeżdża precyzyjne

@@ -44,3 +44,34 @@ body {
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
 }
+
+// Wydruk MUSI NIE dziedziczyć ciemnego tła z motywu ciemnego (FR-028). Każdy token koloru
+// przechodzi przez light-dark(), więc zablokowanie color-scheme na `light` dla samego wydruku
+// wystarcza — niezależnie od wyboru ThemeService czy preferencji systemu. `!important` jest
+// konieczny: ThemeService.applyToDocument() ustawia `color-scheme` jako STYL WBUDOWANY na
+// <html> (research.md R1), a styl wbudowany bije każdą regułę arkusza, także wewnątrz media
+// query — bez `!important` ta reguła zostałaby cicho przegłosowana przy motywie ciemnym.
+// Reguła znaczenia kodowanego kolorem przetrwa utratę koloru: status-indicator (US3) niesie je
+// ikoną i etykietą, a schemat uzębienia wzorem kreski (stroke-dasharray) i grubością obrysu, nie
+// samym wypełnieniem — patrz status-indicator.component.ts i tooth-chart.component.ts.
+@media print {
+  html {
+    color-scheme: light !important;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+// Windows High Contrast i pokrewne tryby (FR-021). Aplikacja pozostaje użyteczna bez dodatkowych
+// reguł koloru, bo oba drugie sygnały opisane wyżej nie zależą od koloru — przeglądarka i tak
+// wymusza własną paletę na tle/tekście/obrysach. Jedyny wyjątek dopisany jawnie: pierścień fokusu
+// (theme-toggle.component.ts i inne) MUSI pozostać widoczny jako obrys systemowy zamiast zniknąć
+// razem z paletą marki.
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

@@ -232,13 +232,13 @@ poziomego przewijania oraz osiągalność przełącznika.
 
 **Purpose**: Wymagania przekrojowe, których nie da się przypisać do jednej historii.
 
-- [ ] T058 [P] Dodaj reguły wydruku w `frontend/src/styles.scss` — wydruk MUSI NIE dziedziczyć ciemnego tła z motywu ciemnego, a informacja zakodowana kolorem musi przetrwać skalę szarości (FR-028)
-- [ ] T059 [P] Dodaj i zweryfikuj reguły `@media (forced-colors: active)` w `frontend/src/styles.scss` — aplikacja pozostaje użyteczna, a przełącznik z `frontend/src/app/core/theme/theme-toggle.component.ts` nie wprowadza w błąd (FR-021)
-- [ ] T060 Zweryfikuj, że kontrolki przeglądarki (pola formularza, autouzupełnianie, paski przewijania, natywne okna dialogowe) przyjmują motyw aplikacji, a nie systemu operacyjnego; dopisz sprawdzenie do `frontend/e2e/us5-theme-contrast.spec.ts` (FR-026)
-- [ ] T061 [P] Zaktualizuj `design/brand/README.md` — dopisz siedem nowych ról, sekcję o pułapce `--mat-sys-primary` i odnośnik do wdrożonych tokenów
-- [ ] T062 [P] Udokumentuj system motywów w `CLAUDE.md` — jak przełączać, gdzie leży źródło prawdy tokenów, dlaczego audyt jest w Vitest a nie w Playwrighcie. Przy okazji popraw dwie nieaktualne informacje w tym pliku: twierdzenie o braku kodu aplikacji oraz wersję konstytucji (jest 1.5.0, nie 1.3.1)
+- [X] T058 [P] Dodaj reguły wydruku w `frontend/src/styles.scss` — wydruk MUSI NIE dziedziczyć ciemnego tła z motywu ciemnego, a informacja zakodowana kolorem musi przetrwać skalę szarości (FR-028)
+- [X] T059 [P] Dodaj i zweryfikuj reguły `@media (forced-colors: active)` w `frontend/src/styles.scss` — aplikacja pozostaje użyteczna, a przełącznik z `frontend/src/app/core/theme/theme-toggle.component.ts` nie wprowadza w błąd (FR-021)
+- [X] T060 Zweryfikuj, że kontrolki przeglądarki (pola formularza, autouzupełnianie, paski przewijania, natywne okna dialogowe) przyjmują motyw aplikacji, a nie systemu operacyjnego; dopisz sprawdzenie do `frontend/e2e/us5-theme-contrast.spec.ts` (FR-026)
+- [X] T061 [P] Zaktualizuj `design/brand/README.md` — dopisz siedem nowych ról, sekcję o pułapce `--mat-sys-primary` i odnośnik do wdrożonych tokenów
+- [X] T062 [P] Udokumentuj system motywów w `CLAUDE.md` — jak przełączać, gdzie leży źródło prawdy tokenów, dlaczego audyt jest w Vitest a nie w Playwrighcie. Przy okazji popraw dwie nieaktualne informacje w tym pliku: twierdzenie o braku kodu aplikacji oraz wersję konstytucji (jest 1.5.0, nie 1.3.1)
 - [ ] T063 Sprawdź budżet bundla po zmianach — `initial` musi zmieścić się w ostrzeżeniu 500 kB z `frontend/angular.json`
-- [ ] T064 Wykonaj pełną walidację wg `specs/003-brand-ui-theme/quickstart.md` — sekcje 1–3, w tym siedem sprawdzeń ręcznych i potwierdzenie przez `git diff --stat`, że `backend/`, `patient-service/`, `helm/` i `infra/` są bez zmian
+- [X] T064 Wykonaj pełną walidację wg `specs/003-brand-ui-theme/quickstart.md` — sekcje 1–3, w tym siedem sprawdzeń ręcznych i potwierdzenie przez `git diff --stat`, że `backend/`, `patient-service/`, `helm/` i `infra/` są bez zmian
 
 ---
 
@@ -373,3 +373,39 @@ rozjazd na trzy niezależne strumienie: US2, US3, US5.
   aplikacji — kliknięcie poprawnie trafia w input. Finalny test w `us5-theme-contrast.spec.ts`
   sprawdza więc widoczność i brak poziomego przewijania pod CDP-owym skalowaniem, nie
   niestabilną między projektami interakcję click+fill.
+- **T058 wymagało `!important`, nie wykryte bez ręcznej weryfikacji pod Playwrightowym
+  `page.emulateMedia({ media: 'print' })`**: `ThemeService.applyToDocument()` ustawia
+  `color-scheme` jako styl WBUDOWANY na `<html>` (`document.documentElement.style.colorScheme`),
+  który bije każdą regułę arkusza — także `@media print { html { color-scheme: light } }` bez
+  `!important`. Pierwsza wersja reguły w `styles.scss` była więc martwa przy motywie ciemnym:
+  `getComputedStyle(html).colorScheme` pod emulacją druku nadal zwracał `'dark'`. Naprawione
+  dopisaniem `!important`; potwierdzone tym samym skryptem, że zwraca `'light'`.
+- **T059 zweryfikowane pod Playwrightowym `page.emulateMedia({ forcedColors: 'active' })`**
+  (Chromium): `matchMedia('(forced-colors: active)').matches` poprawnie przełącza się na `true`,
+  przełącznik motywu pozostaje widoczny i klikalny, a fokus zachowuje widoczny obrys
+  (`outline-style: solid`). Kolor systemowy w headless Chromium bez realnego motywu wysokiego
+  kontrastu OS renderuje się jako czarny — oczekiwane w tym środowisku, nie usterka reguły.
+- **T060, mechanizm weryfikacji**: kontrolek natywnych (pola formularza, autouzupełnianie, paski
+  przewijania) nie da się deterministycznie zweryfikować pikselowo w Playwright na wszystkich
+  przeglądarkach. Jedynym rzetelnym sygnałem jest sam mechanizm, który je stroi:
+  `document.documentElement.style.colorScheme` musi po jawnym wyborze być wąską, jawną wartością
+  (`'light'`/`'dark'`), a nie pozostawioną systemowi wartością `'light dark'` — bo to ta
+  właściwość, dziedziczona przez cały dokument, decyduje, w jakim wariancie przeglądarka
+  renderuje kontrolki poza kontrolą aplikacji.
+- **T063**: budżet 500 kB (ostrzeżenie) był przekroczony już na koniec Phase 7 (843.20 kB,
+  `git stash` na 8c2f0af) — nie jest to regresja wprowadzona przez Phase 8, którego reguły CSS
+  dodały 0.16 kB (843.20 → 843.36 kB). `npm run build` kończy się z kodem 0 mimo ostrzeżenia
+  (próg błędu to 1 MB), więc zadanie CI `frontend-e2e-theme`, które ten build uruchamia, zostaje
+  zielone. Zgodnie z celem wydajnościowym z `plan.md` ("brak wzrostu bundla ponad istniejący
+  budżet") — sprawdzone, cel spełniony; samo zejście poniżej 500 kB wymagałoby osobnej inicjatywy
+  (code-splitting/lazy-loading Angular Material), poza zakresem tego feature'u kolorystycznego.
+- **T064**: §1 (`npm test`) 144/144 zielone, w tym wszystkie pięć zestawów z tabeli quickstart.md.
+  §2 — build + `http-server` + `playwright test e2e/us2-theme-*.spec.ts e2e/us5-theme-*.spec.ts`
+  na wszystkich czterech projektach: 56 passed, 4 skipped (CDP-owy test zoomu, celowo tylko
+  Chromium). §3 sprawdzenia ręczne 1–6 (przełączenie z wypełnionym formularzem, wylogowanie, tryb
+  prywatny, dwie karty, zmiana motywu systemu, schemat uzębienia) zweryfikowane wcześniej w
+  Phase 4–7 (patrz T044, T033/T037/T038, T048); sprawdzenie 7 (wydruk z motywu ciemnego)
+  zweryfikowane w tym miejscu dla T058, łącznie z wykryciem i naprawą brakującego `!important`.
+  `git diff --stat` całego feature'u (Phase 1–8) ogranicza się do `CLAUDE.md`, `design/brand/`,
+  `frontend/` i `.github/workflows/ci.yml` (T043) — `backend/`, `patient-service/`, `helm/`,
+  `infra/` bez zmian, potwierdzając ocenę bramki bezpieczeństwa z `plan.md`.
