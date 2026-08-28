@@ -237,7 +237,7 @@ poziomego przewijania oraz osiągalność przełącznika.
 - [X] T060 Zweryfikuj, że kontrolki przeglądarki (pola formularza, autouzupełnianie, paski przewijania, natywne okna dialogowe) przyjmują motyw aplikacji, a nie systemu operacyjnego; dopisz sprawdzenie do `frontend/e2e/us5-theme-contrast.spec.ts` (FR-026)
 - [X] T061 [P] Zaktualizuj `design/brand/README.md` — dopisz siedem nowych ról, sekcję o pułapce `--mat-sys-primary` i odnośnik do wdrożonych tokenów
 - [X] T062 [P] Udokumentuj system motywów w `CLAUDE.md` — jak przełączać, gdzie leży źródło prawdy tokenów, dlaczego audyt jest w Vitest a nie w Playwrighcie. Przy okazji popraw dwie nieaktualne informacje w tym pliku: twierdzenie o braku kodu aplikacji oraz wersję konstytucji (jest 1.5.0, nie 1.3.1)
-- [ ] T063 Sprawdź budżet bundla po zmianach — `initial` musi zmieścić się w ostrzeżeniu 500 kB z `frontend/angular.json`
+- [X] T063 Sprawdź budżet bundla po zmianach — `initial` musi zmieścić się w ostrzeżeniu 500 kB z `frontend/angular.json`
 - [X] T064 Wykonaj pełną walidację wg `specs/003-brand-ui-theme/quickstart.md` — sekcje 1–3, w tym siedem sprawdzeń ręcznych i potwierdzenie przez `git diff --stat`, że `backend/`, `patient-service/`, `helm/` i `infra/` są bez zmian
 
 ---
