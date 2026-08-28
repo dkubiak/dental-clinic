@@ -9,7 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "serve:dist": "http-server dist/dental-clinic-frontend/browser -p 4200",
+    "serve:dist": "http-server dist/dental-clinic-frontend/browser -p 4200 --proxy http://localhost:4200?",
     "e2e:theme": "playwright test e2e/us2-theme-toggle.spec.ts e2e/us5-theme-contrast.spec.ts",
     "lint": "eslint .",
     "format": "prettier --write ."

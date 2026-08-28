@@ -409,3 +409,22 @@ rozjazd na trzy niezależne strumienie: US2, US3, US5.
   `git diff --stat` całego feature'u (Phase 1–8) ogranicza się do `CLAUDE.md`, `design/brand/`,
   `frontend/` i `.github/workflows/ci.yml` (T043) — `backend/`, `patient-service/`, `helm/`,
   `infra/` bez zmian, potwierdzając ocenę bramki bezpieczeństwa z `plan.md`.
+- **Usterka w `serve:dist` wykryta na pierwszym prawdziwym uruchomieniu `frontend-e2e-theme`
+  na GitHub Actions (PR #8), niewykryta wcześniej lokalnie**: `http-server dist/.../browser -p
+  4200` (T002) nie ma fallbacku SPA — serwuje wyłącznie realne pliki, więc każde żądanie do
+  trasy Angulara innej niż `/` (np. `/login`, `/password-reset/request`) dostaje 404 zamiast
+  `index.html`. Sprawdzenie gotowości w `ci.yml` odpytuje tylko `/`, które istnieje jako plik,
+  więc przechodziło mimo że aplikacja nigdy się nie renderowała pod żadną inną trasą — 48/60
+  testów motywu failowało ze `getByTestId('theme-toggle')` nie znalezione, bo strona to była
+  strona błędu `http-server`, nie Angular. Naprawione dopisaniem `--proxy
+  http://localhost:4200?` do `serve:dist` w `package.json` (konsumowane przez `ci.yml` i
+  `quickstart.md` §2 bez zmian w nich samych, poza tym samym poprawieniem przykładu w
+  quickstart.md). Zweryfikowane dokładnie tą samą komendą co CI (`npm run serve:dist` +
+  `npm run e2e:theme`): 56 passed, 4 skipped. Własna weryfikacja T064 w Phase 8 nie wykryła
+  tego, bo do ręcznego sprawdzenia użyto `http-server` z dopisaną ad hoc flagą `--proxy` (po
+  natrafieniu na ten sam problem 404 przy okazji sprawdzania T058/T059), a nie samego skryptu
+  `serve:dist` — dopiero pierwsze uruchomienie `frontend-e2e-theme` na GitHub Actions (a nie
+  lokalnie) użyło `npm run serve:dist` dosłownie i ujawniło usterkę. Nieznane, czy wcześniejsze
+  zielone przebiegi z Phase 5/7 (T043, T057) rzeczywiście uruchamiały się na CI, czy tylko
+  lokalnie innym sposobem — to była pierwsza faktyczna egzekucja tego zadania CI na GitHub
+  Actions w historii tej gałęzi.

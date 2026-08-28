@@ -68,7 +68,7 @@ To samo dla parzystości ról — usuń wartość `dark` dowolnej roli i sprawd�
 ```bash
 cd frontend
 npm run build
-npx http-server dist/dental-clinic-frontend/browser -p 4200 &
+npx http-server dist/dental-clinic-frontend/browser -p 4200 --proxy http://localhost:4200? &
 E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/us[25]-theme-*.spec.ts
 ```
 
