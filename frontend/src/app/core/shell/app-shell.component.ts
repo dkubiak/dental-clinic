@@ -6,6 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../auth/auth.service';
 import { AuthState, StaffRole } from '../auth/auth-state';
 import { BrandMarkComponent } from '../../shared/brand-mark/brand-mark.component';
+import { ThemeToggleComponent } from '../theme/theme-toggle.component';
 
 /**
  * Persistent, mobile-first shell (research.md #8, #9; Principle IV) wrapping every authenticated
@@ -29,12 +30,14 @@ import { BrandMarkComponent } from '../../shared/brand-mark/brand-mark.component
     MatIconModule,
     MatToolbarModule,
     BrandMarkComponent,
+    ThemeToggleComponent,
   ],
   template: `
     <mat-toolbar color="primary" class="toolbar">
       <app-brand-mark class="brand-mark" />
       <span class="title">Kartoteka pacjentów</span>
       <span class="spacer"></span>
+      <app-theme-toggle />
       <nav class="nav-desktop">
         @for (link of navLinks(); track link.path) {
           <a mat-button [routerLink]="link.path">{{ link.label }}</a>
@@ -78,6 +81,13 @@ import { BrandMarkComponent } from '../../shared/brand-mark/brand-mark.component
       display: block;
       min-height: 100vh;
       padding-bottom: 56px; /* room for the mobile bottom nav */
+    }
+
+    .toolbar {
+      /* Toolbar background is always the accent plane (color="primary"), so focus indicators
+         inside it need the on-accent variant — plain focus-ring only reaches 2.97:1 here,
+         below the 3:1 floor from FR-020 (contracts/design-tokens.md "Fokus"). */
+      --pu-focus-ring: var(--pu-focus-ring-on-accent);
     }
 
     .brand-mark {

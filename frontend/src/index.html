@@ -7,6 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script>
+      try {
+        var t = localStorage.getItem('pu.theme');
+        document.documentElement.style.colorScheme =
+          t === 'light' || t === 'dark' ? t : 'light dark';
+      } catch (e) {
+        document.documentElement.style.colorScheme = 'light dark';
+      }
+    </script>
   </head>
   <body class="mat-typography">
     <app-root></app-root>

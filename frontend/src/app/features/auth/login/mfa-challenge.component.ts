@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { roleHomeRoute } from '../../../core/auth/role-home-route';
+import { ThemeToggleComponent } from '../../../core/theme/theme-toggle.component';
 import { LoginFlowState } from './login-flow-state';
 
 /**
@@ -28,9 +29,11 @@ import { LoginFlowState } from './login-flow-state';
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    ThemeToggleComponent,
   ],
   template: `
     <div class="mfa-page">
+      <app-theme-toggle class="theme-toggle" />
       <mat-card class="mfa-card">
         <mat-card-header>
           <mat-card-title>Weryfikacja dwuskładnikowa</mat-card-title>
@@ -83,9 +86,16 @@ import { LoginFlowState } from './login-flow-state';
   `,
   styles: `
     .mfa-page {
+      position: relative;
       display: flex;
       justify-content: center;
       padding: 16px;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1;
     }
     .mfa-card {
       width: 100%;

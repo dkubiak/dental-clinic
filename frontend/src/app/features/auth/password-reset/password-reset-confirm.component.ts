@@ -13,6 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ThemeToggleComponent } from '../../../core/theme/theme-toggle.component';
 
 /**
  * T051 — self-service password reset, step 2: consume the reset token and set a new password
@@ -30,9 +31,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    ThemeToggleComponent,
   ],
   template: `
     <div class="reset-page">
+      <app-theme-toggle class="theme-toggle" />
       <mat-card class="reset-card">
         <mat-card-header>
           <mat-card-title>Ustaw nowe hasło</mat-card-title>
@@ -88,9 +91,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   `,
   styles: `
     .reset-page {
+      position: relative;
       display: flex;
       justify-content: center;
       padding: 16px;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1;
     }
     .reset-card {
       width: 100%;

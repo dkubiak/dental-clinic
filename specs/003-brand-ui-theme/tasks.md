@@ -156,21 +156,21 @@ został odtworzony; powtórz w trybie prywatnym i sprawdź, że nie pojawia się
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T033 [P] [US2] Napisz **czerwony** `frontend/src/app/core/theme/theme.service.spec.ts` — zapis i odczyt klucza `pu.theme`, wartość nieznana traktowana jak brak wpisu, wyjątek przy odczycie i zapisie nie propaguje, `resolved` śledzi `prefers-color-scheme` tylko w stanie `system`, jawny wybór wygrywa ze zmianą systemu, zdarzenie `storage` z innej karty stosuje zmianę, klucz `pu.theme` pozostaje nietknięty po symulacji wylogowania (FR-011, US2 scenariusz 7)
-- [ ] T034 [P] [US2] Napisz **czerwony** `frontend/src/app/core/theme/theme-toggle.component.spec.ts` — przełącznik ma `data-testid="theme-toggle"`, dostępną nazwę komunikującą stan i skutek, jest osiągalny klawiaturą
-- [ ] T035 [P] [US2] Napisz **czerwony** `frontend/e2e/us2-theme-toggle.spec.ts` — przełącznik obecny na ekranie logowania przed uwierzytelnieniem, przełączenie bez przeładowania i bez utraty wpisanych danych, trwałość po odświeżeniu, brak błysku przy zapamiętanym motywie ciemnym, propagacja między dwiema kartami
+- [X] T033 [P] [US2] Napisz **czerwony** `frontend/src/app/core/theme/theme.service.spec.ts` — zapis i odczyt klucza `pu.theme`, wartość nieznana traktowana jak brak wpisu, wyjątek przy odczycie i zapisie nie propaguje, `resolved` śledzi `prefers-color-scheme` tylko w stanie `system`, jawny wybór wygrywa ze zmianą systemu, zdarzenie `storage` z innej karty stosuje zmianę, klucz `pu.theme` pozostaje nietknięty po symulacji wylogowania (FR-011, US2 scenariusz 7)
+- [X] T034 [P] [US2] Napisz **czerwony** `frontend/src/app/core/theme/theme-toggle.component.spec.ts` — przełącznik ma `data-testid="theme-toggle"`, dostępną nazwę komunikującą stan i skutek, jest osiągalny klawiaturą
+- [X] T035 [P] [US2] Napisz **czerwony** `frontend/e2e/us2-theme-toggle.spec.ts` — przełącznik obecny na ekranie logowania przed uwierzytelnieniem, przełączenie bez przeładowania i bez utraty wpisanych danych, trwałość po odświeżeniu, brak błysku przy zapamiętanym motywie ciemnym, propagacja między dwiema kartami
 
 ### Implementation for User Story 2
 
-- [ ] T036 [US2] Zaimplementuj `frontend/src/app/core/theme/theme.service.ts` — sygnały `choice` i `resolved`, metody `set()` i `toggle()`, ustawianie `color-scheme` na `document.documentElement` wg `contracts/theme-preference.md` §3
-- [ ] T037 [US2] Otocz każdy dostęp do `localStorage` w `frontend/src/app/core/theme/theme.service.ts` blokiem `try/catch` — w trybie prywatnym rzuca sam **odczyt**, nie tylko zapis; nieznana wartość równa się brakowi wpisu (FR-014)
-- [ ] T038 [US2] Dodaj w `frontend/src/app/core/theme/theme.service.ts` nasłuch zdarzenia `storage` na kluczu `pu.theme`, stosujący zmianę w pozostałych kartach urządzenia (research.md R10)
-- [ ] T039 [US2] Zaimplementuj `frontend/src/app/core/theme/theme-toggle.component.ts` — kontrolka przełączająca z `data-testid="theme-toggle"`, dostępną nazwą i widocznym fokusem korzystającym z roli `focus-ring`
-- [ ] T040 [US2] Osadź przełącznik w pasku `frontend/src/app/core/shell/app-shell.component.ts`
-- [ ] T041 [US2] Osadź przełącznik na czterech ekranach przed zalogowaniem: `frontend/src/app/features/auth/login/login.component.ts`, `frontend/src/app/features/auth/login/mfa-challenge.component.ts`, `frontend/src/app/features/auth/password-reset/password-reset-request.component.ts`, `frontend/src/app/features/auth/password-reset/password-reset-confirm.component.ts` (FR-008: przełącznik działa także bez sesji)
-- [ ] T042 [US2] Dodaj synchroniczny skrypt inline w `<head>` pliku `frontend/src/index.html`, ustawiający `color-scheme` przed pierwszym malowaniem, odporny na wyjątek z `localStorage` (research.md R8, FR-027)
-- [ ] T043 [US2] Dodaj zadanie `frontend-e2e-theme` w `.github/workflows/ci.yml` — build, statyczny serwer, `npx playwright test e2e/us2-theme-*.spec.ts`; **nie ruszaj** wyłączonego zadania `frontend-e2e` (research.md R6)
-- [ ] T044 [US2] Zweryfikuj brak utraty stanu przy przełączeniu — otwórz ekran z `frontend/src/app/features/patients/patient-create/patient-create.component.ts`, wypełnij pola, przełącz motyw, potwierdź, że dane i pozycja przewijania zostały (FR-009)
+- [X] T036 [US2] Zaimplementuj `frontend/src/app/core/theme/theme.service.ts` — sygnały `choice` i `resolved`, metody `set()` i `toggle()`, ustawianie `color-scheme` na `document.documentElement` wg `contracts/theme-preference.md` §3
+- [X] T037 [US2] Otocz każdy dostęp do `localStorage` w `frontend/src/app/core/theme/theme.service.ts` blokiem `try/catch` — w trybie prywatnym rzuca sam **odczyt**, nie tylko zapis; nieznana wartość równa się brakowi wpisu (FR-014)
+- [X] T038 [US2] Dodaj w `frontend/src/app/core/theme/theme.service.ts` nasłuch zdarzenia `storage` na kluczu `pu.theme`, stosujący zmianę w pozostałych kartach urządzenia (research.md R10)
+- [X] T039 [US2] Zaimplementuj `frontend/src/app/core/theme/theme-toggle.component.ts` — kontrolka przełączająca z `data-testid="theme-toggle"`, dostępną nazwą i widocznym fokusem korzystającym z roli `focus-ring`
+- [X] T040 [US2] Osadź przełącznik w pasku `frontend/src/app/core/shell/app-shell.component.ts`
+- [X] T041 [US2] Osadź przełącznik na czterech ekranach przed zalogowaniem: `frontend/src/app/features/auth/login/login.component.ts`, `frontend/src/app/features/auth/login/mfa-challenge.component.ts`, `frontend/src/app/features/auth/password-reset/password-reset-request.component.ts`, `frontend/src/app/features/auth/password-reset/password-reset-confirm.component.ts` (FR-008: przełącznik działa także bez sesji)
+- [X] T042 [US2] Dodaj synchroniczny skrypt inline w `<head>` pliku `frontend/src/index.html`, ustawiający `color-scheme` przed pierwszym malowaniem, odporny na wyjątek z `localStorage` (research.md R8, FR-027)
+- [X] T043 [US2] Dodaj zadanie `frontend-e2e-theme` w `.github/workflows/ci.yml` — build, statyczny serwer, `npx playwright test e2e/us2-theme-*.spec.ts`; **nie ruszaj** wyłączonego zadania `frontend-e2e` (research.md R6)
+- [X] T044 [US2] Zweryfikuj brak utraty stanu przy przełączeniu — otwórz ekran z `frontend/src/app/features/patients/patient-create/patient-create.component.ts`, wypełnij pola, przełącz motyw, potwierdź, że dane i pozycja przewijania zostały (FR-009)
 
 **Checkpoint**: Przełącznik działa na każdym ekranie, jest bramkowany w CI.
 

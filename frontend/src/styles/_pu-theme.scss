@@ -29,6 +29,12 @@ html {
   --mat-button-outlined-label-text-color: light-dark(#7A5A2E, #E3C9A6);
   --mat-button-protected-label-text-color: light-dark(#7A5A2E, #E3C9A6);
 
+  // Wskaźnik fokusu (contracts/design-tokens.md §1 "Fokus") — osobna rola dla fokusu na
+  // płaszczyźnie akcentu jest konieczna: zwykły focus-ring na accent daje 2.97:1, poniżej
+  // progu 3:1 z FR-020.
+  --pu-focus-ring: light-dark(#7A5A2E, #E3C9A6);
+  --pu-focus-ring-on-accent: light-dark(#4E3A1F, #1A1819);
+
   // Schemat uzębienia — role klinicznie znaczące, poza zestawem tokenów Material (contracts/
   // design-tokens.md §1). Zaznaczenie przechodzi z obcego marce błękitu #1a73e8 na złoto/brąz.
   --pu-tooth-healthy-fill: light-dark(#FFFFFF, #363233);

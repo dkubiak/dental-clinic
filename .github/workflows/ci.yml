@@ -84,6 +84,59 @@ jobs:
         working-directory: frontend
         run: npm test
 
+  frontend-e2e-theme:
+    name: Frontend (Playwright, theme — no backend needed)
+    runs-on: ubuntu-latest
+    needs: [frontend-unit]
+    # US2 (theme toggle) runs entirely against the static build — the toggle must work before
+    # authentication (FR-008), so unlike frontend-e2e below, this job needs no Postgres/LocalStack
+    # (research.md R6, quickstart.md §4).
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps
+
+      - name: Build app
+        working-directory: frontend
+        run: npm run build
+
+      - name: Serve build
+        working-directory: frontend
+        run: |
+          npm run serve:dist &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4200 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "static server did not become ready" >&2
+          exit 1
+
+      - name: Run theme e2e specs
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:4200
+        run: npx playwright test e2e/us2-theme-toggle.spec.ts
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-theme
+          path: frontend/playwright-report
+
   frontend-e2e:
     name: Frontend (Playwright, mobile-first)
     runs-on: ubuntu-latest
