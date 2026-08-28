@@ -188,16 +188,16 @@ w symulacji deuteranopii oraz w skali szarości.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T045 [P] [US3] Napisz **czerwony** `frontend/src/app/shared/status/status-indicator.component.spec.ts` — każdy z czterech typów (sukces, ostrzeżenie, błąd, informacja) renderuje kolor **oraz** etykietę tekstową lub ikonę; brak drugiego sygnału kończy się porażką (FR-019)
-- [ ] T046 [P] [US3] Napisz **czerwony** test drugiego sygnału na schemacie uzębienia w `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts` — stan chory MUSI być odróżnialny od zdrowego atrybutem innym niż wypełnienie
+- [X] T045 [P] [US3] Napisz **czerwony** `frontend/src/app/shared/status/status-indicator.component.spec.ts` — każdy z czterech typów (sukces, ostrzeżenie, błąd, informacja) renderuje kolor **oraz** etykietę tekstową lub ikonę; brak drugiego sygnału kończy się porażką (FR-019)
+- [X] T046 [P] [US3] Napisz **czerwony** test drugiego sygnału na schemacie uzębienia w `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts` — stan chory MUSI być odróżnialny od zdrowego atrybutem innym niż wypełnienie
 
 ### Implementation for User Story 3
 
-- [ ] T047 [US3] Zaimplementuj `frontend/src/app/shared/status/status-indicator.component.ts` — wspólny komponent stanu kodujący typ kolorem i ikoną plus etykietą, korzystający z ról funkcyjnych systemu
-- [ ] T048 [US3] Dodaj drugi sygnał niezależny od koloru do `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` — wypełnienia zdrowy/chory dają wobec siebie **1.23:1** (jasny) i **1.09:1** (ciemny), więc sam kolor nie przenosi tu informacji klinicznej; to zadanie funkcjonalne, nie kosmetyczne (contracts/design-tokens.md §2)
+- [X] T047 [US3] Zaimplementuj `frontend/src/app/shared/status/status-indicator.component.ts` — wspólny komponent stanu kodujący typ kolorem i ikoną plus etykietą, korzystający z ról funkcyjnych systemu
+- [X] T048 [US3] Dodaj drugi sygnał niezależny od koloru do `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` — wypełnienia zdrowy/chory dają wobec siebie **1.23:1** (jasny) i **1.09:1** (ciemny), więc sam kolor nie przenosi tu informacji klinicznej; to zadanie funkcjonalne, nie kosmetyczne (contracts/design-tokens.md §2)
 - [ ] T049 [US3] Zastosuj `status-indicator` do ostrzeżenia o alergii w `frontend/src/app/features/patients/patient-detail/patient-detail.component.ts`, nadając mu wagę wizualnie silniejszą niż komunikaty niekrytyczne (US3 scenariusz 4)
-- [ ] T050 [US3] Zweryfikuj w `frontend/src/app/shared/status/status-indicator.component.ts` rozróżnialność roli `warning` od roli `accent` w obu motywach — kolor ostrzeżenia jest celowo bardziej pomarańczowy niż złoto (FR-006)
-- [ ] T051 [US3] Wykonaj sprawdzenie w symulacji deuteranopii i protanopii dla czterech typów komunikatu renderowanych przez `frontend/src/app/shared/status/status-indicator.component.ts`, w obu motywach (US3 scenariusz 3)
+- [X] T050 [US3] Zweryfikuj w `frontend/src/app/shared/status/status-indicator.component.ts` rozróżnialność roli `warning` od roli `accent` w obu motywach — kolor ostrzeżenia jest celowo bardziej pomarańczowy niż złoto (FR-006)
+- [X] T051 [US3] Wykonaj sprawdzenie w symulacji deuteranopii i protanopii dla czterech typów komunikatu renderowanych przez `frontend/src/app/shared/status/status-indicator.component.ts`, w obu motywach (US3 scenariusz 3)
 
 **Checkpoint**: Znaczenie nigdy nie zależy wyłącznie od koloru.
 
@@ -347,3 +347,14 @@ rozjazd na trzy niezależne strumienie: US2, US3, US5.
 - Trzy wyzwalacze unieważniające ocenę bramki bezpieczeństwa (`plan.md`): zależność
   `ThemeService` od `AuthService`, preferencja w profilu lub cookie, wpis w logu audytowym.
   Jeżeli którykolwiek zajdzie — zatrzymaj się, zaktualizuj plan i wyłącz auto-merge
+- **T049 zablokowane (wykryte podczas implementacji Phase 6)**: zadanie zakłada, że kartoteka
+  pacjenta ma pole "alergia" (spec.md US3 scenariusz 4: "Given kartoteka pacjenta z odnotowaną
+  alergią"). Takie pole nie istnieje nigdzie w kodzie ani w module 002 (`PatientDetail` w
+  `patients.models.ts` ma tylko dane podstawowe + adres) — spec tego feature'u zakłada dane
+  pacjenta, których 002 nigdy nie zbudował. Dodanie realnego pola "alergia" byłoby zmianą modelu
+  danych pacjenta (RODO Art. 9, Principle II/III), wymagającą własnej specyfikacji/planu i
+  odblokowującą wymóg udokumentowanego przeglądu bezpieczeństwa, którego plan.md tego feature'u
+  wprost unika (Constitution Check, "brak wymogu udokumentowanego przeglądu"). T045/T047
+  (status-indicator) i T048 (drugi sygnał na schemacie uzębienia) są zrobione i niezależne od
+  T049. T050/T051 zweryfikowane symulacją ślepoty barw na maketach z prawdziwymi tokenami —
+  patrz komentarz w `status-indicator.component.ts`.

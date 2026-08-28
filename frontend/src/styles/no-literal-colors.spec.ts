@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// Dwanaście ekranów aplikacji personelu — jedyne miejsca, gdzie kolor mógłby wyciec poza
-// system tokenów (plan.md, Project Structure). Ścieżki względem `frontend/src/`.
+// Dwanaście ekranów aplikacji personelu z planu (plan.md, Project Structure), plus komponenty
+// współdzielone dodane później (US2 przełącznik motywu, US3 status-indicator) — każde miejsce,
+// gdzie kolor mógłby wyciec poza system tokenów. Ścieżki względem `frontend/src/`.
 const COMPONENT_FILES = [
   'app/core/shell/app-shell.component.ts',
   'app/features/auth/login/login.component.ts',
@@ -17,6 +18,8 @@ const COMPONENT_FILES = [
   'app/features/patients/tooth-chart/tooth-chart.component.ts',
   'app/features/admin/accounts/accounts.component.ts',
   'app/features/admin/audit-log/audit-log.component.ts',
+  'app/core/theme/theme-toggle.component.ts',
+  'app/shared/status/status-indicator.component.ts',
 ];
 
 const NAMED_CSS_COLORS = [

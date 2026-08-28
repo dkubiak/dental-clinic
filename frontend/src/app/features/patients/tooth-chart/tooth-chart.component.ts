@@ -40,6 +40,7 @@ function toothPosition(toothNumber: number): { x: number; y: number } {
           class="tooth"
           [class.sick]="tooth.status === 'SICK'"
           [class.selected]="selectedTooth() === tooth.toothNumber"
+          [attr.stroke-dasharray]="tooth.status === 'SICK' ? '3 2' : null"
           (click)="select(tooth.toothNumber)"
         />
       }

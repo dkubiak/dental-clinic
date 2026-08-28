@@ -35,6 +35,17 @@ html {
   --pu-focus-ring: light-dark(#7A5A2E, #E3C9A6);
   --pu-focus-ring-on-accent: light-dark(#4E3A1F, #1A1819);
 
+  // Kolory funkcyjne (contracts/design-tokens.md §1 "Kontrapunkt i kolory funkcyjne") — status-
+  // indicator (US3) i inne komunikaty stanu. `error`/`on-error` już istnieją jako --mat-sys-error
+  // przez $overrides; success/warning/info nie mają odpowiednika w Material, więc jako zwykłe
+  // właściwości CSS, tak jak role uzębienia i fokusu powyżej.
+  --pu-success: light-dark(#2E6B45, #6FBF8E);
+  --pu-on-success: light-dark(#FAF7F2, #1A1819);
+  --pu-warning: light-dark(#9A5B00, #E8A33D);
+  --pu-on-warning: light-dark(#FAF7F2, #1A1819);
+  --pu-info: light-dark(#3B5A7A, #8FB2D6);
+  --pu-on-info: light-dark(#FAF7F2, #1A1819);
+
   // Schemat uzębienia — role klinicznie znaczące, poza zestawem tokenów Material (contracts/
   // design-tokens.md §1). Zaznaczenie przechodzi z obcego marce błękitu #1a73e8 na złoto/brąz.
   --pu-tooth-healthy-fill: light-dark(#FFFFFF, #363233);
