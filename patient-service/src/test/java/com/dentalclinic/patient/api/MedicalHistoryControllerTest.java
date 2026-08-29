@@ -378,4 +378,151 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2));
   }
+
+  // ---------------------------------------------------------------------------------------
+  // Chronic conditions (US3)
+  // ---------------------------------------------------------------------------------------
+
+  @Test
+  void doctor_canAddAndReadChronicConditions_andItWritesAuditEntries() throws Exception {
+    UUID id = createPatient("91011502117");
+    long addedBefore = countEntries("MEDICAL_HISTORY_ENTRY_ADDED");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Cukrzyca typu 2","clinicalStatus":"ACTIVE","diagnosisDate":"2020-03-15"}
+                    """))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("Cukrzyca typu 2"))
+        .andExpect(jsonPath("$.clinicalStatus").value("ACTIVE"));
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1));
+
+    assertThat(countEntries("MEDICAL_HISTORY_ENTRY_ADDED")).isEqualTo(addedBefore + 1);
+  }
+
+  @Test
+  void emptyPatient_returnsEmptyArray_forChronicConditions() throws Exception {
+    UUID id = createPatient("91011502124");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void assistant_canReadChronicConditions_butCannotAddThem() throws Exception {
+    UUID id = createPatient("91011502131");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("ASSISTANT")))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("ASSISTANT"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Astma","clinicalStatus":"ACTIVE","diagnosisDate":"2020-01-01"}
+                    """))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void reception_isDenied404_onChronicConditionsReadAndWrite() throws Exception {
+    UUID id = createPatient("91011502148");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("RECEPTION")))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("RECEPTION"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Astma","clinicalStatus":"ACTIVE","diagnosisDate":"2020-01-01"}
+                    """))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void chronicConditionCorrection_hidesSupersededFromDefaultView_butHistoryShowsBoth()
+      throws Exception {
+    UUID id = createPatient("91011502155");
+
+    var createResult =
+        mockMvc
+            .perform(
+                post("/patients/" + id + "/chronic-conditions")
+                    .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                    .cookie(CSRF_TOKEN_COOKIE)
+                    .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                    .contentType(APPLICATION_JSON)
+                    .content(
+                        """
+                        {"name":"Cukrzyca typu 2","clinicalStatus":"ACTIVE","diagnosisDate":"2020-03-15"}
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn();
+    String originalId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Cukrzyca typu 2","clinicalStatus":"PAST","diagnosisDate":"2020-03-15",
+                     "supersedesEntryId":"%s"}
+                    """
+                        .formatted(originalId)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.clinicalStatus").value("PAST"));
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].clinicalStatus").value("PAST"));
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/chronic-conditions/history")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2));
+  }
 }

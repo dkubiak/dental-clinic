@@ -248,49 +248,49 @@ independently — without allergy or medication data present.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T036 [P] [US3] Failing JUnit test proving `clinicalStatus` and `recordStatus` are independent
+- [X] T036 [P] [US3] Failing JUnit test proving `clinicalStatus` and `recordStatus` are independent
   state machines on the same entity (a correction can flip `clinicalStatus` alone, or neither, or
   both); and that blank `name` is rejected while arbitrary free text (no dictionary check) is
   accepted (FR-011) in
   `patient-service/src/test/java/com/dentalclinic/patient/medicalhistory/ChronicConditionEntryServiceTest.java`
-- [ ] T037 [US3] Failing JUnit API/RBAC test extending `MedicalHistoryControllerTest.java` (T007)
+- [X] T037 [US3] Failing JUnit API/RBAC test extending `MedicalHistoryControllerTest.java` (T007)
   with chronic-condition cases: DOCTOR add/view, ASSISTANT read-only, RECEPTION 404,
   current-vs-history split, a patient with zero chronic-condition entries returns `200` with an
   empty array (FR-012), audit rows with `metadata.entryType = CHRONIC_CONDITION`
-- [ ] T038 [P] [US3] Failing Vitest test for `medical-history.service.ts`'s chronic-condition
+- [X] T038 [P] [US3] Failing Vitest test for `medical-history.service.ts`'s chronic-condition
   methods (`getChronicConditions`, `getChronicConditionHistory`, `addChronicCondition`) in
   `frontend/src/app/features/patients/medical-history/medical-history.service.spec.ts`
-- [ ] T039 [P] [US3] Failing Vitest test extending `medical-history.component.spec.ts` (T009) with
+- [X] T039 [P] [US3] Failing Vitest test extending `medical-history.component.spec.ts` (T009) with
   the chronic-conditions section: empty state ("brak odnotowanych chorób"), list with clinical
   status and diagnosis date, add form
 
 ### Implementation for User Story 3
 
-- [ ] T040 [US3] Create `ChronicConditionEntry` JPA entity (name, clinicalStatus, diagnosisDate,
+- [X] T040 [US3] Create `ChronicConditionEntry` JPA entity (name, clinicalStatus, diagnosisDate,
   recordStatus, supersedesEntryId, createdAt, createdBy) in
   `patient-service/src/main/java/com/dentalclinic/patient/medicalhistory/ChronicConditionEntry.java`
-- [ ] T041 [P] [US3] Create `ChronicConditionStatus` enum (`ACTIVE`, `PAST`) in
+- [X] T041 [P] [US3] Create `ChronicConditionStatus` enum (`ACTIVE`, `PAST`) in
   `patient-service/src/main/java/com/dentalclinic/patient/medicalhistory/ChronicConditionStatus.java`
-- [ ] T042 [US3] Create `ChronicConditionEntryRepository` in
+- [X] T042 [US3] Create `ChronicConditionEntryRepository` in
   `patient-service/src/main/java/com/dentalclinic/patient/medicalhistory/ChronicConditionEntryRepository.java`
   (depends on T040)
-- [ ] T043 [US3] Add chronic-condition methods (`getCurrentChronicConditions`,
+- [X] T043 [US3] Add chronic-condition methods (`getCurrentChronicConditions`,
   `getChronicConditionHistory`, `addChronicCondition`) to `MedicalHistoryService.java` (depends on
   T042, T014)
-- [ ] T044 [P] [US3] Create `ChronicConditionEntryResponse` and `ChronicConditionCreateRequest`
+- [X] T044 [P] [US3] Create `ChronicConditionEntryResponse` and `ChronicConditionCreateRequest`
   records in
   `patient-service/src/main/java/com/dentalclinic/patient/api/ChronicConditionEntryResponse.java`
   and
   `patient-service/src/main/java/com/dentalclinic/patient/api/ChronicConditionCreateRequest.java`
-- [ ] T045 [US3] Add `GET/POST /patients/{patientId}/chronic-conditions` and
+- [X] T045 [US3] Add `GET/POST /patients/{patientId}/chronic-conditions` and
   `GET /patients/{patientId}/chronic-conditions/history` endpoints to
   `MedicalHistoryController.java` with the same `@PreAuthorize` rules (depends on T043, T044)
-- [ ] T046 [P] [US3] Add `ChronicConditionEntry` TypeScript type to `patients.models.ts`
-- [ ] T047 [US3] Add `getChronicConditions`, `getChronicConditionHistory`,
+- [X] T046 [P] [US3] Add `ChronicConditionEntry` TypeScript type to `patients.models.ts`
+- [X] T047 [US3] Add `getChronicConditions`, `getChronicConditionHistory`,
   `addChronicCondition` methods to `medical-history.service.ts` (depends on T046)
-- [ ] T048 [US3] Add the chronic-conditions section (list, empty state, "Historia zmian",
+- [X] T048 [US3] Add the chronic-conditions section (list, empty state, "Historia zmian",
   DOCTOR-only add form) to `medical-history.component.ts` (depends on T047)
-- [ ] T049 [US3] Extend `PatientExportService`/`PatientFullExportResponse` to include
+- [X] T049 [US3] Extend `PatientExportService`/`PatientFullExportResponse` to include
   `chronicConditions` (full history) (depends on T043)
 
 **Checkpoint**: All three user stories are independently functional; "Historia medyczna" tab is

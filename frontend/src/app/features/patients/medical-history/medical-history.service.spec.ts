@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AllergyEntry, MedicationEntry } from '../patients.models';
+import { AllergyEntry, ChronicConditionEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 
 describe('MedicalHistoryService', () => {
@@ -113,5 +113,56 @@ describe('MedicalHistoryService', () => {
       startDate: '2026-01-01',
     });
     req.flush(medication);
+  });
+
+  const chronicCondition: ChronicConditionEntry = {
+    id: 'c1',
+    name: 'Cukrzyca typu 2',
+    clinicalStatus: 'ACTIVE',
+    diagnosisDate: '2020-03-15',
+    recordStatus: 'CURRENT',
+    supersedesEntryId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('getChronicConditions calls GET /patients/:id/chronic-conditions', () => {
+    service.getChronicConditions('p1').subscribe((result) => {
+      expect(result).toEqual([chronicCondition]);
+    });
+
+    const req = httpMock.expectOne('/patients/p1/chronic-conditions');
+    expect(req.request.method).toBe('GET');
+    req.flush([chronicCondition]);
+  });
+
+  it('getChronicConditionHistory calls GET /patients/:id/chronic-conditions/history', () => {
+    service.getChronicConditionHistory('p1').subscribe((result) => {
+      expect(result).toEqual([chronicCondition]);
+    });
+
+    const req = httpMock.expectOne('/patients/p1/chronic-conditions/history');
+    expect(req.request.method).toBe('GET');
+    req.flush([chronicCondition]);
+  });
+
+  it('addChronicCondition calls POST /patients/:id/chronic-conditions with the request body', () => {
+    service
+      .addChronicCondition('p1', {
+        name: 'Cukrzyca typu 2',
+        clinicalStatus: 'ACTIVE',
+        diagnosisDate: '2020-03-15',
+      })
+      .subscribe((result) => {
+        expect(result).toEqual(chronicCondition);
+      });
+
+    const req = httpMock.expectOne('/patients/p1/chronic-conditions');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      name: 'Cukrzyca typu 2',
+      clinicalStatus: 'ACTIVE',
+      diagnosisDate: '2020-03-15',
+    });
+    req.flush(chronicCondition);
   });
 });

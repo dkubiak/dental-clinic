@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthState } from '../../../core/auth/auth-state';
 import { StatusIndicatorComponent } from '../../../shared/status/status-indicator.component';
-import { AllergyEntry, MedicationEntry } from '../patients.models';
+import { AllergyEntry, ChronicConditionEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 
 /**
@@ -157,6 +157,76 @@ import { MedicalHistoryService } from './medical-history.service';
         </form>
       }
     </section>
+
+    <section class="history-section">
+      <h2>Choroby przewlekłe/przebyte</h2>
+
+      @if (currentChronicConditions().length === 0) {
+        <p data-testid="chronic-conditions-empty">brak odnotowanych chorób</p>
+      } @else {
+        <ul class="entry-list">
+          @for (entry of currentChronicConditions(); track entry.id) {
+            <li [attr.data-testid]="'chronic-condition-' + entry.id">
+              {{ entry.name }} — {{ entry.clinicalStatus }} (rozpoznano {{ entry.diagnosisDate }})
+            </li>
+          }
+        </ul>
+      }
+
+      <button
+        mat-button
+        type="button"
+        data-testid="toggle-chronic-condition-history"
+        (click)="toggleChronicConditionHistory()"
+      >
+        Historia zmian
+      </button>
+
+      @if (showChronicConditionHistory()) {
+        <ul class="entry-list history">
+          @for (entry of chronicConditionHistory(); track entry.id) {
+            @if (entry.recordStatus === 'SUPERSEDED') {
+              <li [attr.data-testid]="'chronic-condition-' + entry.id" class="superseded">
+                {{ entry.name }} — {{ entry.clinicalStatus }} (rozpoznano {{ entry.diagnosisDate }})
+                — nieaktualny
+              </li>
+            }
+          }
+        </ul>
+      }
+
+      @if (canEdit()) {
+        <form
+          data-testid="add-chronic-condition-form"
+          [formGroup]="chronicConditionForm"
+          (ngSubmit)="submitChronicCondition()"
+        >
+          <mat-form-field appearance="outline">
+            <mat-label>Nazwa choroby</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="clinicalStatus">
+              <mat-option value="ACTIVE">aktywna</mat-option>
+              <mat-option value="PAST">przebyta</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Data rozpoznania</mat-label>
+            <input matInput type="date" formControlName="diagnosisDate" />
+          </mat-form-field>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="chronicConditionForm.invalid"
+          >
+            Dodaj chorobę
+          </button>
+        </form>
+      }
+    </section>
   `,
   styles: `
     .history-section {
@@ -194,6 +264,10 @@ export class MedicalHistoryComponent implements OnInit {
   readonly medicationHistory = signal<MedicationEntry[]>([]);
   readonly showMedicationHistory = signal(false);
 
+  readonly currentChronicConditions = signal<ChronicConditionEntry[]>([]);
+  readonly chronicConditionHistory = signal<ChronicConditionEntry[]>([]);
+  readonly showChronicConditionHistory = signal(false);
+
   // FR-004 — ASSISTANT has the same read scope as DOCTOR but no edit rights; RECEPTION never
   // reaches this component (patient-detail's canViewMedicalHistory guard). UX-only mirror of the
   // backend's @PreAuthorize — the 404 it returns on POST is the real boundary.
@@ -211,9 +285,16 @@ export class MedicalHistoryComponent implements OnInit {
     startDate: ['', Validators.required],
   });
 
+  readonly chronicConditionForm = this.formBuilder.nonNullable.group({
+    name: ['', Validators.required],
+    clinicalStatus: ['ACTIVE' as 'ACTIVE' | 'PAST', Validators.required],
+    diagnosisDate: ['', Validators.required],
+  });
+
   ngOnInit(): void {
     this.loadCurrentAllergies();
     this.loadCurrentMedications();
+    this.loadCurrentChronicConditions();
   }
 
   private loadCurrentAllergies(): void {
@@ -271,6 +352,35 @@ export class MedicalHistoryComponent implements OnInit {
       .subscribe(() => {
         this.medicationForm.reset({ name: '', dosage: '', startDate: '' });
         this.loadCurrentMedications();
+      });
+  }
+
+  private loadCurrentChronicConditions(): void {
+    this.medicalHistoryService
+      .getChronicConditions(this.patientId())
+      .subscribe((entries) => this.currentChronicConditions.set(entries));
+  }
+
+  toggleChronicConditionHistory(): void {
+    if (this.showChronicConditionHistory()) {
+      this.showChronicConditionHistory.set(false);
+      return;
+    }
+    this.medicalHistoryService.getChronicConditionHistory(this.patientId()).subscribe((entries) => {
+      this.chronicConditionHistory.set(entries);
+      this.showChronicConditionHistory.set(true);
+    });
+  }
+
+  submitChronicCondition(): void {
+    if (this.chronicConditionForm.invalid) {
+      return;
+    }
+    this.medicalHistoryService
+      .addChronicCondition(this.patientId(), this.chronicConditionForm.getRawValue())
+      .subscribe(() => {
+        this.chronicConditionForm.reset({ name: '', clinicalStatus: 'ACTIVE', diagnosisDate: '' });
+        this.loadCurrentChronicConditions();
       });
   }
 }

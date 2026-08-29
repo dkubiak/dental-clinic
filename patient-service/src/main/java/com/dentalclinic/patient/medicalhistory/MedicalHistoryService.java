@@ -22,6 +22,7 @@ public class MedicalHistoryService {
 
   private final AllergyEntryRepository allergyEntryRepository;
   private final MedicationEntryRepository medicationEntryRepository;
+  private final ChronicConditionEntryRepository chronicConditionEntryRepository;
   private final PatientRecordRepository patientRecordRepository;
   private final PatientAuditWriter auditWriter;
   private final ObjectMapper objectMapper;
@@ -29,11 +30,13 @@ public class MedicalHistoryService {
   public MedicalHistoryService(
       AllergyEntryRepository allergyEntryRepository,
       MedicationEntryRepository medicationEntryRepository,
+      ChronicConditionEntryRepository chronicConditionEntryRepository,
       PatientRecordRepository patientRecordRepository,
       PatientAuditWriter auditWriter,
       ObjectMapper objectMapper) {
     this.allergyEntryRepository = allergyEntryRepository;
     this.medicationEntryRepository = medicationEntryRepository;
+    this.chronicConditionEntryRepository = chronicConditionEntryRepository;
     this.patientRecordRepository = patientRecordRepository;
     this.auditWriter = auditWriter;
     this.objectMapper = objectMapper;
@@ -41,6 +44,8 @@ public class MedicalHistoryService {
 
   private static final String ALLERGY_METADATA = "{\"entryType\":\"ALLERGY\"}";
   private static final String MEDICATION_METADATA = "{\"entryType\":\"MEDICATION\"}";
+  private static final String CHRONIC_CONDITION_METADATA =
+      "{\"entryType\":\"CHRONIC_CONDITION\"}";
 
   /**
    * @throws PatientNotFoundException no patient record with this id exists.
@@ -198,6 +203,92 @@ public class MedicalHistoryService {
     return entry;
   }
 
+  /**
+   * @throws PatientNotFoundException no patient record with this id exists.
+   */
+  public List<ChronicConditionEntry> getCurrentChronicConditions(UUID patientId, UUID actorId) {
+    requirePatientExists(patientId);
+    List<ChronicConditionEntry> entries =
+        chronicConditionEntryRepository.findByPatientRecordIdAndRecordStatusOrderByCreatedAtDesc(
+            patientId, RecordStatus.CURRENT);
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_ENTRY_VIEWED,
+        actorId,
+        patientId,
+        null,
+        null,
+        CHRONIC_CONDITION_METADATA);
+    return entries;
+  }
+
+  /**
+   * @throws PatientNotFoundException no patient record with this id exists.
+   */
+  public List<ChronicConditionEntry> getChronicConditionHistory(UUID patientId, UUID actorId) {
+    requirePatientExists(patientId);
+    List<ChronicConditionEntry> entries =
+        chronicConditionEntryRepository.findByPatientRecordIdOrderByCreatedAtDesc(patientId);
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_HISTORY_VIEWED,
+        actorId,
+        patientId,
+        null,
+        null,
+        CHRONIC_CONDITION_METADATA);
+    return entries;
+  }
+
+  /**
+   * FR-010 — same correction semantics as {@link #addAllergy}; {@code clinicalStatus} may also
+   * change on a correction (Clarifications Session 2026-08-29 Q1) — that's an independent field,
+   * not a second correction mechanism.
+   *
+   * @throws PatientNotFoundException no patient record, or (if set) no superseded entry, exists.
+   * @throws IllegalArgumentException {@code name} is blank (FR-011).
+   */
+  @Transactional
+  public ChronicConditionEntry addChronicCondition(
+      UUID patientId,
+      String name,
+      ChronicConditionStatus clinicalStatus,
+      LocalDate diagnosisDate,
+      UUID supersedesEntryId,
+      UUID actorId) {
+    requirePatientExists(patientId);
+    requireNonBlank(name, "name");
+
+    String beforeJson = null;
+    if (supersedesEntryId != null) {
+      ChronicConditionEntry superseded =
+          chronicConditionEntryRepository
+              .findById(supersedesEntryId)
+              .orElseThrow(PatientNotFoundException::new);
+      beforeJson = toJson(superseded);
+      superseded.supersede();
+      chronicConditionEntryRepository.save(superseded);
+    }
+
+    ChronicConditionEntry entry =
+        new ChronicConditionEntry(
+            UUID.randomUUID(),
+            patientId,
+            name,
+            clinicalStatus,
+            diagnosisDate,
+            supersedesEntryId,
+            actorId);
+    chronicConditionEntryRepository.save(entry);
+
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_ENTRY_ADDED,
+        actorId,
+        patientId,
+        beforeJson,
+        toJson(entry),
+        CHRONIC_CONDITION_METADATA);
+    return entry;
+  }
+
   /** FR-005/FR-006 — computed per request, no caching/denormalization (data-model.md). */
   public boolean hasCriticalAllergyAlert(UUID patientId) {
     return allergyEntryRepository.existsByPatientRecordIdAndRecordStatusAndSeverity(
@@ -228,9 +319,24 @@ public class MedicalHistoryService {
             entry.getName(), entry.getDosage(), entry.getStartDate(), entry.getRecordStatus()));
   }
 
+  private String toJson(ChronicConditionEntry entry) {
+    return objectMapper.writeValueAsString(
+        new ChronicConditionSnapshot(
+            entry.getName(),
+            entry.getClinicalStatus(),
+            entry.getDiagnosisDate(),
+            entry.getRecordStatus()));
+  }
+
   private record AllergySnapshot(
       String substance, String reactionType, AllergySeverity severity, RecordStatus recordStatus) {}
 
   private record MedicationSnapshot(
       String name, String dosage, LocalDate startDate, RecordStatus recordStatus) {}
+
+  private record ChronicConditionSnapshot(
+      String name,
+      ChronicConditionStatus clinicalStatus,
+      LocalDate diagnosisDate,
+      RecordStatus recordStatus) {}
 }

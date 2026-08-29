@@ -86,3 +86,24 @@ export interface MedicationCreateRequest {
   startDate: string;
   supersedesEntryId?: string | null;
 }
+
+export type ChronicConditionStatus = 'ACTIVE' | 'PAST';
+
+/** Mirrors backend ChronicConditionEntryResponse (contracts/patient-api.yaml ChronicConditionEntry schema). */
+export interface ChronicConditionEntry {
+  id: string;
+  name: string;
+  clinicalStatus: ChronicConditionStatus;
+  diagnosisDate: string;
+  recordStatus: RecordStatus;
+  supersedesEntryId: string | null;
+  createdAt: string;
+}
+
+/** Mirrors backend ChronicConditionCreateRequest (contracts/patient-api.yaml ChronicConditionCreateRequest schema). */
+export interface ChronicConditionCreateRequest {
+  name: string;
+  clinicalStatus: ChronicConditionStatus;
+  diagnosisDate: string;
+  supersedesEntryId?: string | null;
+}

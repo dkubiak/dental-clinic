@@ -15,7 +15,8 @@ public record PatientFullExportResponse(
     List<ToothStateResponse> toothChart,
     List<Object> visitHistory,
     List<AllergyEntryResponse> allergies,
-    List<MedicationEntryResponse> medications) {
+    List<MedicationEntryResponse> medications,
+    List<ChronicConditionEntryResponse> chronicConditions) {
 
   public static PatientFullExportResponse from(PatientExport export) {
     boolean hasCriticalAllergyAlert =
@@ -28,6 +29,7 @@ public record PatientFullExportResponse(
         export.toothChart().stream().map(ToothStateResponse::from).toList(),
         List.of(),
         export.allergies().stream().map(AllergyEntryResponse::from).toList(),
-        export.medications().stream().map(MedicationEntryResponse::from).toList());
+        export.medications().stream().map(MedicationEntryResponse::from).toList(),
+        export.chronicConditions().stream().map(ChronicConditionEntryResponse::from).toList());
   }
 }

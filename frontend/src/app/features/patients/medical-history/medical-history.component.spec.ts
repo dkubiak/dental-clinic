@@ -3,7 +3,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthState } from '../../../core/auth/auth-state';
-import { AllergyEntry, MedicationEntry } from '../patients.models';
+import { AllergyEntry, ChronicConditionEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 import { MedicalHistoryComponent } from './medical-history.component';
 
@@ -18,6 +18,9 @@ describe('MedicalHistoryComponent', () => {
     getMedications: ReturnType<typeof vi.fn>;
     getMedicationHistory: ReturnType<typeof vi.fn>;
     addMedication: ReturnType<typeof vi.fn>;
+    getChronicConditions: ReturnType<typeof vi.fn>;
+    getChronicConditionHistory: ReturnType<typeof vi.fn>;
+    addChronicCondition: ReturnType<typeof vi.fn>;
   };
 
   const criticalAllergy: AllergyEntry = {
@@ -52,6 +55,9 @@ describe('MedicalHistoryComponent', () => {
       getMedications: vi.fn().mockReturnValue(of([])),
       getMedicationHistory: vi.fn().mockReturnValue(of([])),
       addMedication: vi.fn(),
+      getChronicConditions: vi.fn().mockReturnValue(of([])),
+      getChronicConditionHistory: vi.fn().mockReturnValue(of([])),
+      addChronicCondition: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -185,6 +191,66 @@ describe('MedicalHistoryComponent', () => {
       name: 'Ibuprofen',
       dosage: '400mg',
       startDate: '2026-01-01',
+    });
+  });
+
+  const chronicCondition: ChronicConditionEntry = {
+    id: 'c1',
+    name: 'Cukrzyca typu 2',
+    clinicalStatus: 'ACTIVE',
+    diagnosisDate: '2020-03-15',
+    recordStatus: 'CURRENT',
+    supersedesEntryId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('shows the empty state when there are no chronic-condition entries', () => {
+    createComponent();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('brak odnotowanych chorób');
+  });
+
+  it('renders a chronic-condition entry with its clinical status and diagnosis date', () => {
+    medicalHistoryService.getChronicConditions.mockReturnValue(of([chronicCondition]));
+    createComponent();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Cukrzyca typu 2');
+    expect(text).toContain('2020-03-15');
+    expect(text).toContain('ACTIVE');
+  });
+
+  it('shows the add-chronic-condition form only for DOCTOR', () => {
+    authState.setRole('ASSISTANT');
+    createComponent();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="add-chronic-condition-form"]'),
+    ).toBeNull();
+
+    authState.setRole('DOCTOR');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="add-chronic-condition-form"]'),
+    ).toBeTruthy();
+  });
+
+  it('submitting the add-chronic-condition form calls MedicalHistoryService.addChronicCondition', () => {
+    authState.setRole('DOCTOR');
+    medicalHistoryService.addChronicCondition.mockReturnValue(of(chronicCondition));
+    createComponent();
+
+    component.chronicConditionForm.setValue({
+      name: 'Cukrzyca typu 2',
+      clinicalStatus: 'ACTIVE',
+      diagnosisDate: '2020-03-15',
+    });
+    component.submitChronicCondition();
+
+    expect(medicalHistoryService.addChronicCondition).toHaveBeenCalledWith('p1', {
+      name: 'Cukrzyca typu 2',
+      clinicalStatus: 'ACTIVE',
+      diagnosisDate: '2020-03-15',
     });
   });
 });

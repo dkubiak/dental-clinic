@@ -52,6 +52,7 @@ describe('PatientDetailComponent', () => {
           useValue: {
             getAllergies: vi.fn().mockReturnValue(of([])),
             getMedications: vi.fn().mockReturnValue(of([])),
+            getChronicConditions: vi.fn().mockReturnValue(of([])),
           },
         },
         {

@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import {
   AllergyCreateRequest,
   AllergyEntry,
+  ChronicConditionCreateRequest,
+  ChronicConditionEntry,
   MedicationCreateRequest,
   MedicationEntry,
 } from '../patients.models';
@@ -40,5 +42,25 @@ export class MedicalHistoryService {
 
   addMedication(patientId: string, request: MedicationCreateRequest): Observable<MedicationEntry> {
     return this.http.post<MedicationEntry>(`/patients/${patientId}/medications`, request);
+  }
+
+  getChronicConditions(patientId: string): Observable<ChronicConditionEntry[]> {
+    return this.http.get<ChronicConditionEntry[]>(`/patients/${patientId}/chronic-conditions`);
+  }
+
+  getChronicConditionHistory(patientId: string): Observable<ChronicConditionEntry[]> {
+    return this.http.get<ChronicConditionEntry[]>(
+      `/patients/${patientId}/chronic-conditions/history`,
+    );
+  }
+
+  addChronicCondition(
+    patientId: string,
+    request: ChronicConditionCreateRequest,
+  ): Observable<ChronicConditionEntry> {
+    return this.http.post<ChronicConditionEntry>(
+      `/patients/${patientId}/chronic-conditions`,
+      request,
+    );
   }
 }

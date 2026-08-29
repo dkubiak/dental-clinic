@@ -105,6 +105,45 @@ public class MedicalHistoryController {
     return ResponseEntity.status(HttpStatus.CREATED).body(MedicationEntryResponse.from(entry));
   }
 
+  @GetMapping("/patients/{patientId}/chronic-conditions")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<List<ChronicConditionEntryResponse>> getCurrentChronicConditions(
+      @PathVariable UUID patientId, Principal principal) {
+    List<ChronicConditionEntryResponse> entries =
+        medicalHistoryService.getCurrentChronicConditions(patientId, actorId(principal)).stream()
+            .map(ChronicConditionEntryResponse::from)
+            .toList();
+    return ResponseEntity.ok(entries);
+  }
+
+  @GetMapping("/patients/{patientId}/chronic-conditions/history")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<List<ChronicConditionEntryResponse>> getChronicConditionHistory(
+      @PathVariable UUID patientId, Principal principal) {
+    List<ChronicConditionEntryResponse> entries =
+        medicalHistoryService.getChronicConditionHistory(patientId, actorId(principal)).stream()
+            .map(ChronicConditionEntryResponse::from)
+            .toList();
+    return ResponseEntity.ok(entries);
+  }
+
+  @PostMapping("/patients/{patientId}/chronic-conditions")
+  @PreAuthorize("hasRole('DOCTOR')")
+  public ResponseEntity<ChronicConditionEntryResponse> addChronicCondition(
+      @PathVariable UUID patientId,
+      @RequestBody ChronicConditionCreateRequest request,
+      Principal principal) {
+    var entry =
+        medicalHistoryService.addChronicCondition(
+            patientId,
+            request.name(),
+            request.clinicalStatus(),
+            request.diagnosisDate(),
+            request.supersedesEntryId(),
+            actorId(principal));
+    return ResponseEntity.status(HttpStatus.CREATED).body(ChronicConditionEntryResponse.from(entry));
+  }
+
   private static UUID actorId(Principal principal) {
     return UUID.fromString(principal.getName());
   }
