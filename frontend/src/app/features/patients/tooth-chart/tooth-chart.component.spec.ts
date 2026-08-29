@@ -51,6 +51,30 @@ describe('ToothChartComponent', () => {
     expect(text).toContain('11');
   });
 
+  it('marks a sick tooth with a signal other than fill color (FR-019) — fills alone are 1.23:1/1.09:1, indistinguishable', () => {
+    patientsService.getToothChart.mockReturnValue(
+      of(
+        healthyChart.map((t) =>
+          t.toothNumber === 11 ? { ...t, status: 'SICK' as const } : t,
+        ),
+      ),
+    );
+    fixture = TestBed.createComponent(ToothChartComponent);
+    component = fixture.componentInstance;
+    component.patientId = 'p1';
+    fixture.detectChanges();
+
+    const healthyTooth = fixture.nativeElement.querySelector('[data-testid="tooth-12"]');
+    const sickTooth = fixture.nativeElement.querySelector('[data-testid="tooth-11"]');
+
+    // The non-color signal must be a real attribute difference — a class name alone (which only
+    // exists to carry a color rule) would not satisfy "an attribute other than fill".
+    expect(sickTooth.getAttribute('stroke-dasharray')).not.toBe(
+      healthyTooth.getAttribute('stroke-dasharray'),
+    );
+    expect(sickTooth.getAttribute('stroke-dasharray')).toBeTruthy();
+  });
+
   it('toggling the selected tooth updates its visual (and data) state', () => {
     patientsService.setToothStatus.mockReturnValue(
       of({ toothNumber: 11, status: 'SICK', updatedAt: '2026-01-01T00:00:00Z' }),

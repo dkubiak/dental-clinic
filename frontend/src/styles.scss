@@ -1,14 +1,22 @@
 @use '@angular/material' as mat;
+@use './styles/pu-palettes' as pu-palettes;
+@use './styles/pu-theme' as pu-theme;
 
-// Angular Material default theme — no custom branding/theme (deferred to feature 002, see
-// tasks.md T049 note).
+// Motyw marki Projekt Uśmiech. `theme-type: color-scheme` (domyślny) emituje każdy token
+// koloru jako light-dark($jasny, $ciemny) — przełączanie motywu sprowadza się do ustawienia
+// właściwości CSS `color-scheme` na `<html>` (research.md R1), bez drugiego wywołania
+// mat.theme() i bez klas motywu.
 html {
   @include mat.theme(
     (
-      color: mat.$violet-palette,
+      color: (
+        primary: pu-palettes.$primary-palette,
+        tertiary: pu-palettes.$tertiary-palette,
+      ),
       typography: Roboto,
       density: 0,
-    )
+    ),
+    $overrides: pu-theme.$overrides
   );
 }
 
@@ -16,4 +24,54 @@ html,
 body {
   height: 100%;
   margin: 0;
+}
+
+// Self-hosted Material Icons ligature font (@fontsource/material-icons registers the @font-face
+// only — this class rule is normally bundled with Google's CDN stylesheet, which self-hosting
+// deliberately skips, so mat-icon's default "material-icons" fontSet needs it defined here).
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+// Wydruk MUSI NIE dziedziczyć ciemnego tła z motywu ciemnego (FR-028). Każdy token koloru
+// przechodzi przez light-dark(), więc zablokowanie color-scheme na `light` dla samego wydruku
+// wystarcza — niezależnie od wyboru ThemeService czy preferencji systemu. `!important` jest
+// konieczny: ThemeService.applyToDocument() ustawia `color-scheme` jako STYL WBUDOWANY na
+// <html> (research.md R1), a styl wbudowany bije każdą regułę arkusza, także wewnątrz media
+// query — bez `!important` ta reguła zostałaby cicho przegłosowana przy motywie ciemnym.
+// Reguła znaczenia kodowanego kolorem przetrwa utratę koloru: status-indicator (US3) niesie je
+// ikoną i etykietą, a schemat uzębienia wzorem kreski (stroke-dasharray) i grubością obrysu, nie
+// samym wypełnieniem — patrz status-indicator.component.ts i tooth-chart.component.ts.
+@media print {
+  html {
+    color-scheme: light !important;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+// Windows High Contrast i pokrewne tryby (FR-021). Aplikacja pozostaje użyteczna bez dodatkowych
+// reguł koloru, bo oba drugie sygnały opisane wyżej nie zależą od koloru — przeglądarka i tak
+// wymusza własną paletę na tle/tekście/obrysach. Jedyny wyjątek dopisany jawnie: pierścień fokusu
+// (theme-toggle.component.ts i inne) MUSI pozostać widoczny jako obrys systemowy zamiast zniknąć
+// razem z paletą marki.
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
 }

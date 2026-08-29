@@ -68,4 +68,16 @@ describe('AppShellComponent', () => {
     );
     expect(newPatientButton).toBeFalsy();
   });
+
+  it('renders the brand mark in the toolbar with an accessible name (FR-023)', async () => {
+    await setup();
+    authState.setRole('RECEPTION');
+    fixture.detectChanges();
+
+    const mark = fixture.nativeElement.querySelector('[data-testid="brand-mark"]');
+
+    expect(mark).toBeTruthy();
+    expect(mark.getAttribute('role')).toBe('img');
+    expect(mark.getAttribute('aria-label')).toBe('Projekt Uśmiech');
+  });
 });

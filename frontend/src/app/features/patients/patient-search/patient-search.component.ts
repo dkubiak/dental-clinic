@@ -61,7 +61,7 @@ import { PatientSummary } from '../patients.models';
       flex: 1 1 240px;
     }
     .pesel {
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--mat-sys-on-surface-variant);
     }
   `,
 })

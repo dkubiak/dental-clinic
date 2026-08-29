@@ -40,6 +40,7 @@ function toothPosition(toothNumber: number): { x: number; y: number } {
           class="tooth"
           [class.sick]="tooth.status === 'SICK'"
           [class.selected]="selectedTooth() === tooth.toothNumber"
+          [attr.stroke-dasharray]="tooth.status === 'SICK' ? '3 2' : null"
           (click)="select(tooth.toothNumber)"
         />
       }
@@ -60,16 +61,17 @@ function toothPosition(toothNumber: number): { x: number; y: number } {
       max-width: 360px;
     }
     .tooth {
-      fill: #ffffff;
-      stroke: #666;
+      fill: var(--pu-tooth-healthy-fill);
+      stroke: var(--pu-tooth-healthy-stroke);
       stroke-width: 1;
       cursor: pointer;
     }
     .tooth.sick {
-      fill: #f3b0ae;
+      fill: var(--pu-tooth-diseased-fill);
+      stroke: var(--pu-tooth-diseased-stroke);
     }
     .tooth.selected {
-      stroke: #1a73e8;
+      stroke: var(--pu-tooth-selected-stroke);
       stroke-width: 2;
     }
     .tooth-detail {

@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PatientsService } from '../patients.service';
+import { ThemeService } from '../../../core/theme/theme.service';
 import { PatientCreateComponent } from './patient-create.component';
 
 describe('PatientCreateComponent', () => {
@@ -84,5 +85,15 @@ describe('PatientCreateComponent', () => {
     fixture.detectChanges();
 
     expect(component.errorMessage()).toContain('PESEL');
+  });
+
+  it('keeps unsaved form data when the theme is toggled mid-entry (T044, FR-009)', () => {
+    fillRequiredFields();
+    const beforeToggle = component.form.getRawValue();
+
+    TestBed.inject(ThemeService).toggle();
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue()).toEqual(beforeToggle);
   });
 });

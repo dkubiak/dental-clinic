@@ -1,0 +1,91 @@
+// Projekt Uśmiech — tokeny kolorystyczne (v1)
+//
+// Wartości złota i grafitu są próbkowane bezpośrednio z pliku logo, nie dobrane
+// ręcznie: #CBAD89 to mediana złotych pikseli, #2E2C2D to dominanta tła.
+// Wszystkie pary tekst/tło zweryfikowane pod WCAG 2.1 AA.
+//
+// UWAGA — jedyna pułapka tej palety: Gold 400 na jasnym tle ma kontrast 1.99:1.
+// Na papierze złoto występuje wyłącznie jako PŁASZCZYZNA (tło przycisku, linia,
+// kreska boczna) z ciemnym napisem. Złoty TEKST na jasnym tle to Bronze 800.
+
+// ── marka: złoto ─────────────────────────────────────────────────────────────
+$pu-gold-100: #F5E4CE; // wash, tło sekcji
+$pu-gold-200: #F2D5B3; // refleks z logo; 12.57:1 na graficie 900
+$pu-gold-300: #E3C9A6; // tekst na ciemnym; 11.08:1 na graficie 900
+$pu-gold-400: #CBAD89; // RDZEŃ marki; 8.31:1 na graficie 900, 7.88:1 pod $pu-ink
+$pu-gold-500: #B2946E; // hover przycisku głównego
+$pu-gold-600: #A78A68; // obramowania; 3.03:1 na papierze — nie na tekst
+$pu-gold-700: #8A6634; // ikony / duży tekst na papierze; 4.88:1 AA
+$pu-gold-800: #7A5A2E; // BRONZE — tekst i linki na papierze; 5.90:1 AA
+$pu-gold-900: #4E3A1F; // tekst na złotym tle; 10.08:1 na papierze AAA
+
+// ── grafit ───────────────────────────────────────────────────────────────────
+$pu-graphite-900: #1A1819; // najgłębsze tło
+$pu-graphite-800: #222222;
+$pu-graphite-700: #2E2C2D; // RDZEŃ — główna powierzchnia ciemna
+$pu-graphite-600: #363233; // warstwa uniesiona / hover
+$pu-graphite-500: #504C4B; // obramowania na ciemnym
+
+// ── neutrale ciepłe (podbite w stronę złota — zimne szarości sinieją) ────────
+$pu-paper:     #FAF7F2; // tło jasnego motywu; nigdy czysta biel
+$pu-sand-100:  #F2EDE6;
+$pu-sand-200:  #E6DFD5; // obramowania na jasnym
+$pu-stone-500: #8C8480; // placeholder / disabled; 3.43:1 — nie na treść
+$pu-stone-700: #5C5654; // tekst drugorzędny; 6.74:1 AA
+$pu-ink:       #1F1D1E; // tekst główny; 15.69:1 na papierze AAA
+
+// ── eukaliptus (jedyny chłodny kolor; zamiast dentystycznego błękitu) ────────
+$pu-euc-100: #D7E8E4;
+$pu-euc-300: #7FB3AA; // tekst na ciemnym; 7.51:1 AAA
+$pu-euc-500: #3E7A72; // wypełnienia, wykresy; 4.64:1 na papierze AA
+$pu-euc-700: #2F5D57; // tekst na papierze; 6.96:1 AAA
+
+// ── funkcyjne (jasny motyw / ciemny motyw) ───────────────────────────────────
+$pu-success:      #2E6B45; $pu-success-dark: #6FBF8E; // 5.95 / 6.29
+$pu-warning:      #9A5B00; $pu-warning-dark: #E8A33D; // 5.08 / 6.43
+$pu-error:        #A33A32; $pu-error-dark:   #E88178; // 6.12 / 5.18
+$pu-info:         #3B5A7A; $pu-info-dark:    #8FB2D6; // 6.71 / 6.28
+
+// ── schemat uzębienia (stan chory NIE może być kodowany wyłącznie kolorem —
+// wypełnienia zdrowy/chory dają 1.23:1 jasny / 1.09:1 ciemny; potrzebny drugi
+// sygnał niezależny od koloru, zob. contracts/design-tokens.md §2) ───────────
+$pu-tooth-diseased-fill:       #F7E3E1; $pu-tooth-diseased-fill-dark: #5A2B27;
+
+// ── role semantyczne ─────────────────────────────────────────────────────────
+:root {
+  --pu-bg:          #{$pu-paper};
+  --pu-surface:     #FFFFFF;
+  --pu-border:      #{$pu-sand-200};
+  --pu-border-strong: #7D746F; // obrys kontrolki (WCAG 1.4.11); 4.27:1 na bg
+  --pu-text:        #{$pu-ink};
+  --pu-text-muted:  #{$pu-stone-700};
+  --pu-accent:      #{$pu-gold-400}; // tylko płaszczyzna
+  --pu-accent-text: #{$pu-gold-800}; // tekst i linki
+  --pu-on-accent:   #{$pu-ink};
+  --pu-focus-ring:            #{$pu-gold-800}; // 5.90:1 na bg
+  --pu-focus-ring-on-accent:  #{$pu-gold-900}; // 5.07:1 na accent
+  --pu-tooth-healthy-fill:    #FFFFFF;
+  --pu-tooth-healthy-stroke:  #{$pu-stone-700}; // 7.21:1 na tooth-healthy-fill
+  --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill};
+  --pu-tooth-diseased-stroke: #{$pu-error}; // 5.31:1 na tooth-diseased-fill
+  --pu-tooth-selected-stroke: #{$pu-gold-800}; // 6.31:1 na tooth-healthy-fill; zastępuje obcy marce #1a73e8
+}
+
+[data-theme='dark'] {
+  --pu-bg:          #{$pu-graphite-900};
+  --pu-surface:     #{$pu-graphite-700};
+  --pu-border:      #{$pu-graphite-500};
+  --pu-border-strong: #8C8480; // 4.82:1 na bg
+  --pu-text:        #EAE4DC;
+  --pu-text-muted:  #A79E96;
+  --pu-accent:      #{$pu-gold-400};
+  --pu-accent-text: #{$pu-gold-300}; // na graficie złoto może być tekstem
+  --pu-on-accent:   #{$pu-graphite-900};
+  --pu-focus-ring:            #{$pu-gold-300}; // 11.08:1 na bg
+  --pu-focus-ring-on-accent:  #{$pu-graphite-900}; // 8.31:1 na accent
+  --pu-tooth-healthy-fill:    #{$pu-graphite-600};
+  --pu-tooth-healthy-stroke:  #A79E96; // 4.80:1 na tooth-healthy-fill
+  --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill-dark};
+  --pu-tooth-diseased-stroke: #{$pu-error-dark}; // 4.33:1 na tooth-diseased-fill
+  --pu-tooth-selected-stroke: #{$pu-gold-300}; // 7.93:1 na tooth-healthy-fill
+}
