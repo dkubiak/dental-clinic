@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AllergyCreateRequest, AllergyEntry } from '../patients.models';
+import {
+  AllergyCreateRequest,
+  AllergyEntry,
+  MedicationCreateRequest,
+  MedicationEntry,
+} from '../patients.models';
 
 /**
  * Calls the {@code /patients/{id}/{allergies,medications,chronic-conditions}[/history]} endpoints
@@ -23,5 +28,17 @@ export class MedicalHistoryService {
 
   addAllergy(patientId: string, request: AllergyCreateRequest): Observable<AllergyEntry> {
     return this.http.post<AllergyEntry>(`/patients/${patientId}/allergies`, request);
+  }
+
+  getMedications(patientId: string): Observable<MedicationEntry[]> {
+    return this.http.get<MedicationEntry[]>(`/patients/${patientId}/medications`);
+  }
+
+  getMedicationHistory(patientId: string): Observable<MedicationEntry[]> {
+    return this.http.get<MedicationEntry[]>(`/patients/${patientId}/medications/history`);
+  }
+
+  addMedication(patientId: string, request: MedicationCreateRequest): Observable<MedicationEntry> {
+    return this.http.post<MedicationEntry>(`/patients/${patientId}/medications`, request);
   }
 }

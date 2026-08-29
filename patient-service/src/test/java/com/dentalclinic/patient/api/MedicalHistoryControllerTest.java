@@ -234,4 +234,148 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
         .andExpect(jsonPath("$.length()").value(2));
     assertThat(countEntries("MEDICAL_HISTORY_HISTORY_VIEWED")).isEqualTo(historyBefore + 1);
   }
+
+  // ---------------------------------------------------------------------------------------
+  // Medications (US2)
+  // ---------------------------------------------------------------------------------------
+
+  @Test
+  void doctor_canAddAndReadMedications_andItWritesAuditEntries() throws Exception {
+    UUID id = createPatient("91011502063");
+    long addedBefore = countEntries("MEDICAL_HISTORY_ENTRY_ADDED");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Ibuprofen","dosage":"400mg 2x/dzień","startDate":"2026-01-01"}
+                    """))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("Ibuprofen"));
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1));
+
+    assertThat(countEntries("MEDICAL_HISTORY_ENTRY_ADDED")).isEqualTo(addedBefore + 1);
+  }
+
+  @Test
+  void emptyPatient_returnsEmptyArray_forMedications() throws Exception {
+    UUID id = createPatient("91011502070");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void assistant_canReadMedications_butCannotAddThem() throws Exception {
+    UUID id = createPatient("91011502087");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("ASSISTANT")))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("ASSISTANT"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Ibuprofen","dosage":"400mg","startDate":"2026-01-01"}
+                    """))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void reception_isDenied404_onMedicationsReadAndWrite() throws Exception {
+    UUID id = createPatient("91011502094");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("RECEPTION")))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("RECEPTION"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Ibuprofen","dosage":"400mg","startDate":"2026-01-01"}
+                    """))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void medicationCorrection_hidesSupersededFromDefaultView_butHistoryShowsBoth() throws Exception {
+    UUID id = createPatient("91011502100");
+
+    var createResult =
+        mockMvc
+            .perform(
+                post("/patients/" + id + "/medications")
+                    .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                    .cookie(CSRF_TOKEN_COOKIE)
+                    .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                    .contentType(APPLICATION_JSON)
+                    .content(
+                        """
+                        {"name":"Ibuprofen","dosage":"400mg","startDate":"2026-01-01"}
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn();
+    String originalId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"name":"Ibuprofen","dosage":"200mg","startDate":"2026-01-01",
+                     "supersedesEntryId":"%s"}
+                    """
+                        .formatted(originalId)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].dosage").value("200mg"));
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/medications/history")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2));
+  }
 }

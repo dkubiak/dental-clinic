@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AllergyEntry } from '../patients.models';
+import { AllergyEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 
 describe('MedicalHistoryService', () => {
@@ -66,5 +66,52 @@ describe('MedicalHistoryService', () => {
       severity: 'CRITICAL',
     });
     req.flush(allergy);
+  });
+
+  const medication: MedicationEntry = {
+    id: 'm1',
+    name: 'Ibuprofen',
+    dosage: '400mg 2x/dzień',
+    startDate: '2026-01-01',
+    recordStatus: 'CURRENT',
+    supersedesEntryId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('getMedications calls GET /patients/:id/medications', () => {
+    service.getMedications('p1').subscribe((result) => {
+      expect(result).toEqual([medication]);
+    });
+
+    const req = httpMock.expectOne('/patients/p1/medications');
+    expect(req.request.method).toBe('GET');
+    req.flush([medication]);
+  });
+
+  it('getMedicationHistory calls GET /patients/:id/medications/history', () => {
+    service.getMedicationHistory('p1').subscribe((result) => {
+      expect(result).toEqual([medication]);
+    });
+
+    const req = httpMock.expectOne('/patients/p1/medications/history');
+    expect(req.request.method).toBe('GET');
+    req.flush([medication]);
+  });
+
+  it('addMedication calls POST /patients/:id/medications with the request body', () => {
+    service
+      .addMedication('p1', { name: 'Ibuprofen', dosage: '400mg 2x/dzień', startDate: '2026-01-01' })
+      .subscribe((result) => {
+        expect(result).toEqual(medication);
+      });
+
+    const req = httpMock.expectOne('/patients/p1/medications');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      name: 'Ibuprofen',
+      dosage: '400mg 2x/dzień',
+      startDate: '2026-01-01',
+    });
+    req.flush(medication);
   });
 });

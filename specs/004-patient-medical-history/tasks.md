@@ -192,43 +192,43 @@ with its start date and is audit-logged — without any allergy or chronic-condi
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T023 [P] [US2] Failing JUnit test for medication append-only correction behavior; and that
+- [X] T023 [P] [US2] Failing JUnit test for medication append-only correction behavior; and that
   blank `name`/`dosage` is rejected while arbitrary free text (no dictionary check) is accepted
   (FR-011) in
   `patient-service/src/test/java/com/dentalclinic/patient/medicalhistory/MedicationEntryServiceTest.java`
-- [ ] T024 [US2] Failing JUnit API/RBAC test extending `MedicalHistoryControllerTest.java` (T007)
+- [X] T024 [US2] Failing JUnit API/RBAC test extending `MedicalHistoryControllerTest.java` (T007)
   with medication cases: DOCTOR add/view, ASSISTANT read-only, RECEPTION 404, current-vs-history
   split, a patient with zero medication entries returns `200` with an empty array (FR-012), audit
   rows with `metadata.entryType = MEDICATION`
-- [ ] T025 [P] [US2] Failing Vitest test for `medical-history.service.ts`'s medication methods
+- [X] T025 [P] [US2] Failing Vitest test for `medical-history.service.ts`'s medication methods
   (`getMedications`, `getMedicationHistory`, `addMedication`) in
   `frontend/src/app/features/patients/medical-history/medical-history.service.spec.ts`
-- [ ] T026 [P] [US2] Failing Vitest test extending `medical-history.component.spec.ts` (T009) with
+- [X] T026 [P] [US2] Failing Vitest test extending `medical-history.component.spec.ts` (T009) with
   the medication section: empty state ("brak odnotowanych leków"), list with start date, add form
 
 ### Implementation for User Story 2
 
-- [ ] T027 [US2] Create `MedicationEntry` JPA entity (name, dosage, startDate, recordStatus,
+- [X] T027 [US2] Create `MedicationEntry` JPA entity (name, dosage, startDate, recordStatus,
   supersedesEntryId, createdAt, createdBy) in
   `patient-service/src/main/java/com/dentalclinic/patient/medicalhistory/MedicationEntry.java`
-- [ ] T028 [US2] Create `MedicationEntryRepository` in
+- [X] T028 [US2] Create `MedicationEntryRepository` in
   `patient-service/src/main/java/com/dentalclinic/patient/medicalhistory/MedicationEntryRepository.java`
   (depends on T027)
-- [ ] T029 [US2] Add medication methods (`getCurrentMedications`, `getMedicationHistory`,
+- [X] T029 [US2] Add medication methods (`getCurrentMedications`, `getMedicationHistory`,
   `addMedication`) to `MedicalHistoryService.java` (depends on T028, T014 — same class as US1's
   allergy methods, per research.md #7's single-service decision)
-- [ ] T030 [P] [US2] Create `MedicationEntryResponse` and `MedicationCreateRequest` records in
+- [X] T030 [P] [US2] Create `MedicationEntryResponse` and `MedicationCreateRequest` records in
   `patient-service/src/main/java/com/dentalclinic/patient/api/MedicationEntryResponse.java` and
   `patient-service/src/main/java/com/dentalclinic/patient/api/MedicationCreateRequest.java`
-- [ ] T031 [US2] Add `GET/POST /patients/{patientId}/medications` and
+- [X] T031 [US2] Add `GET/POST /patients/{patientId}/medications` and
   `GET /patients/{patientId}/medications/history` endpoints to `MedicalHistoryController.java`
   with the same `@PreAuthorize` rules as allergies (depends on T029, T030)
-- [ ] T032 [P] [US2] Add `MedicationEntry` TypeScript type to `patients.models.ts`
-- [ ] T033 [US2] Add `getMedications`, `getMedicationHistory`, `addMedication` methods to
+- [X] T032 [P] [US2] Add `MedicationEntry` TypeScript type to `patients.models.ts`
+- [X] T033 [US2] Add `getMedications`, `getMedicationHistory`, `addMedication` methods to
   `medical-history.service.ts` (depends on T032)
-- [ ] T034 [US2] Add the medications section (list, empty state, "Historia zmian", DOCTOR-only add
+- [X] T034 [US2] Add the medications section (list, empty state, "Historia zmian", DOCTOR-only add
   form) to `medical-history.component.ts` (depends on T033)
-- [ ] T035 [US2] Extend `PatientExportService`/`PatientFullExportResponse` to include `medications`
+- [X] T035 [US2] Extend `PatientExportService`/`PatientFullExportResponse` to include `medications`
   (full history) (depends on T029)
 
 **Checkpoint**: User Stories 1 AND 2 both work independently.

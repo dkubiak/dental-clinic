@@ -66,6 +66,45 @@ public class MedicalHistoryController {
     return ResponseEntity.status(HttpStatus.CREATED).body(AllergyEntryResponse.from(entry));
   }
 
+  @GetMapping("/patients/{patientId}/medications")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<List<MedicationEntryResponse>> getCurrentMedications(
+      @PathVariable UUID patientId, Principal principal) {
+    List<MedicationEntryResponse> entries =
+        medicalHistoryService.getCurrentMedications(patientId, actorId(principal)).stream()
+            .map(MedicationEntryResponse::from)
+            .toList();
+    return ResponseEntity.ok(entries);
+  }
+
+  @GetMapping("/patients/{patientId}/medications/history")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<List<MedicationEntryResponse>> getMedicationHistory(
+      @PathVariable UUID patientId, Principal principal) {
+    List<MedicationEntryResponse> entries =
+        medicalHistoryService.getMedicationHistory(patientId, actorId(principal)).stream()
+            .map(MedicationEntryResponse::from)
+            .toList();
+    return ResponseEntity.ok(entries);
+  }
+
+  @PostMapping("/patients/{patientId}/medications")
+  @PreAuthorize("hasRole('DOCTOR')")
+  public ResponseEntity<MedicationEntryResponse> addMedication(
+      @PathVariable UUID patientId,
+      @RequestBody MedicationCreateRequest request,
+      Principal principal) {
+    var entry =
+        medicalHistoryService.addMedication(
+            patientId,
+            request.name(),
+            request.dosage(),
+            request.startDate(),
+            request.supersedesEntryId(),
+            actorId(principal));
+    return ResponseEntity.status(HttpStatus.CREATED).body(MedicationEntryResponse.from(entry));
+  }
+
   private static UUID actorId(Principal principal) {
     return UUID.fromString(principal.getName());
   }

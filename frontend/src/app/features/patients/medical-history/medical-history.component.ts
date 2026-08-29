@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthState } from '../../../core/auth/auth-state';
 import { StatusIndicatorComponent } from '../../../shared/status/status-indicator.component';
-import { AllergyEntry } from '../patients.models';
+import { AllergyEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 
 /**
@@ -96,6 +96,67 @@ import { MedicalHistoryService } from './medical-history.service';
         </form>
       }
     </section>
+
+    <section class="history-section">
+      <h2>Przyjmowane leki</h2>
+
+      @if (currentMedications().length === 0) {
+        <p data-testid="medications-empty">brak odnotowanych leków</p>
+      } @else {
+        <ul class="entry-list">
+          @for (entry of currentMedications(); track entry.id) {
+            <li [attr.data-testid]="'medication-' + entry.id">
+              {{ entry.name }} — {{ entry.dosage }} (od {{ entry.startDate }})
+            </li>
+          }
+        </ul>
+      }
+
+      <button
+        mat-button
+        type="button"
+        data-testid="toggle-medication-history"
+        (click)="toggleMedicationHistory()"
+      >
+        Historia zmian
+      </button>
+
+      @if (showMedicationHistory()) {
+        <ul class="entry-list history">
+          @for (entry of medicationHistory(); track entry.id) {
+            @if (entry.recordStatus === 'SUPERSEDED') {
+              <li [attr.data-testid]="'medication-' + entry.id" class="superseded">
+                {{ entry.name }} — {{ entry.dosage }} (od {{ entry.startDate }}) — nieaktualny
+              </li>
+            }
+          }
+        </ul>
+      }
+
+      @if (canEdit()) {
+        <form
+          data-testid="add-medication-form"
+          [formGroup]="medicationForm"
+          (ngSubmit)="submitMedication()"
+        >
+          <mat-form-field appearance="outline">
+            <mat-label>Nazwa leku</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Dawka</mat-label>
+            <input matInput formControlName="dosage" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Data rozpoczęcia</mat-label>
+            <input matInput type="date" formControlName="startDate" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit" [disabled]="medicationForm.invalid">
+            Dodaj lek
+          </button>
+        </form>
+      }
+    </section>
   `,
   styles: `
     .history-section {
@@ -129,6 +190,10 @@ export class MedicalHistoryComponent implements OnInit {
   readonly allergyHistory = signal<AllergyEntry[]>([]);
   readonly showAllergyHistory = signal(false);
 
+  readonly currentMedications = signal<MedicationEntry[]>([]);
+  readonly medicationHistory = signal<MedicationEntry[]>([]);
+  readonly showMedicationHistory = signal(false);
+
   // FR-004 — ASSISTANT has the same read scope as DOCTOR but no edit rights; RECEPTION never
   // reaches this component (patient-detail's canViewMedicalHistory guard). UX-only mirror of the
   // backend's @PreAuthorize — the 404 it returns on POST is the real boundary.
@@ -140,8 +205,15 @@ export class MedicalHistoryComponent implements OnInit {
     severity: ['CRITICAL' as 'CRITICAL' | 'MODERATE', Validators.required],
   });
 
+  readonly medicationForm = this.formBuilder.nonNullable.group({
+    name: ['', Validators.required],
+    dosage: ['', Validators.required],
+    startDate: ['', Validators.required],
+  });
+
   ngOnInit(): void {
     this.loadCurrentAllergies();
+    this.loadCurrentMedications();
   }
 
   private loadCurrentAllergies(): void {
@@ -170,6 +242,35 @@ export class MedicalHistoryComponent implements OnInit {
       .subscribe(() => {
         this.allergyForm.reset({ substance: '', reactionType: '', severity: 'CRITICAL' });
         this.loadCurrentAllergies();
+      });
+  }
+
+  private loadCurrentMedications(): void {
+    this.medicalHistoryService
+      .getMedications(this.patientId())
+      .subscribe((entries) => this.currentMedications.set(entries));
+  }
+
+  toggleMedicationHistory(): void {
+    if (this.showMedicationHistory()) {
+      this.showMedicationHistory.set(false);
+      return;
+    }
+    this.medicalHistoryService.getMedicationHistory(this.patientId()).subscribe((entries) => {
+      this.medicationHistory.set(entries);
+      this.showMedicationHistory.set(true);
+    });
+  }
+
+  submitMedication(): void {
+    if (this.medicationForm.invalid) {
+      return;
+    }
+    this.medicalHistoryService
+      .addMedication(this.patientId(), this.medicationForm.getRawValue())
+      .subscribe(() => {
+        this.medicationForm.reset({ name: '', dosage: '', startDate: '' });
+        this.loadCurrentMedications();
       });
   }
 }

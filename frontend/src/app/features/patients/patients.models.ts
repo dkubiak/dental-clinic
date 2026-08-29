@@ -67,3 +67,22 @@ export interface AllergyCreateRequest {
   severity: AllergySeverity;
   supersedesEntryId?: string | null;
 }
+
+/** Mirrors backend MedicationEntryResponse (contracts/patient-api.yaml MedicationEntry schema). */
+export interface MedicationEntry {
+  id: string;
+  name: string;
+  dosage: string;
+  startDate: string;
+  recordStatus: RecordStatus;
+  supersedesEntryId: string | null;
+  createdAt: string;
+}
+
+/** Mirrors backend MedicationCreateRequest (contracts/patient-api.yaml MedicationCreateRequest schema). */
+export interface MedicationCreateRequest {
+  name: string;
+  dosage: string;
+  startDate: string;
+  supersedesEntryId?: string | null;
+}

@@ -3,7 +3,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthState } from '../../../core/auth/auth-state';
-import { AllergyEntry } from '../patients.models';
+import { AllergyEntry, MedicationEntry } from '../patients.models';
 import { MedicalHistoryService } from './medical-history.service';
 import { MedicalHistoryComponent } from './medical-history.component';
 
@@ -15,6 +15,9 @@ describe('MedicalHistoryComponent', () => {
     getAllergies: ReturnType<typeof vi.fn>;
     getAllergyHistory: ReturnType<typeof vi.fn>;
     addAllergy: ReturnType<typeof vi.fn>;
+    getMedications: ReturnType<typeof vi.fn>;
+    getMedicationHistory: ReturnType<typeof vi.fn>;
+    addMedication: ReturnType<typeof vi.fn>;
   };
 
   const criticalAllergy: AllergyEntry = {
@@ -46,6 +49,9 @@ describe('MedicalHistoryComponent', () => {
       getAllergies: vi.fn().mockReturnValue(of([])),
       getAllergyHistory: vi.fn().mockReturnValue(of([])),
       addAllergy: vi.fn(),
+      getMedications: vi.fn().mockReturnValue(of([])),
+      getMedicationHistory: vi.fn().mockReturnValue(of([])),
+      addMedication: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -122,6 +128,63 @@ describe('MedicalHistoryComponent', () => {
       substance: 'Penicylina',
       reactionType: 'Anafilaksja',
       severity: 'CRITICAL',
+    });
+  });
+
+  const medication: MedicationEntry = {
+    id: 'm1',
+    name: 'Ibuprofen',
+    dosage: '400mg',
+    startDate: '2026-01-01',
+    recordStatus: 'CURRENT',
+    supersedesEntryId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('shows the empty state when there are no medication entries', () => {
+    createComponent();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('brak odnotowanych leków');
+  });
+
+  it('renders a medication entry with its start date', () => {
+    medicalHistoryService.getMedications.mockReturnValue(of([medication]));
+    createComponent();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Ibuprofen');
+    expect(text).toContain('2026-01-01');
+  });
+
+  it('shows the add-medication form only for DOCTOR', () => {
+    authState.setRole('ASSISTANT');
+    createComponent();
+    expect(fixture.nativeElement.querySelector('[data-testid="add-medication-form"]')).toBeNull();
+
+    authState.setRole('DOCTOR');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="add-medication-form"]'),
+    ).toBeTruthy();
+  });
+
+  it('submitting the add-medication form calls MedicalHistoryService.addMedication', () => {
+    authState.setRole('DOCTOR');
+    medicalHistoryService.addMedication.mockReturnValue(of(medication));
+    createComponent();
+
+    component.medicationForm.setValue({
+      name: 'Ibuprofen',
+      dosage: '400mg',
+      startDate: '2026-01-01',
+    });
+    component.submitMedication();
+
+    expect(medicalHistoryService.addMedication).toHaveBeenCalledWith('p1', {
+      name: 'Ibuprofen',
+      dosage: '400mg',
+      startDate: '2026-01-01',
     });
   });
 });

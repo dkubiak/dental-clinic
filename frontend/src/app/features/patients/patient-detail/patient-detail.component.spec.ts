@@ -49,7 +49,10 @@ describe('PatientDetailComponent', () => {
         { provide: PatientsService, useValue: patientsService },
         {
           provide: MedicalHistoryService,
-          useValue: { getAllergies: vi.fn().mockReturnValue(of([])) },
+          useValue: {
+            getAllergies: vi.fn().mockReturnValue(of([])),
+            getMedications: vi.fn().mockReturnValue(of([])),
+          },
         },
         {
           provide: ActivatedRoute,

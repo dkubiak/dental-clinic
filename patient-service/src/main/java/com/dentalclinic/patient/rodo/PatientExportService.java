@@ -4,6 +4,7 @@ import com.dentalclinic.patient.audit.PatientAuditEventType;
 import com.dentalclinic.patient.audit.PatientAuditWriter;
 import com.dentalclinic.patient.medicalhistory.AllergyEntry;
 import com.dentalclinic.patient.medicalhistory.MedicalHistoryService;
+import com.dentalclinic.patient.medicalhistory.MedicationEntry;
 import com.dentalclinic.patient.record.PatientNotFoundException;
 import com.dentalclinic.patient.record.PatientRecord;
 import com.dentalclinic.patient.record.PatientRecordRepository;
@@ -48,14 +49,18 @@ public class PatientExportService {
     List<ToothState> toothChart =
         toothStateRepository.findByPatientRecordIdOrderByToothNumberAsc(patientId);
     List<AllergyEntry> allergies = medicalHistoryService.getAllergyHistory(patientId, actorId);
+    List<MedicationEntry> medications = medicalHistoryService.getMedicationHistory(patientId, actorId);
 
     auditWriter.append(
         PatientAuditEventType.PATIENT_DATA_EXPORTED, actorId, patientId, null, null, null);
 
-    return new PatientExport(record, toothChart, allergies);
+    return new PatientExport(record, toothChart, allergies, medications);
   }
 
   /** Visit history is deliberately excluded here — always empty in this version (US3). */
   public record PatientExport(
-      PatientRecord patient, List<ToothState> toothChart, List<AllergyEntry> allergies) {}
+      PatientRecord patient,
+      List<ToothState> toothChart,
+      List<AllergyEntry> allergies,
+      List<MedicationEntry> medications) {}
 }

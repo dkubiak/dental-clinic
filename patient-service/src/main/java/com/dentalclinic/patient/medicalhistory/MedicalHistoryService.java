@@ -4,6 +4,7 @@ import com.dentalclinic.patient.audit.PatientAuditEventType;
 import com.dentalclinic.patient.audit.PatientAuditWriter;
 import com.dentalclinic.patient.record.PatientNotFoundException;
 import com.dentalclinic.patient.record.PatientRecordRepository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,22 +21,26 @@ import tools.jackson.databind.ObjectMapper;
 public class MedicalHistoryService {
 
   private final AllergyEntryRepository allergyEntryRepository;
+  private final MedicationEntryRepository medicationEntryRepository;
   private final PatientRecordRepository patientRecordRepository;
   private final PatientAuditWriter auditWriter;
   private final ObjectMapper objectMapper;
 
   public MedicalHistoryService(
       AllergyEntryRepository allergyEntryRepository,
+      MedicationEntryRepository medicationEntryRepository,
       PatientRecordRepository patientRecordRepository,
       PatientAuditWriter auditWriter,
       ObjectMapper objectMapper) {
     this.allergyEntryRepository = allergyEntryRepository;
+    this.medicationEntryRepository = medicationEntryRepository;
     this.patientRecordRepository = patientRecordRepository;
     this.auditWriter = auditWriter;
     this.objectMapper = objectMapper;
   }
 
   private static final String ALLERGY_METADATA = "{\"entryType\":\"ALLERGY\"}";
+  private static final String MEDICATION_METADATA = "{\"entryType\":\"MEDICATION\"}";
 
   /**
    * @throws PatientNotFoundException no patient record with this id exists.
@@ -114,6 +119,85 @@ public class MedicalHistoryService {
     return entry;
   }
 
+  /**
+   * @throws PatientNotFoundException no patient record with this id exists.
+   */
+  public List<MedicationEntry> getCurrentMedications(UUID patientId, UUID actorId) {
+    requirePatientExists(patientId);
+    List<MedicationEntry> entries =
+        medicationEntryRepository.findByPatientRecordIdAndRecordStatusOrderByCreatedAtDesc(
+            patientId, RecordStatus.CURRENT);
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_ENTRY_VIEWED,
+        actorId,
+        patientId,
+        null,
+        null,
+        MEDICATION_METADATA);
+    return entries;
+  }
+
+  /**
+   * @throws PatientNotFoundException no patient record with this id exists.
+   */
+  public List<MedicationEntry> getMedicationHistory(UUID patientId, UUID actorId) {
+    requirePatientExists(patientId);
+    List<MedicationEntry> entries =
+        medicationEntryRepository.findByPatientRecordIdOrderByCreatedAtDesc(patientId);
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_HISTORY_VIEWED,
+        actorId,
+        patientId,
+        null,
+        null,
+        MEDICATION_METADATA);
+    return entries;
+  }
+
+  /**
+   * FR-010 — same correction semantics as {@link #addAllergy}.
+   *
+   * @throws PatientNotFoundException no patient record, or (if set) no superseded entry, exists.
+   * @throws IllegalArgumentException {@code name}/{@code dosage} is blank (FR-011).
+   */
+  @Transactional
+  public MedicationEntry addMedication(
+      UUID patientId,
+      String name,
+      String dosage,
+      LocalDate startDate,
+      UUID supersedesEntryId,
+      UUID actorId) {
+    requirePatientExists(patientId);
+    requireNonBlank(name, "name");
+    requireNonBlank(dosage, "dosage");
+
+    String beforeJson = null;
+    if (supersedesEntryId != null) {
+      MedicationEntry superseded =
+          medicationEntryRepository
+              .findById(supersedesEntryId)
+              .orElseThrow(PatientNotFoundException::new);
+      beforeJson = toJson(superseded);
+      superseded.supersede();
+      medicationEntryRepository.save(superseded);
+    }
+
+    MedicationEntry entry =
+        new MedicationEntry(
+            UUID.randomUUID(), patientId, name, dosage, startDate, supersedesEntryId, actorId);
+    medicationEntryRepository.save(entry);
+
+    auditWriter.append(
+        PatientAuditEventType.MEDICAL_HISTORY_ENTRY_ADDED,
+        actorId,
+        patientId,
+        beforeJson,
+        toJson(entry),
+        MEDICATION_METADATA);
+    return entry;
+  }
+
   /** FR-005/FR-006 — computed per request, no caching/denormalization (data-model.md). */
   public boolean hasCriticalAllergyAlert(UUID patientId) {
     return allergyEntryRepository.existsByPatientRecordIdAndRecordStatusAndSeverity(
@@ -138,6 +222,15 @@ public class MedicalHistoryService {
             entry.getSubstance(), entry.getReactionType(), entry.getSeverity(), entry.getRecordStatus()));
   }
 
+  private String toJson(MedicationEntry entry) {
+    return objectMapper.writeValueAsString(
+        new MedicationSnapshot(
+            entry.getName(), entry.getDosage(), entry.getStartDate(), entry.getRecordStatus()));
+  }
+
   private record AllergySnapshot(
       String substance, String reactionType, AllergySeverity severity, RecordStatus recordStatus) {}
+
+  private record MedicationSnapshot(
+      String name, String dosage, LocalDate startDate, RecordStatus recordStatus) {}
 }
