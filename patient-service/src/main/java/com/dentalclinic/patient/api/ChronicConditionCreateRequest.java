@@ -6,5 +6,7 @@ import java.util.UUID;
 
 /** contracts/patient-api.yaml ChronicConditionCreateRequest schema (FR-003/FR-010). */
 public record ChronicConditionCreateRequest(
-    String name, ChronicConditionStatus clinicalStatus, LocalDate diagnosisDate,
+    String name,
+    ChronicConditionStatus clinicalStatus,
+    LocalDate diagnosisDate,
     UUID supersedesEntryId) {}

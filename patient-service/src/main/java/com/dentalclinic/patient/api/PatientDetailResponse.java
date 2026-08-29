@@ -21,8 +21,8 @@ public record PatientDetailResponse(
     boolean hasCriticalAllergyAlert) {
 
   /**
-   * Added by feature 004 (004-patient-medical-history) — {@code hasCriticalAllergyAlert} carries
-   * no clinical detail by construction, so it's safe on a response RECEPTION already reads
+   * Added by feature 004 (004-patient-medical-history) — {@code hasCriticalAllergyAlert} carries no
+   * clinical detail by construction, so it's safe on a response RECEPTION already reads
    * (research.md #5).
    */
   public static PatientDetailResponse from(PatientRecord record, boolean hasCriticalAllergyAlert) {

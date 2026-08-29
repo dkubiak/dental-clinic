@@ -17,8 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code GET/POST /patients/{patientId}/{allergies,medications,chronic-conditions}[/history]} per
  * contracts/patient-api.yaml — US1/US2/US3 (FR-001/FR-002/FR-003/FR-004/FR-005/FR-010).
  * {@code @PreAuthorize} restricted to DOCTOR/ASSISTANT for reads, DOCTOR only for writes (RECEPTION
- * excluded, rbac-policy.md rule 7); deny→404 per rule 2. No {@code @PatchMapping}/{@code
- * @DeleteMapping} exists anywhere in this class — corrections are always a new POST (FR-010).
+ * excluded, rbac-policy.md rule 7); deny→404 per rule 2. No
+ * {@code @PatchMapping}/{@code @DeleteMapping} exists anywhere in this class — corrections are
+ * always a new POST (FR-010).
  */
 @RestController
 public class MedicalHistoryController {
@@ -54,7 +55,9 @@ public class MedicalHistoryController {
   @PostMapping("/patients/{patientId}/allergies")
   @PreAuthorize("hasRole('DOCTOR')")
   public ResponseEntity<AllergyEntryResponse> addAllergy(
-      @PathVariable UUID patientId, @RequestBody AllergyCreateRequest request, Principal principal) {
+      @PathVariable UUID patientId,
+      @RequestBody AllergyCreateRequest request,
+      Principal principal) {
     var entry =
         medicalHistoryService.addAllergy(
             patientId,
@@ -141,7 +144,8 @@ public class MedicalHistoryController {
             request.diagnosisDate(),
             request.supersedesEntryId(),
             actorId(principal));
-    return ResponseEntity.status(HttpStatus.CREATED).body(ChronicConditionEntryResponse.from(entry));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ChronicConditionEntryResponse.from(entry));
   }
 
   private static UUID actorId(Principal principal) {

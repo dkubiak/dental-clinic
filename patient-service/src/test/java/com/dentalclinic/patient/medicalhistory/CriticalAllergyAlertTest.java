@@ -61,7 +61,11 @@ class CriticalAllergyAlertTest extends PostgresIntegrationTestBase {
     UUID patientId = createPatient();
     AllergyEntry original =
         medicalHistoryService.addAllergy(
-            patientId, "Penicylina", "Anafilaksja", AllergySeverity.CRITICAL, null,
+            patientId,
+            "Penicylina",
+            "Anafilaksja",
+            AllergySeverity.CRITICAL,
+            null,
             UUID.randomUUID());
     medicalHistoryService.addAllergy(
         patientId,

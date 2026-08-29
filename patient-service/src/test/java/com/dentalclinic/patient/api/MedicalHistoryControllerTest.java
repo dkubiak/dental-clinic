@@ -16,10 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * T007/T024/T037 — {@code GET/POST /patients/{id}/{allergies,medications,chronic-conditions}[/history]}
- * per contracts/patient-api.yaml (FR-001..FR-012). Mirrors {@code ToothChartApiTest}'s structure:
- * 200 for DOCTOR/ASSISTANT reads, DOCTOR-only writes, 404 for RECEPTION, and every operation
- * writes the expected audit_log_entry row (metadata.entryType discriminator, research.md #2).
+ * T007/T024/T037 — {@code GET/POST
+ * /patients/{id}/{allergies,medications,chronic-conditions}[/history]} per
+ * contracts/patient-api.yaml (FR-001..FR-012). Mirrors {@code ToothChartApiTest}'s structure: 200
+ * for DOCTOR/ASSISTANT reads, DOCTOR-only writes, 404 for RECEPTION, and every operation writes the
+ * expected audit_log_entry row (metadata.entryType discriminator, research.md #2).
  */
 class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
@@ -173,9 +174,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
         .andExpect(status().isCreated());
 
     mockMvc
-        .perform(
-            get("/patients/" + id)
-                .with(user(UUID.randomUUID().toString()).roles("RECEPTION")))
+        .perform(get("/patients/" + id).with(user(UUID.randomUUID().toString()).roles("RECEPTION")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hasCriticalAllergyAlert").value(true))
         .andExpect(jsonPath("$.pesel").value("91011502049"));
@@ -199,8 +198,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
                         """))
             .andExpect(status().isCreated())
             .andReturn();
-    String originalId =
-        JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
+    String originalId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
 
     mockMvc
         .perform(

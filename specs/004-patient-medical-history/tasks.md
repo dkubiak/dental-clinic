@@ -304,17 +304,24 @@ complete.
 
 - [ ] T050 [P] Run `specs/004-patient-medical-history/quickstart.md` Scenarios 1–6 end-to-end
   against a local stack (Testcontainers Postgres + `backend` + `patient-service` + `frontend`) and
-  record results
-- [ ] T051 [P] Verify `checkstyle`/lint pass: `cd patient-service && ./gradlew build` and
-  `cd frontend && npm run lint`
-- [ ] T052 Verify no `PATCH`/`DELETE` mapping exists anywhere on
+  record results — **NOT executed**: no Docker daemon available in the `/speckit-implement`
+  environment (Testcontainers cannot start `PostgresIntegrationTestBase`'s container, confirmed via
+  `ExceptionInInitializerError` on a real test run). Must be run in an environment with Docker
+  before this PR merges.
+- [X] T051 [P] Verify `checkstyle`/lint pass: `cd patient-service && ./gradlew build` and
+  `cd frontend && npm run lint` — ran as `./gradlew build -x test` (the `test` task itself needs
+  Docker, see T050); `checkstyleMain`/`checkstyleTest`/`spotlessCheck` (after one `spotlessApply`
+  formatting pass) and `compileJava`/`compileTestJava` all pass for both `patient-service` and
+  `backend`. `npm run lint` and all 170 frontend Vitest tests pass.
+- [X] T052 Verify no `PATCH`/`DELETE` mapping exists anywhere on
   `/patients/{patientId}/{allergies,medications,chronic-conditions}` (append-only enforced by API
   surface, FR-010, quickstart.md Scenario 2 step 4) — grep
-  `MedicalHistoryController.java` for `@PatchMapping`/`@DeleteMapping` and confirm zero matches
+  `MedicalHistoryController.java` for `@PatchMapping`/`@DeleteMapping` and confirm zero matches —
+  confirmed: only a javadoc mention of both names exists, zero actual annotations.
 - [ ] T053 Document the security/compliance self-review required by constitution v1.5.0's
   risk-tiered gate (this PR touches patient data and audit logging) in the PR description before
   merge; do not enable auto-merge on this PR (plan.md Constitution Check, "ACTION REQUIRED AT PR
-  TIME")
+  TIME") — drafted, pending an actual PR to attach it to (see completion report).
 
 ---
 

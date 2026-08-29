@@ -13,9 +13,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * data-model.md ChronicConditionEntry (FR-003) — name/clinicalStatus/diagnosisDate, plus the
- * shared {@code recordStatus} correction flag (FR-010). Two independent state machines on this one
- * entity (Clarifications Session 2026-08-29 Q1): {@code clinicalStatus} (ACTIVE ⇄ PAST, itself only
+ * data-model.md ChronicConditionEntry (FR-003) — name/clinicalStatus/diagnosisDate, plus the shared
+ * {@code recordStatus} correction flag (FR-010). Two independent state machines on this one entity
+ * (Clarifications Session 2026-08-29 Q1): {@code clinicalStatus} (ACTIVE ⇄ PAST, itself only
  * changed via a new correcting entry — there is no in-place clinical-status toggle either) is
  * orthogonal to {@code recordStatus} (CURRENT → SUPERSEDED, one-way, correction-only).
  */

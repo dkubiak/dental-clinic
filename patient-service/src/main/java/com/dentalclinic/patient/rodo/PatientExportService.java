@@ -50,7 +50,8 @@ public class PatientExportService {
     List<ToothState> toothChart =
         toothStateRepository.findByPatientRecordIdOrderByToothNumberAsc(patientId);
     List<AllergyEntry> allergies = medicalHistoryService.getAllergyHistory(patientId, actorId);
-    List<MedicationEntry> medications = medicalHistoryService.getMedicationHistory(patientId, actorId);
+    List<MedicationEntry> medications =
+        medicalHistoryService.getMedicationHistory(patientId, actorId);
     List<ChronicConditionEntry> chronicConditions =
         medicalHistoryService.getChronicConditionHistory(patientId, actorId);
 

@@ -68,7 +68,9 @@ public class PatientController {
             request.addressCity(),
             actorId(principal));
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(PatientDetailResponse.from(record, medicalHistoryService.hasCriticalAllergyAlert(record.getId())));
+        .body(
+            PatientDetailResponse.from(
+                record, medicalHistoryService.hasCriticalAllergyAlert(record.getId())));
   }
 
   @GetMapping("/patients/{id}")

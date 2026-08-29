@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * T036 — {@code clinicalStatus} (ACTIVE/PAST) and {@code recordStatus} (CURRENT/SUPERSEDED) are
  * independent state machines on the same entity (Clarifications Session 2026-08-29 Q1,
- * data-model.md); plus free-text/non-blank validation (FR-011), mirrors
- * {@code AllergyEntryServiceTest}.
+ * data-model.md); plus free-text/non-blank validation (FR-011), mirrors {@code
+ * AllergyEntryServiceTest}.
  */
 class ChronicConditionEntryServiceTest extends PostgresIntegrationTestBase {
 

@@ -44,8 +44,7 @@ public class MedicalHistoryService {
 
   private static final String ALLERGY_METADATA = "{\"entryType\":\"ALLERGY\"}";
   private static final String MEDICATION_METADATA = "{\"entryType\":\"MEDICATION\"}";
-  private static final String CHRONIC_CONDITION_METADATA =
-      "{\"entryType\":\"CHRONIC_CONDITION\"}";
+  private static final String CHRONIC_CONDITION_METADATA = "{\"entryType\":\"CHRONIC_CONDITION\"}";
 
   /**
    * @throws PatientNotFoundException no patient record with this id exists.
@@ -70,7 +69,8 @@ public class MedicalHistoryService {
    */
   public List<AllergyEntry> getAllergyHistory(UUID patientId, UUID actorId) {
     requirePatientExists(patientId);
-    List<AllergyEntry> entries = allergyEntryRepository.findByPatientRecordIdOrderByCreatedAtDesc(patientId);
+    List<AllergyEntry> entries =
+        allergyEntryRepository.findByPatientRecordIdOrderByCreatedAtDesc(patientId);
     auditWriter.append(
         PatientAuditEventType.MEDICAL_HISTORY_HISTORY_VIEWED,
         actorId,
@@ -103,7 +103,9 @@ public class MedicalHistoryService {
     String beforeJson = null;
     if (supersedesEntryId != null) {
       AllergyEntry superseded =
-          allergyEntryRepository.findById(supersedesEntryId).orElseThrow(PatientNotFoundException::new);
+          allergyEntryRepository
+              .findById(supersedesEntryId)
+              .orElseThrow(PatientNotFoundException::new);
       beforeJson = toJson(superseded);
       superseded.supersede();
       allergyEntryRepository.save(superseded);
@@ -111,7 +113,13 @@ public class MedicalHistoryService {
 
     AllergyEntry entry =
         new AllergyEntry(
-            UUID.randomUUID(), patientId, substance, reactionType, severity, supersedesEntryId, actorId);
+            UUID.randomUUID(),
+            patientId,
+            substance,
+            reactionType,
+            severity,
+            supersedesEntryId,
+            actorId);
     allergyEntryRepository.save(entry);
 
     auditWriter.append(
@@ -310,7 +318,10 @@ public class MedicalHistoryService {
   private String toJson(AllergyEntry entry) {
     return objectMapper.writeValueAsString(
         new AllergySnapshot(
-            entry.getSubstance(), entry.getReactionType(), entry.getSeverity(), entry.getRecordStatus()));
+            entry.getSubstance(),
+            entry.getReactionType(),
+            entry.getSeverity(),
+            entry.getRecordStatus()));
   }
 
   private String toJson(MedicationEntry entry) {
