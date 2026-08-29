@@ -304,15 +304,24 @@ complete.
 
 - [ ] T050 [P] Run `specs/004-patient-medical-history/quickstart.md` Scenarios 1–6 end-to-end
   against a local stack (Testcontainers Postgres + `backend` + `patient-service` + `frontend`) and
-  record results — **NOT executed**: no Docker daemon available in the `/speckit-implement`
-  environment (Testcontainers cannot start `PostgresIntegrationTestBase`'s container, confirmed via
-  `ExceptionInInitializerError` on a real test run). Must be run in an environment with Docker
-  before this PR merges.
+  record results — **not run as a live manual walkthrough** (would additionally require starting
+  `docker-compose`, both services, the frontend dev server, and a full login+MFA flow per role).
+  Docker became available mid-implementation (Remote Control to the user's own machine); once it
+  was, `./gradlew test` was re-run for real (not just compiled) and **all 33 JUnit tests pass**,
+  including `MedicalHistoryControllerTest`'s 16 cases, which directly exercise every quickstart.md
+  Scenario 1–4/6 assertion (role-based 200/404, correction/history split, empty-state 200, audit
+  row counts) at the HTTP/API layer — see T051. Scenario 5 (RODO export) is covered by
+  `PatientExportApiTest`'s existing pattern extended to the new fields. Only the genuine UI
+  walkthrough (clicking through the frontend as each role) remains unexercised end-to-end; the
+  170 Vitest component/service tests cover the same behavior at the component level.
 - [X] T051 [P] Verify `checkstyle`/lint pass: `cd patient-service && ./gradlew build` and
-  `cd frontend && npm run lint` — ran as `./gradlew build -x test` (the `test` task itself needs
-  Docker, see T050); `checkstyleMain`/`checkstyleTest`/`spotlessCheck` (after one `spotlessApply`
-  formatting pass) and `compileJava`/`compileTestJava` all pass for both `patient-service` and
-  `backend`. `npm run lint` and all 170 frontend Vitest tests pass.
+  `cd frontend && npm run lint` — Docker became available mid-implementation, so this was run for
+  real, not just compiled: `./gradlew build` (full — checkstyle, spotless, **and all JUnit/
+  Testcontainers tests**) passes for both `patient-service` and `backend`. `npm run lint` and all
+  170 frontend Vitest tests pass. (One bug the real test run caught and fixed: the hand-picked
+  PESEL values in `MedicalHistoryControllerTest`'s new test methods didn't satisfy
+  `PeselValidator`'s checksum, causing 16 spurious 400s — fixed by computing checksum-valid PESELs;
+  not a production-code defect.)
 - [X] T052 Verify no `PATCH`/`DELETE` mapping exists anywhere on
   `/patients/{patientId}/{allergies,medications,chronic-conditions}` (append-only enforced by API
   surface, FR-010, quickstart.md Scenario 2 step 4) — grep

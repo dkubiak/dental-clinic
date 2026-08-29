@@ -65,7 +65,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void doctor_canAddAndReadAllergies_andItWritesAuditEntries() throws Exception {
-    UUID id = createPatient("91011502001");
+    UUID id = createPatient("91011502005");
     long addedBefore = countEntries("MEDICAL_HISTORY_ENTRY_ADDED");
     long viewedBefore = countEntries("MEDICAL_HISTORY_ENTRY_VIEWED");
 
@@ -98,7 +98,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void emptyPatient_returnsEmptyArray_notAnError() throws Exception {
-    UUID id = createPatient("91011502018");
+    UUID id = createPatient("91011502012");
 
     mockMvc
         .perform(
@@ -110,7 +110,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void assistant_canReadAllergies_butCannotAddThem() throws Exception {
-    UUID id = createPatient("91011502025");
+    UUID id = createPatient("91011502029");
 
     mockMvc
         .perform(
@@ -134,7 +134,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void reception_isDenied404_onAllergiesReadAndWrite() throws Exception {
-    UUID id = createPatient("91011502032");
+    UUID id = createPatient("91011502036");
 
     mockMvc
         .perform(
@@ -158,7 +158,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void reception_seesFactOnlyCriticalAlert_onBasicDataRead() throws Exception {
-    UUID id = createPatient("91011502049");
+    UUID id = createPatient("91011502043");
 
     mockMvc
         .perform(
@@ -177,12 +177,12 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
         .perform(get("/patients/" + id).with(user(UUID.randomUUID().toString()).roles("RECEPTION")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hasCriticalAllergyAlert").value(true))
-        .andExpect(jsonPath("$.pesel").value("91011502049"));
+        .andExpect(jsonPath("$.pesel").value("91011502043"));
   }
 
   @Test
   void correction_hidesSupersededFromDefaultView_butHistoryShowsBoth() throws Exception {
-    UUID id = createPatient("91011502056");
+    UUID id = createPatient("91011502050");
 
     var createResult =
         mockMvc
@@ -239,7 +239,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void doctor_canAddAndReadMedications_andItWritesAuditEntries() throws Exception {
-    UUID id = createPatient("91011502063");
+    UUID id = createPatient("91011502067");
     long addedBefore = countEntries("MEDICAL_HISTORY_ENTRY_ADDED");
 
     mockMvc
@@ -268,7 +268,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void emptyPatient_returnsEmptyArray_forMedications() throws Exception {
-    UUID id = createPatient("91011502070");
+    UUID id = createPatient("91011502074");
 
     mockMvc
         .perform(
@@ -280,7 +280,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void assistant_canReadMedications_butCannotAddThem() throws Exception {
-    UUID id = createPatient("91011502087");
+    UUID id = createPatient("91011502081");
 
     mockMvc
         .perform(
@@ -304,7 +304,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void reception_isDenied404_onMedicationsReadAndWrite() throws Exception {
-    UUID id = createPatient("91011502094");
+    UUID id = createPatient("91011502098");
 
     mockMvc
         .perform(
@@ -328,7 +328,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void medicationCorrection_hidesSupersededFromDefaultView_butHistoryShowsBoth() throws Exception {
-    UUID id = createPatient("91011502100");
+    UUID id = createPatient("91011502104");
 
     var createResult =
         mockMvc
@@ -383,7 +383,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void doctor_canAddAndReadChronicConditions_andItWritesAuditEntries() throws Exception {
-    UUID id = createPatient("91011502117");
+    UUID id = createPatient("91011502111");
     long addedBefore = countEntries("MEDICAL_HISTORY_ENTRY_ADDED");
 
     mockMvc
@@ -413,7 +413,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void emptyPatient_returnsEmptyArray_forChronicConditions() throws Exception {
-    UUID id = createPatient("91011502124");
+    UUID id = createPatient("91011502128");
 
     mockMvc
         .perform(
@@ -425,7 +425,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void assistant_canReadChronicConditions_butCannotAddThem() throws Exception {
-    UUID id = createPatient("91011502131");
+    UUID id = createPatient("91011502135");
 
     mockMvc
         .perform(
@@ -449,7 +449,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
 
   @Test
   void reception_isDenied404_onChronicConditionsReadAndWrite() throws Exception {
-    UUID id = createPatient("91011502148");
+    UUID id = createPatient("91011502142");
 
     mockMvc
         .perform(
@@ -474,7 +474,7 @@ class MedicalHistoryControllerTest extends PostgresIntegrationTestBase {
   @Test
   void chronicConditionCorrection_hidesSupersededFromDefaultView_butHistoryShowsBoth()
       throws Exception {
-    UUID id = createPatient("91011502155");
+    UUID id = createPatient("91011502159");
 
     var createResult =
         mockMvc
