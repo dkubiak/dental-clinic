@@ -354,15 +354,21 @@ per current entry (pre-fills the form, tracks which entry it supersedes) plus ma
 in `medical-history.component.spec.ts`. Backend and JUnit tests already fully supported corrections
 via the request body; only the frontend affordance was missing.
 
-**Pre-existing, out-of-scope finding (not fixed here)**: `frontend/e2e/us1-patient-create.spec.ts`,
-`us2-tooth-chart.spec.ts`, and `us3-visit-history-placeholder.spec.ts` all copy a `createPatient()`
-helper using `page.getByTestId('new-patient-action').first()` — since feature 003's responsive
-redesign split that action into two DOM elements (desktop nav link + mobile FAB,
-`app-shell.component.ts`), `.first()` always grabs the one that's `display:none` on mobile/tablet
-viewports, hanging until timeout. Reproduced live against this stack. `us1-medical-history.spec.ts`
-uses `:visible` instead and is unaffected. Not fixed in the pre-existing files — out of scope for
-this feature — but worth a follow-up ticket, since it currently blocks the *entire* existing e2e
-suite from passing on `mobile-chromium`/`tablet-chromium`.
+**Pre-existing, out-of-scope finding — fixed anyway on request**: `frontend/e2e/us1-login-rbac.spec.ts`,
+`us1-patient-create.spec.ts`, `us2-tooth-chart.spec.ts`, and `us3-visit-history-placeholder.spec.ts`
+all used `page.getByTestId('new-patient-action').first()` (click or visibility assertion) — since
+feature 003's responsive redesign split that action into two DOM elements (desktop nav link +
+mobile FAB, `app-shell.component.ts`), `.first()` always grabbed the one that's `display:none` on
+mobile/tablet viewports, hanging until timeout and blocking the *entire* pre-existing e2e suite on
+those projects. Fixed by switching all four files to the same `:visible`-filtered locator
+`us1-medical-history.spec.ts` already used. Verified live: 18/24 tests across the four files now
+pass on `mobile-chromium` (previously every create-patient step hung). The remaining 6 failures are
+unrelated — 4 are stale test data from days of repeated manual runs against the persisted
+`postgres-data` volume (confirmed via direct DB query: duplicate PESELs, 4× duplicate
+"Testowy-E2E-SC004" search matches — not real bugs, would pass on a fresh database), 1 is a genuine
+but separate locator-ambiguity bug in `us3-visit-history-placeholder.spec.ts` (a regex matches both
+the tab label and the placeholder paragraph text), and 1 is an unrelated password-reset flow
+timeout — none of those three were touched.
 
 ---
 
