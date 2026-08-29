@@ -17,9 +17,15 @@ public record PatientDetailResponse(
     String addressPostalCode,
     String addressCity,
     Instant createdAt,
-    Instant updatedAt) {
+    Instant updatedAt,
+    boolean hasCriticalAllergyAlert) {
 
-  public static PatientDetailResponse from(PatientRecord record) {
+  /**
+   * Added by feature 004 (004-patient-medical-history) — {@code hasCriticalAllergyAlert} carries
+   * no clinical detail by construction, so it's safe on a response RECEPTION already reads
+   * (research.md #5).
+   */
+  public static PatientDetailResponse from(PatientRecord record, boolean hasCriticalAllergyAlert) {
     return new PatientDetailResponse(
         record.getId(),
         record.getFirstName(),
@@ -31,6 +37,7 @@ public record PatientDetailResponse(
         record.getAddressPostalCode(),
         record.getAddressCity(),
         record.getCreatedAt(),
-        record.getUpdatedAt());
+        record.getUpdatedAt(),
+        hasCriticalAllergyAlert);
   }
 }

@@ -1,5 +1,6 @@
 package com.dentalclinic.patient.api;
 
+import com.dentalclinic.patient.medicalhistory.MedicalHistoryService;
 import com.dentalclinic.patient.record.PatientCreateService;
 import com.dentalclinic.patient.record.PatientRecord;
 import com.dentalclinic.patient.record.PatientSearchService;
@@ -30,14 +31,17 @@ public class PatientController {
   private final PatientCreateService patientCreateService;
   private final PatientSearchService patientSearchService;
   private final PatientUpdateService patientUpdateService;
+  private final MedicalHistoryService medicalHistoryService;
 
   public PatientController(
       PatientCreateService patientCreateService,
       PatientSearchService patientSearchService,
-      PatientUpdateService patientUpdateService) {
+      PatientUpdateService patientUpdateService,
+      MedicalHistoryService medicalHistoryService) {
     this.patientCreateService = patientCreateService;
     this.patientSearchService = patientSearchService;
     this.patientUpdateService = patientUpdateService;
+    this.medicalHistoryService = medicalHistoryService;
   }
 
   @GetMapping("/patients")
@@ -63,14 +67,16 @@ public class PatientController {
             request.addressPostalCode(),
             request.addressCity(),
             actorId(principal));
-    return ResponseEntity.status(HttpStatus.CREATED).body(PatientDetailResponse.from(record));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(PatientDetailResponse.from(record, medicalHistoryService.hasCriticalAllergyAlert(record.getId())));
   }
 
   @GetMapping("/patients/{id}")
   @PreAuthorize("hasAnyRole('RECEPTION', 'DOCTOR', 'ASSISTANT')")
   public ResponseEntity<PatientDetailResponse> get(@PathVariable UUID id, Principal principal) {
     PatientRecord record = patientSearchService.getById(id, actorId(principal));
-    return ResponseEntity.ok(PatientDetailResponse.from(record));
+    return ResponseEntity.ok(
+        PatientDetailResponse.from(record, medicalHistoryService.hasCriticalAllergyAlert(id)));
   }
 
   @PatchMapping("/patients/{id}")
@@ -91,7 +97,8 @@ public class PatientController {
             request.addressPostalCode(),
             request.addressCity(),
             actorId(principal));
-    return ResponseEntity.ok(PatientDetailResponse.from(record));
+    return ResponseEntity.ok(
+        PatientDetailResponse.from(record, medicalHistoryService.hasCriticalAllergyAlert(id)));
   }
 
   private static UUID actorId(Principal principal) {
