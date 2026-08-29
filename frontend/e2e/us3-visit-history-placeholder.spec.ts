@@ -25,7 +25,12 @@ async function loginWithMfa(
 }
 
 async function createPatient(page: import('@playwright/test').Page, lastName: string) {
-  await page.getByTestId('new-patient-action').first().click();
+  // `new-patient-action` exists twice (desktop nav link + mobile FAB, app-shell.component.ts,
+  // since feature 003's responsive redesign) — exactly one is visible per viewport (CSS media
+  // query), the other `display:none`. `.first()` (DOM order) always grabbed the desktop one,
+  // hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible` picks whichever one the
+  // current viewport actually renders.
+  await page.locator('[data-testid="new-patient-action"]:visible').click();
   await page.waitForURL('**/patients/new');
 
   await page.getByLabel('Imię').fill('Test');

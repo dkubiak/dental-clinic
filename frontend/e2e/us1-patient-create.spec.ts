@@ -33,7 +33,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('Scenario 1: reception creates a patient record with a valid PESEL', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
     await page.getByLabel('Imię').fill('Jan');
@@ -58,7 +63,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   }) => {
     await loginWithMfa(page, seedAccounts.doctor);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
     await page.getByLabel('Imię').fill('Anna');
@@ -144,7 +154,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('SC-001: patient creation completes within 2 minutes', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
     // Timer starts at form submission (data already filled in, per SC-001's "kompletem danych
@@ -169,7 +184,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('SC-004: patient search returns within 10 seconds', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
     await page.getByLabel('Imię').fill('Wyszukiwanie');
     await page.getByLabel('Nazwisko').fill('Testowy-E2E-SC004');

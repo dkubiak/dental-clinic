@@ -48,8 +48,13 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await loginWithMfa(page, seedAccounts.reception);
     await page.waitForURL('**/patients');
     await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
-    // FR-001 — RECEPTION can create patient records.
-    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
+    // FR-001 — RECEPTION can create patient records. `new-patient-action` exists twice in the DOM
+    // (desktop nav link + mobile FAB, app-shell.component.ts, since feature 003's responsive
+    // redesign) — exactly one is visible per viewport (CSS media query), the other is
+    // `display:none`. `.first()` (DOM order) always grabs the desktop one, which is invisible on
+    // the mobile-chromium/mobile-webkit/tablet-chromium projects; `:visible` picks whichever one
+    // the current viewport actually renders.
+    await expect(page.locator('[data-testid="new-patient-action"]:visible')).toBeVisible();
   });
 
   test('Scenario 2: doctor logs in and lands on the shared patient-search screen', async ({
@@ -58,8 +63,8 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await loginWithMfa(page, seedAccounts.doctor);
     await page.waitForURL('**/patients');
     await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
-    // FR-001 — DOCTOR can create patient records.
-    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
+    // FR-001 — DOCTOR can create patient records. See the `:visible` note above.
+    await expect(page.locator('[data-testid="new-patient-action"]:visible')).toBeVisible();
   });
 
   test('Scenario 3: administrator logs in and lands on the admin home screen', async ({ page }) => {
