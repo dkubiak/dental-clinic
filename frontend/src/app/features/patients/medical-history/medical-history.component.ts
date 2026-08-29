@@ -43,6 +43,16 @@ import { MedicalHistoryService } from './medical-history.service';
               } @else {
                 <span>{{ entry.substance }} — {{ entry.reactionType }} ({{ entry.severity }})</span>
               }
+              @if (canEdit()) {
+                <button
+                  mat-button
+                  type="button"
+                  [attr.data-testid]="'correct-allergy-' + entry.id"
+                  (click)="startCorrectingAllergy(entry)"
+                >
+                  Koryguj
+                </button>
+              }
             </li>
           }
         </ul>
@@ -91,8 +101,13 @@ import { MedicalHistoryService } from './medical-history.service';
             </mat-select>
           </mat-form-field>
           <button mat-flat-button color="primary" type="submit" [disabled]="allergyForm.invalid">
-            Dodaj alergię
+            {{ correctingAllergyId() ? 'Zapisz korektę' : 'Dodaj alergię' }}
           </button>
+          @if (correctingAllergyId()) {
+            <button mat-button type="button" data-testid="cancel-allergy-correction" (click)="cancelCorrectingAllergy()">
+              Anuluj korektę
+            </button>
+          }
         </form>
       }
     </section>
@@ -107,6 +122,16 @@ import { MedicalHistoryService } from './medical-history.service';
           @for (entry of currentMedications(); track entry.id) {
             <li [attr.data-testid]="'medication-' + entry.id">
               {{ entry.name }} — {{ entry.dosage }} (od {{ entry.startDate }})
+              @if (canEdit()) {
+                <button
+                  mat-button
+                  type="button"
+                  [attr.data-testid]="'correct-medication-' + entry.id"
+                  (click)="startCorrectingMedication(entry)"
+                >
+                  Koryguj
+                </button>
+              }
             </li>
           }
         </ul>
@@ -152,8 +177,13 @@ import { MedicalHistoryService } from './medical-history.service';
             <input matInput type="date" formControlName="startDate" />
           </mat-form-field>
           <button mat-flat-button color="primary" type="submit" [disabled]="medicationForm.invalid">
-            Dodaj lek
+            {{ correctingMedicationId() ? 'Zapisz korektę' : 'Dodaj lek' }}
           </button>
+          @if (correctingMedicationId()) {
+            <button mat-button type="button" data-testid="cancel-medication-correction" (click)="cancelCorrectingMedication()">
+              Anuluj korektę
+            </button>
+          }
         </form>
       }
     </section>
@@ -168,6 +198,16 @@ import { MedicalHistoryService } from './medical-history.service';
           @for (entry of currentChronicConditions(); track entry.id) {
             <li [attr.data-testid]="'chronic-condition-' + entry.id">
               {{ entry.name }} — {{ entry.clinicalStatus }} (rozpoznano {{ entry.diagnosisDate }})
+              @if (canEdit()) {
+                <button
+                  mat-button
+                  type="button"
+                  [attr.data-testid]="'correct-chronic-condition-' + entry.id"
+                  (click)="startCorrectingChronicCondition(entry)"
+                >
+                  Koryguj
+                </button>
+              }
             </li>
           }
         </ul>
@@ -222,8 +262,18 @@ import { MedicalHistoryService } from './medical-history.service';
             type="submit"
             [disabled]="chronicConditionForm.invalid"
           >
-            Dodaj chorobę
+            {{ correctingChronicConditionId() ? 'Zapisz korektę' : 'Dodaj chorobę' }}
           </button>
+          @if (correctingChronicConditionId()) {
+            <button
+              mat-button
+              type="button"
+              data-testid="cancel-chronic-condition-correction"
+              (click)="cancelCorrectingChronicCondition()"
+            >
+              Anuluj korektę
+            </button>
+          }
         </form>
       }
     </section>
@@ -259,14 +309,17 @@ export class MedicalHistoryComponent implements OnInit {
   readonly currentAllergies = signal<AllergyEntry[]>([]);
   readonly allergyHistory = signal<AllergyEntry[]>([]);
   readonly showAllergyHistory = signal(false);
+  readonly correctingAllergyId = signal<string | null>(null);
 
   readonly currentMedications = signal<MedicationEntry[]>([]);
   readonly medicationHistory = signal<MedicationEntry[]>([]);
   readonly showMedicationHistory = signal(false);
+  readonly correctingMedicationId = signal<string | null>(null);
 
   readonly currentChronicConditions = signal<ChronicConditionEntry[]>([]);
   readonly chronicConditionHistory = signal<ChronicConditionEntry[]>([]);
   readonly showChronicConditionHistory = signal(false);
+  readonly correctingChronicConditionId = signal<string | null>(null);
 
   // FR-004 — ASSISTANT has the same read scope as DOCTOR but no edit rights; RECEPTION never
   // reaches this component (patient-detail's canViewMedicalHistory guard). UX-only mirror of the
@@ -314,14 +367,32 @@ export class MedicalHistoryComponent implements OnInit {
     });
   }
 
+  startCorrectingAllergy(entry: AllergyEntry): void {
+    this.allergyForm.setValue({
+      substance: entry.substance,
+      reactionType: entry.reactionType,
+      severity: entry.severity,
+    });
+    this.correctingAllergyId.set(entry.id);
+  }
+
+  cancelCorrectingAllergy(): void {
+    this.correctingAllergyId.set(null);
+    this.allergyForm.reset({ substance: '', reactionType: '', severity: 'CRITICAL' });
+  }
+
   submitAllergy(): void {
     if (this.allergyForm.invalid) {
       return;
     }
     this.medicalHistoryService
-      .addAllergy(this.patientId(), this.allergyForm.getRawValue())
+      .addAllergy(this.patientId(), {
+        ...this.allergyForm.getRawValue(),
+        supersedesEntryId: this.correctingAllergyId(),
+      })
       .subscribe(() => {
         this.allergyForm.reset({ substance: '', reactionType: '', severity: 'CRITICAL' });
+        this.correctingAllergyId.set(null);
         this.loadCurrentAllergies();
       });
   }
@@ -343,14 +414,32 @@ export class MedicalHistoryComponent implements OnInit {
     });
   }
 
+  startCorrectingMedication(entry: MedicationEntry): void {
+    this.medicationForm.setValue({
+      name: entry.name,
+      dosage: entry.dosage,
+      startDate: entry.startDate,
+    });
+    this.correctingMedicationId.set(entry.id);
+  }
+
+  cancelCorrectingMedication(): void {
+    this.correctingMedicationId.set(null);
+    this.medicationForm.reset({ name: '', dosage: '', startDate: '' });
+  }
+
   submitMedication(): void {
     if (this.medicationForm.invalid) {
       return;
     }
     this.medicalHistoryService
-      .addMedication(this.patientId(), this.medicationForm.getRawValue())
+      .addMedication(this.patientId(), {
+        ...this.medicationForm.getRawValue(),
+        supersedesEntryId: this.correctingMedicationId(),
+      })
       .subscribe(() => {
         this.medicationForm.reset({ name: '', dosage: '', startDate: '' });
+        this.correctingMedicationId.set(null);
         this.loadCurrentMedications();
       });
   }
@@ -372,14 +461,32 @@ export class MedicalHistoryComponent implements OnInit {
     });
   }
 
+  startCorrectingChronicCondition(entry: ChronicConditionEntry): void {
+    this.chronicConditionForm.setValue({
+      name: entry.name,
+      clinicalStatus: entry.clinicalStatus,
+      diagnosisDate: entry.diagnosisDate,
+    });
+    this.correctingChronicConditionId.set(entry.id);
+  }
+
+  cancelCorrectingChronicCondition(): void {
+    this.correctingChronicConditionId.set(null);
+    this.chronicConditionForm.reset({ name: '', clinicalStatus: 'ACTIVE', diagnosisDate: '' });
+  }
+
   submitChronicCondition(): void {
     if (this.chronicConditionForm.invalid) {
       return;
     }
     this.medicalHistoryService
-      .addChronicCondition(this.patientId(), this.chronicConditionForm.getRawValue())
+      .addChronicCondition(this.patientId(), {
+        ...this.chronicConditionForm.getRawValue(),
+        supersedesEntryId: this.correctingChronicConditionId(),
+      })
       .subscribe(() => {
         this.chronicConditionForm.reset({ name: '', clinicalStatus: 'ACTIVE', diagnosisDate: '' });
+        this.correctingChronicConditionId.set(null);
         this.loadCurrentChronicConditions();
       });
   }

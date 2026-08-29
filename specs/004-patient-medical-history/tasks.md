@@ -302,26 +302,41 @@ complete.
 
 **Purpose**: Feature-wide correctness and compliance checks that cut across all three sub-resources.
 
-- [ ] T050 [P] Run `specs/004-patient-medical-history/quickstart.md` Scenarios 1–6 end-to-end
+- [X] T050 [P] Run `specs/004-patient-medical-history/quickstart.md` Scenarios 1–6 end-to-end
   against a local stack (Testcontainers Postgres + `backend` + `patient-service` + `frontend`) and
-  record results — **not run as a live manual walkthrough** (would additionally require starting
-  `docker-compose`, both services, the frontend dev server, and a full login+MFA flow per role).
-  Docker became available mid-implementation (Remote Control to the user's own machine); once it
-  was, `./gradlew test` was re-run for real (not just compiled) and **all 33 JUnit tests pass**,
-  including `MedicalHistoryControllerTest`'s 16 cases, which directly exercise every quickstart.md
-  Scenario 1–4/6 assertion (role-based 200/404, correction/history split, empty-state 200, audit
-  row counts) at the HTTP/API layer — see T051. Scenario 5 (RODO export) is covered by
-  `PatientExportApiTest`'s existing pattern extended to the new fields. Only the genuine UI
-  walkthrough (clicking through the frontend as each role) remains unexercised end-to-end; the
-  170 Vitest component/service tests cover the same behavior at the component level.
+  record results — **run for real** against the project's own `docker-compose.yml` stack (Docker
+  became available mid-implementation via Remote Control to the user's own machine). Added
+  `frontend/e2e/us1-medical-history.spec.ts` (Playwright, not CI-gated — see plan.md's "Known
+  coverage limitation" note) covering every quickstart.md Scenario 1–4 assertion end-to-end through
+  real login+MFA as each role: empty states, CRITICAL-allergy status-indicator + header badge
+  visible in the viewport with **zero scroll/click** (SC-004, verified via Playwright's real
+  browser layout — not just Vitest/jsdom), RECEPTION fact-only badge with no tab access, ASSISTANT
+  read-parity with no add-form, and the full FR-010 correction flow (added a "Koryguj" action to
+  `medical-history.component.ts` — see Notes) proving a superseded entry disappears from the
+  default view and reappears under "Historia zmian". **All 7 tests pass on both `mobile-chromium`
+  and `desktop-chromium`.** Scenario 5 (RODO export) is covered by `PatientExportApiTest`'s pattern
+  extended to the new fields; Scenario 6 (audit trail) by `MedicalHistoryControllerTest`'s audit-row
+  assertions.
+
+  **Running this for real caught a genuine cross-service bug no single-service test suite could
+  have found**: `backend/src/main/java/com/dentalclinic/auth/auditlog/AuditEventType.java` (the
+  table-owning service's own enum) was never updated with the 3 new `MEDICAL_HISTORY_*` values —
+  only `patient-service`'s mirror (`PatientAuditEventType.java`) and the Postgres migration were.
+  Once any medical-history event became the tail of the shared hash-chained `audit_log_entry`
+  table, every subsequent write `backend` made — including the `LOGIN_SUCCESS` write on a
+  completely unrelated, objectively-correct login — threw `IllegalArgumentException: No enum
+  constant ...MEDICAL_HISTORY_ENTRY_VIEWED` when Hibernate tried to read the chain tail back,
+  surfacing as an opaque `401` on `POST /auth/mfa/verify`. Fixed by adding the 3 values to
+  `backend`'s enum; `backend`'s own full `./gradlew build` (all JUnit/Testcontainers tests) is
+  green with the fix, and all 7 new e2e tests pass on both `mobile-chromium` and
+  `desktop-chromium` afterward.
 - [X] T051 [P] Verify `checkstyle`/lint pass: `cd patient-service && ./gradlew build` and
-  `cd frontend && npm run lint` — Docker became available mid-implementation, so this was run for
-  real, not just compiled: `./gradlew build` (full — checkstyle, spotless, **and all JUnit/
-  Testcontainers tests**) passes for both `patient-service` and `backend`. `npm run lint` and all
-  170 frontend Vitest tests pass. (One bug the real test run caught and fixed: the hand-picked
-  PESEL values in `MedicalHistoryControllerTest`'s new test methods didn't satisfy
-  `PeselValidator`'s checksum, causing 16 spurious 400s — fixed by computing checksum-valid PESELs;
-  not a production-code defect.)
+  `cd frontend && npm run lint` — run for real once Docker was available: full `./gradlew build`
+  (checkstyle, spotless, **and all JUnit/Testcontainers tests**) is green for both
+  `patient-service` and `backend`. `npm run lint` and all 173 frontend Vitest tests pass. (Also
+  caught and fixed: hand-picked PESEL values in `MedicalHistoryControllerTest` didn't satisfy
+  `PeselValidator`'s checksum, causing 16 spurious 400s — a test-data bug, not a production-code
+  defect; see T050 for the one production-code bug this phase's real test runs did catch.)
 - [X] T052 Verify no `PATCH`/`DELETE` mapping exists anywhere on
   `/patients/{patientId}/{allergies,medications,chronic-conditions}` (append-only enforced by API
   surface, FR-010, quickstart.md Scenario 2 step 4) — grep
@@ -331,6 +346,23 @@ complete.
   risk-tiered gate (this PR touches patient data and audit logging) in the PR description before
   merge; do not enable auto-merge on this PR (plan.md Constitution Check, "ACTION REQUIRED AT PR
   TIME") — drafted, pending an actual PR to attach it to (see completion report).
+
+**Additional fix beyond the original task list, discovered while writing T050's e2e coverage**:
+`medical-history.component.ts` had no UI affordance for FR-010's correction mechanism — the add
+forms could only create brand-new entries, never set `supersedesEntryId`. Added a "Koryguj" button
+per current entry (pre-fills the form, tracks which entry it supersedes) plus matching Vitest tests
+in `medical-history.component.spec.ts`. Backend and JUnit tests already fully supported corrections
+via the request body; only the frontend affordance was missing.
+
+**Pre-existing, out-of-scope finding (not fixed here)**: `frontend/e2e/us1-patient-create.spec.ts`,
+`us2-tooth-chart.spec.ts`, and `us3-visit-history-placeholder.spec.ts` all copy a `createPatient()`
+helper using `page.getByTestId('new-patient-action').first()` — since feature 003's responsive
+redesign split that action into two DOM elements (desktop nav link + mobile FAB,
+`app-shell.component.ts`), `.first()` always grabs the one that's `display:none` on mobile/tablet
+viewports, hanging until timeout. Reproduced live against this stack. `us1-medical-history.spec.ts`
+uses `:visible` instead and is unaffected. Not fixed in the pre-existing files — out of scope for
+this feature — but worth a follow-up ticket, since it currently blocks the *entire* existing e2e
+suite from passing on `mobile-chromium`/`tablet-chromium`.
 
 ---
 

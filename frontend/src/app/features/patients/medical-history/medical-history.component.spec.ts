@@ -134,6 +134,33 @@ describe('MedicalHistoryComponent', () => {
       substance: 'Penicylina',
       reactionType: 'Anafilaksja',
       severity: 'CRITICAL',
+      supersedesEntryId: null,
+    });
+  });
+
+  it('clicking "Koryguj" pre-fills the form and submits with supersedesEntryId set (FR-010)', () => {
+    authState.setRole('DOCTOR');
+    medicalHistoryService.getAllergies.mockReturnValue(of([criticalAllergy]));
+    medicalHistoryService.addAllergy.mockReturnValue(of({ ...criticalAllergy, id: 'a2' }));
+    createComponent();
+
+    fixture.nativeElement.querySelector('[data-testid="correct-allergy-a1"]').click();
+    fixture.detectChanges();
+
+    expect(component.allergyForm.getRawValue()).toEqual({
+      substance: 'Penicylina',
+      reactionType: 'Anafilaksja',
+      severity: 'CRITICAL',
+    });
+
+    component.allergyForm.controls.severity.setValue('MODERATE');
+    component.submitAllergy();
+
+    expect(medicalHistoryService.addAllergy).toHaveBeenCalledWith('p1', {
+      substance: 'Penicylina',
+      reactionType: 'Anafilaksja',
+      severity: 'MODERATE',
+      supersedesEntryId: 'a1',
     });
   });
 
@@ -191,6 +218,26 @@ describe('MedicalHistoryComponent', () => {
       name: 'Ibuprofen',
       dosage: '400mg',
       startDate: '2026-01-01',
+      supersedesEntryId: null,
+    });
+  });
+
+  it('clicking "Koryguj" on a medication pre-fills the form and submits with supersedesEntryId set', () => {
+    authState.setRole('DOCTOR');
+    medicalHistoryService.getMedications.mockReturnValue(of([medication]));
+    medicalHistoryService.addMedication.mockReturnValue(of({ ...medication, id: 'm2' }));
+    createComponent();
+
+    fixture.nativeElement.querySelector('[data-testid="correct-medication-m1"]').click();
+    fixture.detectChanges();
+    component.medicationForm.controls.dosage.setValue('200mg');
+    component.submitMedication();
+
+    expect(medicalHistoryService.addMedication).toHaveBeenCalledWith('p1', {
+      name: 'Ibuprofen',
+      dosage: '200mg',
+      startDate: '2026-01-01',
+      supersedesEntryId: 'm1',
     });
   });
 
@@ -251,6 +298,26 @@ describe('MedicalHistoryComponent', () => {
       name: 'Cukrzyca typu 2',
       clinicalStatus: 'ACTIVE',
       diagnosisDate: '2020-03-15',
+      supersedesEntryId: null,
+    });
+  });
+
+  it('clicking "Koryguj" on a chronic condition can flip clinicalStatus independently of the correction (Clarifications Q1)', () => {
+    authState.setRole('DOCTOR');
+    medicalHistoryService.getChronicConditions.mockReturnValue(of([chronicCondition]));
+    medicalHistoryService.addChronicCondition.mockReturnValue(of({ ...chronicCondition, id: 'c2' }));
+    createComponent();
+
+    fixture.nativeElement.querySelector('[data-testid="correct-chronic-condition-c1"]').click();
+    fixture.detectChanges();
+    component.chronicConditionForm.controls.clinicalStatus.setValue('PAST');
+    component.submitChronicCondition();
+
+    expect(medicalHistoryService.addChronicCondition).toHaveBeenCalledWith('p1', {
+      name: 'Cukrzyca typu 2',
+      clinicalStatus: 'PAST',
+      diagnosisDate: '2020-03-15',
+      supersedesEntryId: 'c1',
     });
   });
 });

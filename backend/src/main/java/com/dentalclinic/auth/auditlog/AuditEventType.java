@@ -32,5 +32,18 @@ public enum AuditEventType {
   TOOTH_CHART_VIEWED,
   PATIENT_DATA_EXPORTED,
   PATIENT_DATA_ERASURE_REQUESTED,
-  PATIENT_DATA_ERASURE_COMPLETED
+  PATIENT_DATA_ERASURE_COMPLETED,
+
+  // 004-patient-medical-history (data-model.md AuditLogEntry extension) — written by
+  // patient-service via its own PatientAuditWriter, sharing this single hash-chained table
+  // (research.md #2 of 004). Missing this mirror update (while V13__audit_event_type_medical_
+  // history.sql and patient-service's own PatientAuditEventType.java WERE updated) broke every
+  // subsequent write this service makes once a MEDICAL_HISTORY_* row became the hash chain's
+  // tail: reading that row back via JPA to continue the chain threw IllegalArgumentException
+  // ("No enum constant ...MEDICAL_HISTORY_ENTRY_VIEWED"), surfacing as an opaque failure on
+  // unrelated endpoints (e.g. POST /auth/mfa/verify) — caught via real end-to-end Playwright
+  // testing against the full docker-compose stack, not by any single-service test suite.
+  MEDICAL_HISTORY_ENTRY_ADDED,
+  MEDICAL_HISTORY_ENTRY_VIEWED,
+  MEDICAL_HISTORY_HISTORY_VIEWED
 }
