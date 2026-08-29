@@ -1,11 +1,23 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 
+/**
+ * Returns the file's content length in UTF-16 code units (`string.length`), NOT its byte size
+ * (`statSync(...).size`) — the two diverge as soon as the file contains any multi-byte UTF-8
+ * character, which every email body here does (Polish diacritics: "hasła", "zresetować",
+ * "ważny", "można", "użyć"). The offset this returns is later used with `.slice(offsetBefore)`
+ * on a UTF-8-decoded string, which indexes by code unit — mixing a byte offset into that slice
+ * silently drifts further off with every accumulated diacritic in the file, eventually slicing
+ * past the newly appended line entirely (a real, previously-latent bug: harmless on a small/
+ * fresh file where the drift is negligible, but reliably broken once
+ * `docker-compose.yml`'s persistent `postgres-data`-adjacent `sent-emails.jsonl` has accumulated
+ * enough runs).
+ */
 function fileSizeOrZero(filePath: string): number {
   try {
-    return statSync(filePath).size;
+    return readFileSync(filePath, 'utf-8').length;
   } catch {
     return 0;
   }
@@ -48,8 +60,13 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await loginWithMfa(page, seedAccounts.reception);
     await page.waitForURL('**/patients');
     await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
-    // FR-001 — RECEPTION can create patient records.
-    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
+    // FR-001 — RECEPTION can create patient records. `new-patient-action` exists twice in the DOM
+    // (desktop nav link + mobile FAB, app-shell.component.ts, since feature 003's responsive
+    // redesign) — exactly one is visible per viewport (CSS media query), the other is
+    // `display:none`. `.first()` (DOM order) always grabs the desktop one, which is invisible on
+    // the mobile-chromium/mobile-webkit/tablet-chromium projects; `:visible` picks whichever one
+    // the current viewport actually renders.
+    await expect(page.locator('[data-testid="new-patient-action"]:visible')).toBeVisible();
   });
 
   test('Scenario 2: doctor logs in and lands on the shared patient-search screen', async ({
@@ -58,8 +75,8 @@ test.describe('US1 — staff login with role-scoped access', () => {
     await loginWithMfa(page, seedAccounts.doctor);
     await page.waitForURL('**/patients');
     await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
-    // FR-001 — DOCTOR can create patient records.
-    await expect(page.getByTestId('new-patient-action').first()).toBeVisible();
+    // FR-001 — DOCTOR can create patient records. See the `:visible` note above.
+    await expect(page.locator('[data-testid="new-patient-action"]:visible')).toBeVisible();
   });
 
   test('Scenario 3: administrator logs in and lands on the admin home screen', async ({ page }) => {

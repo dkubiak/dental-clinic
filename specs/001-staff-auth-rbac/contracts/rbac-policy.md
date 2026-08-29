@@ -34,6 +34,10 @@ changes touching authz require security/compliance review).
 | View / edit tooth chart | ❌ | ✅ | ✅ | ❌ |
 | View visit-history placeholder | ✅ | ✅ | ❌ | ❌ |
 | Export / erase patient data (RODO, FR-009/FR-010 of 002) | ❌ | ✅ | ❌ | ❌ |
+| *Added by feature 004 (004-patient-medical-history):* | | | | |
+| Add allergy / medication / chronic-condition entries (kartoteka historii medycznej) | ❌ | ✅ | ❌ | ❌ |
+| Read current + "historia zmian" entries for allergies / medications / chronic conditions | ❌ | ✅ | ✅ | ❌ |
+| See fact-only critical-allergy alert (boolean, no clinical detail — `hasCriticalAllergyAlert` on the existing patient-basic-data response) | ✅ | ✅ | ✅ | ❌ |
 
 ## Enforcement rules
 
@@ -59,3 +63,13 @@ changes touching authz require security/compliance review).
    patient basic-data, tooth-chart, or export/erasure access. `DOCTOR` — not `ADMINISTRATOR` —
    owns RODO export/erasure (002's research.md #6), specifically to avoid a quiet violation of
    rule 3.
+7. **`ADMINISTRATOR` exclusion extends to medical history (feature 004); `ASSISTANT` read parity
+   is deliberate, not an oversight.** `ADMINISTRATOR` again has zero rows for allergy/medication/
+   chronic-condition data (rule 3/6, unchanged rationale). `ASSISTANT`'s read access explicitly
+   covers *both* the current view and the "historia zmian" (superseded/corrected entries) view,
+   identical in scope to `DOCTOR`'s own read access — 004's Clarifications session confirmed this
+   directly rather than defaulting to a narrower scope (004's research.md #4). `RECEPTION` gets no
+   row here at all; its only visibility into this data is the pre-existing, unrelated
+   `hasCriticalAllergyAlert` boolean carried on the basic-data response it already reads — that
+   boolean reveals no substance/reaction/medication/diagnosis content, so it does not create a new
+   permission row of its own (004's research.md #5).

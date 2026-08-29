@@ -6,6 +6,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AuthState } from '../../../core/auth/auth-state';
+import { StatusIndicatorComponent } from '../../../shared/status/status-indicator.component';
+import { MedicalHistoryComponent } from '../medical-history/medical-history.component';
 import { peselChecksumValidator } from '../pesel-validator';
 import { PatientDetail } from '../patients.models';
 import { PatientsService } from '../patients.service';
@@ -26,12 +28,20 @@ import { VisitHistoryComponent } from '../visit-history/visit-history.component'
     MatFormFieldModule,
     MatInputModule,
     MatTabsModule,
+    StatusIndicatorComponent,
     ToothChartComponent,
     VisitHistoryComponent,
+    MedicalHistoryComponent,
   ],
   template: `
     @if (patient(); as p) {
       <h1>{{ p.lastName }} {{ p.firstName }}</h1>
+
+      @if (p.hasCriticalAllergyAlert) {
+        <div data-testid="critical-allergy-alert">
+          <app-status-indicator type="error" message="Pacjent ma odnotowaną krytyczną alergię" />
+        </div>
+      }
 
       <mat-tab-group>
         <mat-tab label="Dane podstawowe">
@@ -108,6 +118,13 @@ import { VisitHistoryComponent } from '../visit-history/visit-history.component'
             </div>
           </mat-tab>
         }
+        @if (canViewMedicalHistory()) {
+          <mat-tab label="Historia medyczna">
+            <div class="tab-content">
+              <app-medical-history [patientId]="p.id" />
+            </div>
+          </mat-tab>
+        }
         @if (canViewVisitHistory()) {
           <mat-tab label="Historia wizyt">
             <div class="tab-content">
@@ -152,6 +169,14 @@ export class PatientDetailComponent implements OnInit {
   // the tab. UX-only mirror of the backend's @PreAuthorize — the 404 it returns is the real
   // boundary (US2 Acceptance Scenario 4).
   readonly canViewToothChart = computed(() => {
+    const role = this.authState.currentRole();
+    return role === 'DOCTOR' || role === 'ASSISTANT';
+  });
+
+  // FR-004/FR-005 — medical-history tab is DOCTOR/ASSISTANT only (rbac-policy.md rule 7);
+  // RECEPTION never sees the tab, only the fact-only hasCriticalAllergyAlert badge above. UX-only
+  // mirror of the backend's @PreAuthorize — the 404 it returns is the real boundary.
+  readonly canViewMedicalHistory = computed(() => {
     const role = this.authState.currentRole();
     return role === 'DOCTOR' || role === 'ASSISTANT';
   });

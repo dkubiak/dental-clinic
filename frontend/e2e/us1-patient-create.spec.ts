@@ -14,6 +14,21 @@ import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 
 const seedAccounts = loadSeedAccounts();
 
+/**
+ * Generates a checksum-valid, effectively-unique PESEL per call (millisecond-resolution suffix,
+ * per-digit weighted checksum matching PeselValidator.java exactly). `docker-compose.yml`'s
+ * `postgres-data` volume persists across runs, so a hardcoded literal PESEL collides with
+ * whatever an earlier run already created — a real failure this file hit (Scenario 1/4 timing out
+ * on `PESEL_ALREADY_EXISTS` from days-old leftover rows), not a product bug.
+ */
+function uniqueValidPesel(): string {
+  const prefix = Date.now().toString().slice(-10).padStart(10, '0');
+  const weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
+  const sum = prefix.split('').reduce((acc, digit, i) => acc + Number(digit) * weights[i], 0);
+  const checkDigit = (10 - (sum % 10)) % 10;
+  return prefix + checkDigit;
+}
+
 async function loginWithMfa(
   page: import('@playwright/test').Page,
   account: { email: string; password: string; totpSecret: string },
@@ -33,13 +48,19 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('Scenario 1: reception creates a patient record with a valid PESEL', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
+    const lastName = `Testowy-E2E-1-${Date.now()}`;
     await page.getByLabel('Imię').fill('Jan');
-    await page.getByLabel('Nazwisko').fill('Testowy-E2E-1');
+    await page.getByLabel('Nazwisko').fill(lastName);
     await page.getByLabel('Data urodzenia').fill('1990-01-15');
-    await page.getByLabel('PESEL (opcjonalnie)').fill('90011500013');
+    await page.getByLabel('PESEL (opcjonalnie)').fill(uniqueValidPesel());
     await page.getByLabel('Ulica').fill('Polna');
     await page.getByLabel('Numer budynku').fill('12A');
     await page.getByLabel('Kod pocztowy').fill('00-001');
@@ -50,7 +71,7 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
     // wyświetla potwierdzenie" — the detail view showing the freshly-saved data is that
     // confirmation).
     await page.waitForURL(/\/patients\/[0-9a-f-]{36}$/);
-    await expect(page.getByRole('heading', { name: /Testowy-E2E-1/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: new RegExp(lastName) })).toBeVisible();
   });
 
   test('Scenario 2: doctor creates a patient record on the same terms as reception', async ({
@@ -58,7 +79,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   }) => {
     await loginWithMfa(page, seedAccounts.doctor);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
     await page.getByLabel('Imię').fill('Anna');
@@ -95,7 +121,7 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
 
   test('Scenario 4: a duplicate PESEL is rejected by the server', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.doctor);
-    const pesel = '90011500143'; // deliberately reused across both submissions below
+    const pesel = uniqueValidPesel(); // deliberately reused across both submissions below
 
     await page.goto('/patients/new');
     await page.getByLabel('Imię').fill('Ewa');
@@ -144,7 +170,12 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('SC-001: patient creation completes within 2 minutes', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
 
     // Timer starts at form submission (data already filled in, per SC-001's "kompletem danych
@@ -169,10 +200,16 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
   test('SC-004: patient search returns within 10 seconds', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
 
-    await page.getByTestId('new-patient-action').first().click();
+    // `new-patient-action` exists twice in the DOM (desktop nav link + mobile FAB,
+    // app-shell.component.ts, since feature 003's responsive redesign) — exactly one is visible
+    // per viewport (CSS media query), the other `display:none`. `.first()` (DOM order) always
+    // grabbed the desktop one, hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible`
+    // picks whichever one the current viewport actually renders.
+    await page.locator('[data-testid="new-patient-action"]:visible').click();
     await page.waitForURL('**/patients/new');
+    const lastName = `Testowy-E2E-SC004-${Date.now()}`;
     await page.getByLabel('Imię').fill('Wyszukiwanie');
-    await page.getByLabel('Nazwisko').fill('Testowy-E2E-SC004');
+    await page.getByLabel('Nazwisko').fill(lastName);
     await page.getByLabel('Data urodzenia').fill('1990-01-15');
     await page.getByLabel('Ulica').fill('Polna');
     await page.getByLabel('Numer budynku').fill('1');
@@ -183,11 +220,15 @@ test.describe('US1 — Założenie kartoteki nowego pacjenta', () => {
 
     await page.goto('/patients');
     await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
-    await page.getByTestId('search-input').fill('Testowy-E2E-SC004');
+    // A unique per-run name (not a fixed literal) so this assertion holds regardless of how many
+    // times this suite has already run against docker-compose.yml's persistent postgres-data
+    // volume — a fixed name accumulates duplicates across runs, breaking `getByText` here as soon
+    // as more than one match exists (a real failure this file hit, not a product bug).
+    await page.getByTestId('search-input').fill(lastName);
 
     const start = Date.now();
     await page.getByTestId('search-submit').click();
-    await expect(page.getByText('Testowy-E2E-SC004')).toBeVisible();
+    await expect(page.getByText(lastName)).toBeVisible();
     const elapsedMs = Date.now() - start;
 
     expect(elapsedMs).toBeLessThan(10_000);

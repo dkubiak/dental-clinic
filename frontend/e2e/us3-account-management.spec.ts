@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 
@@ -17,9 +17,18 @@ import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 const seedAccounts = loadSeedAccounts();
 const emailsPath = path.resolve(__dirname, '.generated/sent-emails.jsonl');
 
+/**
+ * Returns the file's content length in UTF-16 code units (`string.length`), NOT its byte size
+ * (`statSync(...).size`) — the two diverge as soon as the file contains any multi-byte UTF-8
+ * character, which every email body here does (Polish diacritics). The offset this returns is
+ * later used with `.slice(offsetBefore)` on a UTF-8-decoded string, which indexes by code unit —
+ * mixing a byte offset into that slice silently drifts further off with every accumulated
+ * diacritic in the file, eventually slicing past the newly appended line entirely (mirrors the
+ * same fix in us1-login-rbac.spec.ts).
+ */
 function fileSizeOrZero(filePath: string): number {
   try {
-    return statSync(filePath).size;
+    return readFileSync(filePath, 'utf-8').length;
   } catch {
     return 0;
   }
@@ -96,9 +105,12 @@ test.describe('US3 — admin account lifecycle', () => {
     await page.getByLabel('6-cyfrowy kod').fill(currentTotpCode(secret));
     await page.getByRole('button', { name: 'Potwierdź' }).click();
 
-    // RECEPTION role -> lands on the reception home screen (role-appropriate access).
-    await page.waitForURL('**/reception');
-    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Recepcja');
+    // RECEPTION role -> lands on the shared patient-search screen (role-appropriate access).
+    // 002-patient-records (T040): the shared shell/patient-search screen replaced the per-role
+    // placeholder home screen (`/reception`, `mat-toolbar` "Panel — Recepcja") this scenario
+    // originally asserted against — same fix already applied in us1-login-rbac.spec.ts.
+    await page.waitForURL('**/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
   });
 
   test('Scenario 2: a deactivated account cannot log in, and the denial is audit-logged', async ({

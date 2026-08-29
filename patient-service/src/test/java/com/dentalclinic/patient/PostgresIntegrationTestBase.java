@@ -93,7 +93,8 @@ public abstract class PostgresIntegrationTestBase {
               + " ('PATIENT_RECORD_CREATED', 'PATIENT_RECORD_UPDATED', 'PATIENT_RECORD_VIEWED',"
               + " 'TOOTH_STATE_CHANGED', 'TOOTH_CHART_VIEWED', 'PATIENT_DATA_EXPORTED',"
               + " 'PATIENT_DATA_ERASURE_REQUESTED', 'PATIENT_DATA_ERASURE_COMPLETED',"
-              + " 'LOGIN_SUCCESS'); END IF; END $$;");
+              + " 'LOGIN_SUCCESS', 'MEDICAL_HISTORY_ENTRY_ADDED', 'MEDICAL_HISTORY_ENTRY_VIEWED',"
+              + " 'MEDICAL_HISTORY_HISTORY_VIEWED'); END IF; END $$;");
       statement.execute(
           """
           CREATE TABLE IF NOT EXISTS audit_log_entry (

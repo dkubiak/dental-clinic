@@ -25,7 +25,12 @@ async function loginWithMfa(
 }
 
 async function createPatient(page: import('@playwright/test').Page, lastName: string) {
-  await page.getByTestId('new-patient-action').first().click();
+  // `new-patient-action` exists twice (desktop nav link + mobile FAB, app-shell.component.ts,
+  // since feature 003's responsive redesign) — exactly one is visible per viewport (CSS media
+  // query), the other `display:none`. `.first()` (DOM order) always grabbed the desktop one,
+  // hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible` picks whichever one the
+  // current viewport actually renders.
+  await page.locator('[data-testid="new-patient-action"]:visible').click();
   await page.waitForURL('**/patients/new');
 
   await page.getByLabel('Imię').fill('Test');
@@ -47,9 +52,10 @@ test.describe('US3 — Podgląd historii wizyt pacjenta z poziomu kartoteki', ()
     await createPatient(page, 'Testowy-E2E-VisitHistory-1');
 
     await page.getByRole('tab', { name: 'Historia wizyt' }).click();
-    await expect(page.getByText(/histori[ai] wizyt/i)).toBeVisible();
-
+    // Scoped to the tabpanel: the unscoped page-wide regex also matches the tab's own label
+    // ("Historia wizyt"), a second, unrelated element outside the panel — `strict mode violation`.
     const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel.getByText(/histori[ai] wizyt/i)).toBeVisible();
     await expect(tabPanel.getByRole('button')).toHaveCount(0);
     await expect(tabPanel.getByRole('link')).toHaveCount(0);
   });
@@ -59,6 +65,6 @@ test.describe('US3 — Podgląd historii wizyt pacjenta z poziomu kartoteki', ()
     await createPatient(page, 'Testowy-E2E-VisitHistory-2');
 
     await page.getByRole('tab', { name: 'Historia wizyt' }).click();
-    await expect(page.getByText(/histori[ai] wizyt/i)).toBeVisible();
+    await expect(page.getByRole('tabpanel').getByText(/histori[ai] wizyt/i)).toBeVisible();
   });
 });

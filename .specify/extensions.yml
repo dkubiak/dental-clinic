@@ -1,0 +1,18 @@
+# Project-local Spec Kit extension hooks.
+#
+# NOTE: this is hand-authored for dental-clinic-app, not an installed upstream
+# github/spec-kit extension package (none was available to install here). The
+# `git` entry below is backed by the local skill at
+# .claude/skills/speckit-git-branch/SKILL.md.
+
+hooks:
+  before_specify:
+    - extension: "git"
+      command: "speckit.git.branch"
+      description: >-
+        Create and switch to a new git branch matching the new feature's directory
+        name (e.g. 004-patient-medical-history), branching from origin/main, before
+        spec.md is written. Mirrors the branch-per-feature convention already used
+        by 001-staff-auth-rbac.
+      optional: false
+      enabled: true
