@@ -5,7 +5,9 @@ info:
   description: >
     REST API served by the independent `patient-service` deployable (own Helm release, own
     Deployment — plan.md Risk Tier & Availability) for the patient-records (kartoteka) module:
-    basic patient data, tooth-chart view/edit, and the read-only visit-history placeholder.
+    basic patient data, tooth-chart view/edit, the read-only visit-history placeholder, and
+    (since feature 004) the medical-history sub-resources — allergies, medications, chronic
+    conditions.
     Authorization is enforced server-side only (@PreAuthorize), same as auth-service's
     auth-api — the Angular frontend's route/UI guards are UX-only. patient-service validates
     the caller by reading the same session table auth-service writes (research.md #7) — no
@@ -167,6 +169,169 @@ paths:
         "404":
           description: Not found, or caller's role is not RECEPTION/DOCTOR.
 
+  # --- Added by feature 004 (004-patient-medical-history). Same shape repeated three times
+  # (allergies / medications / chronic-conditions) — see rbac-policy.md rule 7,
+  # 004/research.md #4 for why GET current vs. GET .../history are two endpoints rather than one
+  # with a query flag, and 004/data-model.md for the record_status/supersedes_entry_id model
+  # POST implements (there is no PATCH/DELETE — corrections are always a new POST, FR-010).
+  /patients/{patientId}/allergies:
+    get:
+      summary: Read current (non-superseded) allergy entries (FR-001).
+      description: Available to DOCTOR, ASSISTANT only.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AllergyEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+    post:
+      summary: Add an allergy entry, optionally correcting a prior one (FR-001, FR-010).
+      description: >
+        Available to DOCTOR only. If `supersedesEntryId` is set, that entry's `recordStatus`
+        flips to SUPERSEDED in the same transaction. Audit-logged as MEDICAL_HISTORY_ENTRY_ADDED
+        (metadata.entryType = ALLERGY).
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AllergyCreateRequest" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AllergyEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR.
+
+  /patients/{patientId}/allergies/history:
+    get:
+      summary: Read all allergy entries, current and superseded ("historia zmian") (FR-010).
+      description: >
+        Available to DOCTOR, ASSISTANT only — same scope as the current-only endpoint
+        (rbac-policy.md rule 7). Audit-logged separately as MEDICAL_HISTORY_HISTORY_VIEWED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AllergyEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/medications:
+    get:
+      summary: Read current (non-superseded) medication entries (FR-002).
+      description: Available to DOCTOR, ASSISTANT only.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MedicationEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+    post:
+      summary: Add a medication entry, optionally correcting a prior one (FR-002, FR-010).
+      description: >
+        Available to DOCTOR only. Same correction semantics as /allergies. Audit-logged as
+        MEDICAL_HISTORY_ENTRY_ADDED (metadata.entryType = MEDICATION).
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MedicationCreateRequest" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MedicationEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR.
+
+  /patients/{patientId}/medications/history:
+    get:
+      summary: Read all medication entries, current and superseded ("historia zmian") (FR-010).
+      description: Available to DOCTOR, ASSISTANT only. Audit-logged as MEDICAL_HISTORY_HISTORY_VIEWED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MedicationEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/chronic-conditions:
+    get:
+      summary: Read current (non-superseded) chronic-condition entries (FR-003).
+      description: Available to DOCTOR, ASSISTANT only.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ChronicConditionEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+    post:
+      summary: Add a chronic-condition entry, optionally correcting a prior one (FR-003, FR-010).
+      description: >
+        Available to DOCTOR only. Same correction semantics as /allergies — including flipping
+        `clinicalStatus` (ACTIVE/PAST), which is independent of the correction's `recordStatus`
+        (data-model.md). Audit-logged as MEDICAL_HISTORY_ENTRY_ADDED (metadata.entryType =
+        CHRONIC_CONDITION).
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChronicConditionCreateRequest" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChronicConditionEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR.
+
+  /patients/{patientId}/chronic-conditions/history:
+    get:
+      summary: Read all chronic-condition entries, current and superseded ("historia zmian") (FR-010).
+      description: Available to DOCTOR, ASSISTANT only. Audit-logged as MEDICAL_HISTORY_HISTORY_VIEWED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ChronicConditionEntry" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
   /patients/{patientId}/export:
     post:
       summary: Export a patient's full data (RODO subject-access request, FR-009).
@@ -178,7 +343,11 @@ paths:
         - $ref: "#/components/parameters/PatientId"
       responses:
         "200":
-          description: Full patient data export (basic data + tooth chart; visit-history is empty in this version).
+          description: >
+            Full patient data export (basic data + tooth chart; visit-history is empty in this
+            version). Since feature 004, also includes the full allergy/medication/chronic-
+            condition history — current and superseded entries alike (004/research.md #6, a
+            subject-access request covers everything held, not just the current view).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PatientFullExport" }
@@ -230,6 +399,14 @@ components:
             addressCity: { type: string }
             createdAt: { type: string, format: date-time }
             updatedAt: { type: string, format: date-time }
+            hasCriticalAllergyAlert:
+              type: boolean
+              description: >
+                Added by feature 004 (004-patient-medical-history). True if the patient has at
+                least one CURRENT allergy entry with severity CRITICAL. Carries no clinical
+                detail (no substance/reaction) by design, so it's visible to every role that can
+                read basic data, including RECEPTION, which has no access to
+                /allergies|/medications|/chronic-conditions themselves (rbac-policy.md rule 7).
 
     PatientCreateRequest:
       type: object
@@ -265,6 +442,94 @@ components:
           type: array
           items: {}
           maxItems: 0
+        allergies:
+          type: array
+          description: Added by feature 004. Full history — current and superseded.
+          items: { $ref: "#/components/schemas/AllergyEntry" }
+        medications:
+          type: array
+          description: Added by feature 004. Full history — current and superseded.
+          items: { $ref: "#/components/schemas/MedicationEntry" }
+        chronicConditions:
+          type: array
+          description: Added by feature 004. Full history — current and superseded.
+          items: { $ref: "#/components/schemas/ChronicConditionEntry" }
+
+    # --- Added by feature 004 (004-patient-medical-history) ---
+
+    RecordStatus:
+      type: string
+      enum: [CURRENT, SUPERSEDED]
+      description: >
+        Technical correction-lifecycle flag (data-model.md), independent of any clinical-status
+        field an entity may also carry.
+
+    AllergyEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        substance: { type: string }
+        reactionType: { type: string }
+        severity: { type: string, enum: [CRITICAL, MODERATE] }
+        recordStatus: { $ref: "#/components/schemas/RecordStatus" }
+        supersedesEntryId: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    AllergyCreateRequest:
+      type: object
+      required: [substance, reactionType, severity]
+      properties:
+        substance: { type: string }
+        reactionType: { type: string }
+        severity: { type: string, enum: [CRITICAL, MODERATE] }
+        supersedesEntryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Set only when this entry corrects a prior one (FR-010).
+
+    MedicationEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        dosage: { type: string }
+        startDate: { type: string, format: date }
+        recordStatus: { $ref: "#/components/schemas/RecordStatus" }
+        supersedesEntryId: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    MedicationCreateRequest:
+      type: object
+      required: [name, dosage, startDate]
+      properties:
+        name: { type: string }
+        dosage: { type: string }
+        startDate: { type: string, format: date }
+        supersedesEntryId: { type: string, format: uuid, nullable: true }
+
+    ChronicConditionEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        clinicalStatus:
+          type: string
+          enum: [ACTIVE, PAST]
+          description: The patient's actual health state — independent of recordStatus.
+        diagnosisDate: { type: string, format: date }
+        recordStatus: { $ref: "#/components/schemas/RecordStatus" }
+        supersedesEntryId: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    ChronicConditionCreateRequest:
+      type: object
+      required: [name, clinicalStatus, diagnosisDate]
+      properties:
+        name: { type: string }
+        clinicalStatus: { type: string, enum: [ACTIVE, PAST] }
+        diagnosisDate: { type: string, format: date }
+        supersedesEntryId: { type: string, format: uuid, nullable: true }
 
   securitySchemes:
     sessionCookie:
