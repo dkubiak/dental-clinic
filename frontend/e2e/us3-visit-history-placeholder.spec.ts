@@ -52,9 +52,10 @@ test.describe('US3 — Podgląd historii wizyt pacjenta z poziomu kartoteki', ()
     await createPatient(page, 'Testowy-E2E-VisitHistory-1');
 
     await page.getByRole('tab', { name: 'Historia wizyt' }).click();
-    await expect(page.getByText(/histori[ai] wizyt/i)).toBeVisible();
-
+    // Scoped to the tabpanel: the unscoped page-wide regex also matches the tab's own label
+    // ("Historia wizyt"), a second, unrelated element outside the panel — `strict mode violation`.
     const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel.getByText(/histori[ai] wizyt/i)).toBeVisible();
     await expect(tabPanel.getByRole('button')).toHaveCount(0);
     await expect(tabPanel.getByRole('link')).toHaveCount(0);
   });
@@ -64,6 +65,6 @@ test.describe('US3 — Podgląd historii wizyt pacjenta z poziomu kartoteki', ()
     await createPatient(page, 'Testowy-E2E-VisitHistory-2');
 
     await page.getByRole('tab', { name: 'Historia wizyt' }).click();
-    await expect(page.getByText(/histori[ai] wizyt/i)).toBeVisible();
+    await expect(page.getByRole('tabpanel').getByText(/histori[ai] wizyt/i)).toBeVisible();
   });
 });

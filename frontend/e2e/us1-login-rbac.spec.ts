@@ -1,11 +1,23 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 
+/**
+ * Returns the file's content length in UTF-16 code units (`string.length`), NOT its byte size
+ * (`statSync(...).size`) — the two diverge as soon as the file contains any multi-byte UTF-8
+ * character, which every email body here does (Polish diacritics: "hasła", "zresetować",
+ * "ważny", "można", "użyć"). The offset this returns is later used with `.slice(offsetBefore)`
+ * on a UTF-8-decoded string, which indexes by code unit — mixing a byte offset into that slice
+ * silently drifts further off with every accumulated diacritic in the file, eventually slicing
+ * past the newly appended line entirely (a real, previously-latent bug: harmless on a small/
+ * fresh file where the drift is negligible, but reliably broken once
+ * `docker-compose.yml`'s persistent `postgres-data`-adjacent `sent-emails.jsonl` has accumulated
+ * enough runs).
+ */
 function fileSizeOrZero(filePath: string): number {
   try {
-    return statSync(filePath).size;
+    return readFileSync(filePath, 'utf-8').length;
   } catch {
     return 0;
   }
