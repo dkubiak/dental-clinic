@@ -105,9 +105,12 @@ test.describe('US3 — admin account lifecycle', () => {
     await page.getByLabel('6-cyfrowy kod').fill(currentTotpCode(secret));
     await page.getByRole('button', { name: 'Potwierdź' }).click();
 
-    // RECEPTION role -> lands on the reception home screen (role-appropriate access).
-    await page.waitForURL('**/reception');
-    await expect(page.locator('mat-toolbar')).toHaveText('Panel — Recepcja');
+    // RECEPTION role -> lands on the shared patient-search screen (role-appropriate access).
+    // 002-patient-records (T040): the shared shell/patient-search screen replaced the per-role
+    // placeholder home screen (`/reception`, `mat-toolbar` "Panel — Recepcja") this scenario
+    // originally asserted against — same fix already applied in us1-login-rbac.spec.ts.
+    await page.waitForURL('**/patients');
+    await expect(page.getByRole('heading', { name: 'Pacjenci' })).toBeVisible();
   });
 
   test('Scenario 2: a deactivated account cannot log in, and the denial is audit-logged', async ({
