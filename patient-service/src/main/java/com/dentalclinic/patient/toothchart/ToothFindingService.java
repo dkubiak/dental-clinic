@@ -115,9 +115,9 @@ public class ToothFindingService {
 
   /**
    * FR-004a-c, US6, research.md D6 — one {@link #addFinding} call per requested position inside a
-   * single transaction; a position the entry doesn't apply to (missing tooth, surface doesn't
-   * exist for that tooth type, bad FDI number, ...) is skipped with a human-readable reason rather
-   * than failing the whole call. Never creates a shared "batch" entity — every created finding is
+   * single transaction; a position the entry doesn't apply to (missing tooth, surface doesn't exist
+   * for that tooth type, bad FDI number, ...) is skipped with a human-readable reason rather than
+   * failing the whole call. Never creates a shared "batch" entity — every created finding is
    * independently correctable via {@link #closeFinding}/{@link #correctFinding} afterward.
    *
    * @throws PatientNotFoundException no patient with this id exists.

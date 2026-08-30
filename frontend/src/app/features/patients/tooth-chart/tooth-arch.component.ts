@@ -68,6 +68,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           [attr.tabindex]="0"
           [attr.role]="'button'"
           [attr.aria-label]="tooth.ariaLabel"
+          [attr.aria-pressed]="selectedFdiNumbers().length > 0 ? isMultiSelected(tooth.fdiNumber) : null"
           (click)="select(tooth.fdiNumber)"
           (keydown.enter)="select(tooth.fdiNumber)"
           (keydown.arrowright)="onArrowKey($any($event), i)"
@@ -120,13 +121,19 @@ const MULTI_FINDING_THRESHOLD = 3;
       stroke: var(--pu-tooth-healthy-stroke, #888);
       stroke-width: 1.5;
     }
+    /* FR-039/FR-050 — diseased/restored/healthy must never rely on fill/stroke color alone: a
+       thicker solid outline flags an active diagnosis, a fine dotted outline flags an existing
+       (already-treated) state, so the three read apart in grayscale or with a color-vision
+       deficiency. */
     .tooth.status-diseased .crown {
       fill: var(--pu-tooth-diseased-fill, #f6cccc);
       stroke: var(--pu-tooth-diseased-stroke, #b33);
+      stroke-width: 2.5;
     }
     .tooth.status-restored .crown {
       fill: var(--pu-tooth-restored-fill, #cfe3f7);
       stroke: var(--pu-tooth-restored-stroke, #3a6ea5);
+      stroke-dasharray: 1.5 1.5;
     }
     .tooth.status-absent .crown,
     .tooth.status-absent .root {

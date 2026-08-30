@@ -13,7 +13,10 @@ public record ToothFindingBulkResultResponse(
       ToothFindingService.BulkResult result, ToothFindingService service) {
     return new ToothFindingBulkResultResponse(
         result.created().stream()
-            .map(finding -> ToothFindingController.toResponse(finding, service.fdiNumberOf(finding), service))
+            .map(
+                finding ->
+                    ToothFindingController.toResponse(
+                        finding, service.fdiNumberOf(finding), service))
             .toList(),
         result.skipped().stream()
             .map(s -> new SkippedPositionResponse(s.fdiNumber(), s.reason()))

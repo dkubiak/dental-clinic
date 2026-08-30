@@ -72,11 +72,13 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
               <input
                 type="text"
                 [attr.data-testid]="'canal-name-' + canal.id"
+                [attr.aria-label]="'Nazwa kanału ' + canal.name"
                 [value]="canal.name"
                 (change)="renameCanal(canal, $any($event.target).value)"
               />
               <select
                 [attr.data-testid]="'canal-state-' + canal.id"
+                [attr.aria-label]="'Stan leczenia kanału ' + canal.name"
                 [value]="canal.state"
                 (change)="changeCanalState(canal, $any($event.target).value)"
               >
@@ -87,6 +89,7 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
               <button
                 type="button"
                 [attr.data-testid]="'canal-remove-' + canal.id"
+                [attr.aria-label]="'Usuń kanał ' + canal.name"
                 (click)="removeCanal(canal)"
               >
                 Usuń
@@ -98,6 +101,7 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
           <input
             type="text"
             data-testid="new-canal-name-input"
+            aria-label="Nazwa nowego kanału"
             placeholder="Nazwa kanału (np. MB, policzkowy bliższy)"
             [value]="newCanalName()"
             (input)="newCanalName.set($any($event.target).value)"

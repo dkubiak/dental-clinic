@@ -18,8 +18,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T092 — {@code POST/PATCH/DELETE .../positions/{fdi}/canals[/{id}]} per
- * contracts/patient-api.yaml (FR-065/FR-066/FR-068). RBAC (DOCTOR/ASSISTANT only) and audit rows
+ * T092 — {@code POST/PATCH/DELETE .../positions/{fdi}/canals[/{id}]} per contracts/patient-api.yaml
+ * (FR-065/FR-066/FR-068). RBAC (DOCTOR/ASSISTANT only) and audit rows
  * (ROOT_CANAL_ADDED/ROOT_CANAL_CHANGED/ROOT_CANAL_REMOVED).
  */
 class RootCanalControllerTest extends PostgresIntegrationTestBase {

@@ -46,7 +46,7 @@ public class PatientExportService {
   public PatientExport export(UUID patientId, UUID actorId) {
     PatientRecord record =
         patientRecordRepository.findById(patientId).orElseThrow(PatientNotFoundException::new);
-    ToothChartService.ChartView toothChart = toothChartService.getChart(patientId, actorId);
+    ToothChartService.ChartView toothChart = toothChartService.getChartForExport(patientId);
     List<AllergyEntry> allergies = medicalHistoryService.getAllergyHistory(patientId, actorId);
     List<MedicationEntry> medications =
         medicalHistoryService.getMedicationHistory(patientId, actorId);

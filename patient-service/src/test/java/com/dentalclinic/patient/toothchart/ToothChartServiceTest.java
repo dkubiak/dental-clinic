@@ -66,28 +66,35 @@ class ToothChartServiceTest extends PostgresIntegrationTestBase {
     PatientRecord patient = createAdultPatient("90011530005");
 
     toothChartService.changePresence(
-        patient.getId(), 36, ToothPresence.EXTRACTED, LocalDate.of(2026, 8, 30), 0, UUID.randomUUID());
+        patient.getId(),
+        36,
+        ToothPresence.EXTRACTED,
+        LocalDate.of(2026, 8, 30),
+        0,
+        UUID.randomUUID());
 
     assertThatThrownBy(
             () ->
                 toothChartService.changePresence(
-                    patient.getId(),
-                    36,
-                    ToothPresence.PRESENT,
-                    null,
-                    0,
-                    UUID.randomUUID()))
+                    patient.getId(), 36, ToothPresence.PRESENT, null, 0, UUID.randomUUID()))
         .isInstanceOf(FindingConflictException.class);
   }
 
   @Test
   void changePresence_toExtracted_blocksSurfaceScopeFinding_butAllowsAllowedForMissingToothEntry() {
     PatientRecord patient = createAdultPatient("90011530012");
-    DiagnosisCatalogEntry caries = diagnosisCatalogEntryRepository.findByCode("K02.1").orElseThrow();
-    DiagnosisCatalogEntry implant = diagnosisCatalogEntryRepository.findByCode("IMPL").orElseThrow();
+    DiagnosisCatalogEntry caries =
+        diagnosisCatalogEntryRepository.findByCode("K02.1").orElseThrow();
+    DiagnosisCatalogEntry implant =
+        diagnosisCatalogEntryRepository.findByCode("IMPL").orElseThrow();
 
     toothChartService.changePresence(
-        patient.getId(), 36, ToothPresence.EXTRACTED, LocalDate.of(2026, 8, 30), 0, UUID.randomUUID());
+        patient.getId(),
+        36,
+        ToothPresence.EXTRACTED,
+        LocalDate.of(2026, 8, 30),
+        0,
+        UUID.randomUUID());
 
     assertThatThrownBy(
             () ->
@@ -122,8 +129,8 @@ class ToothChartServiceTest extends PostgresIntegrationTestBase {
   }
 
   /**
-   * T104 — dentitionMode defaults from age (DECIDUOUS &lt;6y, MIXED 6-13y, PERMANENT else,
-   * FR-044); changing mode never deletes/modifies any ToothPosition/ToothFinding row (FR-047).
+   * T104 — dentitionMode defaults from age (DECIDUOUS &lt;6y, MIXED 6-13y, PERMANENT else, FR-044);
+   * changing mode never deletes/modifies any ToothPosition/ToothFinding row (FR-047).
    */
   @Test
   void defaultDentitionMode_isDeciduousUnderSix_mixedBetweenSixAndThirteen_permanentOtherwise() {
@@ -138,7 +145,8 @@ class ToothChartServiceTest extends PostgresIntegrationTestBase {
   @Test
   void changeDentitionMode_neverDeletesOrModifiesAnyPositionOrFinding() {
     PatientRecord patient = createAdultPatient("90011540046");
-    DiagnosisCatalogEntry caries = diagnosisCatalogEntryRepository.findByCode("K02.1").orElseThrow();
+    DiagnosisCatalogEntry caries =
+        diagnosisCatalogEntryRepository.findByCode("K02.1").orElseThrow();
     ToothFinding finding =
         toothFindingService.addFinding(
             patient.getId(),
@@ -152,10 +160,12 @@ class ToothChartServiceTest extends PostgresIntegrationTestBase {
             LocalDate.of(2026, 8, 30),
             UUID.randomUUID(),
             FindingAuthorRole.DOCTOR);
-    ToothChartService.ChartView before = toothChartService.getChart(patient.getId(), UUID.randomUUID());
+    ToothChartService.ChartView before =
+        toothChartService.getChart(patient.getId(), UUID.randomUUID());
 
     ToothChartService.ChartView after =
-        toothChartService.changeDentitionMode(patient.getId(), DentitionMode.MIXED, UUID.randomUUID());
+        toothChartService.changeDentitionMode(
+            patient.getId(), DentitionMode.MIXED, UUID.randomUUID());
 
     assertThat(after.chart().getDentitionMode()).isEqualTo(DentitionMode.MIXED);
     assertThat(after.positions()).hasSize(before.positions().size()).hasSize(52);

@@ -713,7 +713,7 @@ existing quick context-menu on a multi-selection and confirm it applies to every
 **Purpose**: RODO export/erasure coverage, append-only-surface verification, a cross-cutting
 accessibility audit, and end-to-end validation across every user story.
 
-- [ ] T123 [P] Extend `PatientExportService`/`PatientFullExportResponse` with the `toothChart` field
+- [X] T123 [P] Extend `PatientExportService`/`PatientFullExportResponse` with the `toothChart` field
   — all 52 positions, all canals (including removed), and the full finding history (current,
   resolved, and superseded alike), catalog entries resolved to Polish names (FR-061) in
   `patient-service/src/main/java/com/dentalclinic/patient/rodo/PatientExportService.java` and
@@ -724,19 +724,19 @@ accessibility audit, and end-to-end validation across every user story.
   needed, same posture as feature 004's own `TODO(T060)` deferral
 - [X] T125 Verify no `@PatchMapping`/`@DeleteMapping` exists on `ToothFindingController.java`
   (append-only enforced by API surface, FR-030) — grep the file and confirm zero matches
-- [ ] T126 [P] Run `specs/005-tooth-chart-diagnoses/quickstart.md` Scenarios 1-8 end-to-end against a
+- [X] T126 [P] Run `specs/005-tooth-chart-diagnoses/quickstart.md` Scenarios 1-8 end-to-end against a
   local stack (Testcontainers Postgres + `backend` + `patient-service` + `frontend`); Scenario 8's
   screen-reader/320px/5-doctor-legend checks are manual and documented as such, not automated (same
   accepted gap plan.md records for SC-004/SC-009, now extended to SC-001/SC-012/SC-013 per session
   2026-08-30 piąta tura)
-- [ ] T127 [P] Verify checkstyle/lint and full test suites are green: `cd patient-service && ./gradlew
+- [X] T127 [P] Verify checkstyle/lint and full test suites are green: `cd patient-service && ./gradlew
   build`, `cd backend && ./gradlew build`, `cd frontend && npm run lint && npm test`
 - [ ] T128 Document the security/compliance self-review required by constitution v1.5.0's
   risk-tiered gate in the PR description before merge (this PR touches patient data and audit
   logging), explicitly addressing FR-058's ASSISTANT/DOCTOR write-parity divergence from
   `004-patient-medical-history` as a deliberate, spec-driven decision (plan.md Constitution Check);
   do not enable auto-merge on this PR
-- [ ] T129 [P] Cross-cutting audit: confirm every diagram visual state introduced across US1-US6
+- [X] T129 [P] Cross-cutting audit: confirm every diagram visual state introduced across US1-US6
   (active diagnosis, existing-state, missing-tooth, canal treatment states, layer-filtered/dimmed
   markers) carries a non-color cue per FR-050, and every interactive element (tooth, surface zone,
   context-menu item, dentition-mode switch, zoom control) is keyboard-reachable with screen-reader

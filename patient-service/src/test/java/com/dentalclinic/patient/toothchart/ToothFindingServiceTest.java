@@ -344,7 +344,8 @@ class ToothFindingServiceTest extends PostgresIntegrationTestBase {
             FindingAuthorRole.DOCTOR);
 
     assertThat(result.created()).hasSize(3);
-    assertThat(result.created()).extracting(f -> toothFindingService.fdiNumberOf(f))
+    assertThat(result.created())
+        .extracting(f -> toothFindingService.fdiNumberOf(f))
         .containsExactlyInAnyOrder(11, 12, 13);
     assertThat(result.skipped()).hasSize(1);
     assertThat(result.skipped().get(0).fdiNumber()).isEqualTo(99);

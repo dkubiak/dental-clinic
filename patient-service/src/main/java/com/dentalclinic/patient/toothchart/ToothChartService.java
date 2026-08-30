@@ -170,6 +170,34 @@ public class ToothChartService {
     return history;
   }
 
+  /**
+   * FR-061 — RODO export variant of {@link #getChart}: each position's finding list is the FULL
+   * history (current, resolved, and superseded alike) rather than current-only, per
+   * PatientFullExport (contracts/patient-api.yaml) — a subject-access request covers everything
+   * held, not just the live view. Not itself audited as TOOTH_CHART_VIEWED — the export as a whole
+   * is audited as PATIENT_DATA_EXPORTED by {@code PatientExportService}.
+   *
+   * @throws PatientNotFoundException no patient record with this id exists.
+   */
+  public ChartView getChartForExport(UUID patientId) {
+    requirePatientExists(patientId);
+    ToothChart chart = requireChart(patientId);
+    List<ToothPosition> positions =
+        toothPositionRepository.findByToothChartIdOrderByFdiNumberAsc(chart.getId());
+    List<PositionView> positionViews =
+        positions.stream().map(this::toPositionViewWithFullHistory).toList();
+    return new ChartView(chart, positionViews);
+  }
+
+  private PositionView toPositionViewWithFullHistory(ToothPosition position) {
+    List<RootCanal> canals = rootCanalRepository.findByToothPositionId(position.getId());
+    List<FindingView> allFindings =
+        toothFindingRepository.findByToothPositionIdOrderByCreatedAtAsc(position.getId()).stream()
+            .map(this::toFindingView)
+            .toList();
+    return new PositionView(position, canals, allFindings);
+  }
+
   ToothChart requireChart(UUID patientId) {
     return toothChartRepository
         .findByPatientRecordId(patientId)

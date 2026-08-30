@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * {@code GET /patients/{patientId}/tooth-chart[/positions/{fdiNumber}/history]},
- * {@code PATCH .../positions/{fdiNumber}/presence}, {@code PATCH .../dentition-mode} per
+ * {@code GET /patients/{patientId}/tooth-chart[/positions/{fdiNumber}/history]}, {@code PATCH
+ * .../positions/{fdiNumber}/presence}, {@code PATCH .../dentition-mode} per
  * contracts/patient-api.yaml (FR-005/FR-034/FR-038/FR-044). {@code @PreAuthorize} restricted to
  * DOCTOR/ASSISTANT (RECEPTION excluded, rbac-policy.md); deny→404.
  */

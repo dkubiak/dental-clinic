@@ -105,4 +105,41 @@ describe('ToothArchComponent', () => {
     expect(tooth.querySelectorAll('.canal.c-under-body').length).toBeGreaterThan(0);
     expect(tooth.querySelectorAll('.canal.c-under-apex').length).toBeGreaterThan(0);
   });
+
+  it('distinguishes healthy/diseased/restored by more than color — outline weight/pattern (T129/FR-039/FR-050)', () => {
+    const diseased = activeFinding({ diagnosisCatalogEntry: { ...activeFinding().diagnosisCatalogEntry, layer: 'DIAGNOSIS' } });
+    const restored = activeFinding({
+      id: 'f2',
+      diagnosisCatalogEntry: { ...activeFinding().diagnosisCatalogEntry, layer: 'EXISTING_STATE' },
+    });
+    fixture.componentRef.setInput('positions', [
+      position(11, [diseased]),
+      position(12, [restored]),
+      position(13, []),
+    ]);
+    fixture.detectChanges();
+
+    const diseasedCrown = fixture.nativeElement.querySelector('[data-testid="tooth-11"] .crown');
+    const restoredCrown = fixture.nativeElement.querySelector('[data-testid="tooth-12"] .crown');
+    const healthyCrown = fixture.nativeElement.querySelector('[data-testid="tooth-13"] .crown');
+
+    const diseasedStyle = getComputedStyle(diseasedCrown);
+    const restoredStyle = getComputedStyle(restoredCrown);
+    const healthyStyle = getComputedStyle(healthyCrown);
+
+    // diseased: thicker outline than healthy; restored: dashed outline, healthy: none.
+    expect(parseFloat(diseasedStyle.strokeWidth)).toBeGreaterThan(parseFloat(healthyStyle.strokeWidth));
+    expect(restoredStyle.strokeDasharray).not.toBe('none');
+    expect(healthyStyle.strokeDasharray === 'none' || healthyStyle.strokeDasharray === '').toBe(true);
+  });
+
+  it('exposes multi-selection state via aria-pressed only while a selection is active', () => {
+    fixture.componentRef.setInput('positions', [position(11, [])]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-11"]').hasAttribute('aria-pressed')).toBe(false);
+
+    fixture.componentRef.setInput('selectedFdiNumbers', [11]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-11"]').getAttribute('aria-pressed')).toBe('true');
+  });
 });

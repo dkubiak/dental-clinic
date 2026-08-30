@@ -52,7 +52,9 @@ public class RootCanalService {
         rootCanalRepository.findByToothPositionIdAndRemovedFalse(position.getId()).size();
     if (nonRemovedCount >= MAX_NON_REMOVED_CANALS) {
       throw new FindingConflictException(
-          "A tooth position may have at most " + MAX_NON_REMOVED_CANALS + " non-removed root canals.");
+          "A tooth position may have at most "
+              + MAX_NON_REMOVED_CANALS
+              + " non-removed root canals.");
     }
 
     RootCanal canal = new RootCanal(UUID.randomUUID(), position.getId(), name, actorId);

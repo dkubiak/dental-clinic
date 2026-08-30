@@ -252,7 +252,8 @@ class ToothFindingControllerTest extends PostgresIntegrationTestBase {
    * one TOOTH_FINDING_ADDED audit row per created finding.
    */
   @Test
-  void addFindingsBulk_returnsCreatedAndSkipped_withOneAuditRowPerCreatedFinding() throws Exception {
+  void addFindingsBulk_returnsCreatedAndSkipped_withOneAuditRowPerCreatedFinding()
+      throws Exception {
     UUID id = createPatient("90011527023");
     long before = countEntries("TOOTH_FINDING_ADDED");
 

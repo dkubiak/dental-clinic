@@ -210,7 +210,8 @@ class ToothChartControllerTest extends PostgresIntegrationTestBase {
                 .cookie(CSRF_TOKEN_COOKIE)
                 .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
                 .contentType(APPLICATION_JSON)
-                .content("{\"presence\":\"EXTRACTED\",\"presenceDate\":\"2026-08-30\",\"expectedVersion\":0}"))
+                .content(
+                    "{\"presence\":\"EXTRACTED\",\"presenceDate\":\"2026-08-30\",\"expectedVersion\":0}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.presence").value("EXTRACTED"))
         .andExpect(jsonPath("$.version").value(1));

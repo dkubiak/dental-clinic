@@ -42,7 +42,12 @@ class RootCanalServiceTest extends PostgresIntegrationTestBase {
   void addCanal_requiresPresenceToBePresent() {
     PatientRecord patient = createAdultPatient("90011531006");
     toothChartService.changePresence(
-        patient.getId(), 36, ToothPresence.EXTRACTED, LocalDate.of(2026, 8, 30), 0, UUID.randomUUID());
+        patient.getId(),
+        36,
+        ToothPresence.EXTRACTED,
+        LocalDate.of(2026, 8, 30),
+        0,
+        UUID.randomUUID());
 
     assertThatThrownBy(
             () -> rootCanalService.addCanal(patient.getId(), 36, "MB", UUID.randomUUID()))
@@ -72,13 +77,7 @@ class RootCanalServiceTest extends PostgresIntegrationTestBase {
     assertThatThrownBy(
             () ->
                 rootCanalService.updateCanal(
-                    patient.getId(),
-                    36,
-                    canal.getId(),
-                    "MB2",
-                    null,
-                    0,
-                    UUID.randomUUID()))
+                    patient.getId(), 36, canal.getId(), "MB2", null, 0, UUID.randomUUID()))
         .isInstanceOf(FindingConflictException.class);
   }
 
