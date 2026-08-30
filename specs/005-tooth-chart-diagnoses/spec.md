@@ -44,6 +44,11 @@
 
 ### Session 2026-08-30 (trzecia tura — po przeglądzie mockupu)
 
+- Q: Czy strefy powierzchni na głównym diagramie mają być klikalne także na ekranach dotykowych,
+  mimo że przy widoku całego uzębienia są mniejsze niż 44 px? → A: Tak — klikanie powierzchni
+  wprost z diagramu ma działać na każdym urządzeniu. Trafialność zapewnia powiększenie diagramu
+  (2× i 3×), przy którym strefy przekraczają najpierw próg WCAG 2.5.8 AA, a potem 44 px
+  (FR-029a, FR-029b, FR-049).
 - Q: Gdzie mają być prezentowane powierzchnie zęba na głównym diagramie? → A: Poza koroną — w
   osobnym, powiększonym schemacie powierzchni umieszczonym w środkowym pasie diagramu, między
   łukami. Sylwetki zębów mają być mniejsze, bo ich rolą jest anatomia, a nie nośnik danych
@@ -94,8 +99,8 @@ sekcji A, C, G oraz I i służy jako referencja dla `/speckit-plan`. Odwzorowuje
 anatomicznymi sylwetkami zębów (FR-001a), zaznaczanie wielu zębów i wielu części
 (FR-004a..FR-004c), słownik z zakresami anatomicznymi (FR-011..FR-021), mapę powierzchni
 (FR-024..FR-026), kanały dodawane ręcznie z trzema stanami leczenia (FR-063..FR-066a), warstwy i legendę
-(FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) oraz cele
-dotknięcia ≥ 44 px bez poziomego przewijania strony (FR-049). Przełącznik „Wymagania" w pasku
+(FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) oraz klikanie
+powierzchni wprost z diagramu z powiększeniem 1×/2×/3× (FR-029a, FR-029b, FR-049). Przełącznik „Wymagania" w pasku
 górnym pokazuje przy elementach interfejsu numery wymagań, których dotyczą.
 
 Moduł pozostaje w klasyfikacji **high-risk "patient records"** (Principle V) i przetwarza dane
@@ -520,9 +525,18 @@ zębów, a każdy da się później skorygować niezależnie.
   wyłącznie anatomię (typ zęba, korzenie, kanały) i MUST NOT być używana jako nośnik oznaczeń
   powierzchniowych; korona MUST być na tyle mała, żeby schemat powierzchni pozostał dominującym
   elementem odczytu.
-- **FR-029a**: Schemat powierzchni w widoku łuku MUST być klikalny — wskazanie powierzchni
-  bezpośrednio na diagramie MUST zaznaczać odpowiedni ząb i tę powierzchnię, bez konieczności
-  wchodzenia najpierw w panel szczegółów.
+- **FR-029a**: Schemat powierzchni w widoku łuku MUST być klikalny na **każdym rodzaju urządzenia
+  wskazującego** — myszą, piórem i dotykiem — a wskazanie powierzchni bezpośrednio na diagramie
+  MUST zaznaczać odpowiedni ząb i tę powierzchnię, bez konieczności wchodzenia najpierw w panel
+  szczegółów. Każda strefa MUST mieć podpowiedź z nazwą powierzchni dostępną przed kliknięciem.
+- **FR-029b**: Ponieważ przy widoku całego uzębienia pojedyncza strefa powierzchni jest mniejsza
+  niż minimalny cel dotknięcia z FR-049, system MUST udostępniać powiększenie diagramu (co
+  najmniej dwa stopnie ponad widok domyślny), przy którym każda strefa osiąga co najmniej 24×24 px
+  (WCAG 2.5.8, poziom AA), a na najwyższym stopniu 44×44 px. Powiększony diagram MUST przewijać
+  się poziomo wewnątrz własnego kontenera (nigdy jako cała strona, FR-049), MUST utrzymywać
+  zaznaczony ząb w polu widzenia po zmianie powiększenia i MUST NOT być warunkiem korzystania z
+  funkcji — pełna, powiększona mapa powierzchni w panelu szczegółów pozostaje równorzędną drogą
+  wskazania powierzchni.
 
 #### D. Cykl życia wpisu
 
@@ -577,9 +591,11 @@ zębów, a każdy da się później skorygować niezależnie.
 - **FR-048**: System MUST projektować odontogram mobile-first (Principle IV): pełna obsługa
   wszystkich przepływów tej specyfikacji na ekranie o szerokości 320 px, z progresywnym
   wzbogaceniem dla tabletu i desktopu.
-- **FR-049**: Każdy interaktywny element diagramu (ząb, powierzchnia) MUST mieć obszar dotknięcia o
-  wymiarach co najmniej 44×44 px niezależnie od rozmiaru rysunku; jeżeli wymaga to przewijania
-  poziomego, MUST ono odbywać się wewnątrz kontenera diagramu, nigdy jako przewijanie całej strony.
+- **FR-049**: Wybór zęba i wybór jego schematu powierzchni MUST mieć obszar dotknięcia o wymiarach
+  co najmniej 44×44 px niezależnie od rozmiaru rysunku. Dla pojedynczych stref powierzchni w
+  widoku całego uzębienia obowiązuje próg WCAG 2.5.8 (24×24 px) osiągany przez powiększenie z
+  FR-029b. Jeżeli którykolwiek z tych wymogów wymaga przewijania poziomego, MUST ono odbywać się
+  wewnątrz kontenera diagramu, nigdy jako przewijanie całej strony.
 - **FR-050**: System MUST rozróżniać wszystkie stany pozycji i warstwy wpisów w sposób nieoparty
   wyłącznie na kolorze (kształt, wzór, obrys lub symbol), tak aby diagram pozostał czytelny w skali
   szarości i dla osób z zaburzeniami widzenia barw.

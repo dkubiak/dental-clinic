@@ -140,7 +140,13 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 
 /* ── Diagram ─────────────────────────────────────────────────────────────── */
 .arch-wrap { overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 12px 12px; }
-.arch { display: block; min-width: 780px; width: 100%; height: auto; touch-action: pan-x pan-y; }
+.arch { display: block; min-width: calc(var(--arch-zoom, 1) * 780px); width: 100%; height: auto; touch-action: pan-x pan-y; }
+.zoomctl { display: inline-flex; align-items: center; gap: 4px; }
+.zoomctl .eyebrow { margin-right: 2px; }
+.zoomctl button { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm);
+  padding: 4px 9px; font-size: 12px; cursor: pointer; color: var(--text-muted);
+  font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.zoomctl button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 600; }
 
 .tooth { cursor: pointer; }
 .tooth .root { fill: var(--tooth-root-fill); stroke: var(--tooth-stroke); stroke-width: 1.1; }
@@ -184,7 +190,6 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .sbox.is-selected .frame { stroke: var(--tooth-selected-stroke); stroke-width: 2.2; }
 .sbox.is-absent .zone { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 2 2; pointer-events: none; }
 .sbox.is-absent .frame { stroke: var(--tooth-absent); stroke-dasharray: 3 3; }
-@media (pointer: coarse) { .sbox .zone { pointer-events: none; } }
 .sbox .boxhit { fill: transparent; cursor: pointer; }
 
 /* ── Przegląd ────────────────────────────────────────────────────────────── */
@@ -407,6 +412,13 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
         </div>
         <span class="fr">FR-004a · FR-004b</span>
         <span class="spacer"></span>
+        <span class="zoomctl" role="group" aria-label="Powiększenie diagramu">
+          <span class="eyebrow">Powiększ</span>
+          <button type="button" data-zoom="1" aria-pressed="true">1×</button>
+          <button type="button" data-zoom="2" aria-pressed="false">2×</button>
+          <button type="button" data-zoom="3" aria-pressed="false">3×</button>
+          <span class="fr">FR-029b</span>
+        </span>
         <button type="button" class="btn btn-ghost btn-sm" id="clearSel">Wyczyść</button>
       </div>
 
@@ -561,7 +573,7 @@ const STATE_LABEL = Object.fromEntries(CANAL_STATES.map(s => [s.key, s.full]));
 const state = {
   dentition: 'permanent', layer: 'all',
   selection: new Set(), surfaces: new Set(), canal: null,
-  dx: null, scopeAsk: 'tooth', query: '', teeth: {}, seq: 100, cseq: 500,
+  dx: null, scopeAsk: 'tooth', query: '', zoom: 1, teeth: {}, seq: 100, cseq: 500,
 };
 [...PERM_UPPER, ...PERM_LOWER, ...DEC_UPPER, ...DEC_LOWER].forEach(fdi => {
   state.teeth[fdi] = { presence: 'present', canals: [], findings: [] };   // FR-063 — zero kanałów na start
@@ -795,10 +807,12 @@ function drawTooth(fdi, m, w, colW, cx, yBase, dir, rot) {
 function drawSurfaceBox(fdi, m, cx, cy, size, colW) {
   const grp = el('g', { class: 'sbox', transform: `translate(${f2(cx)} ${cy})`, 'data-sbox': fdi });
   grp.appendChild(el('rect', { class: 'boxhit', x: f2(-colW / 2), y: f2(-size / 2 - 6), width: f2(colW), height: f2(size + 12) }));
-  zoneDefs(size, m.right).forEach(z => grp.appendChild(el('path', {
-    d: z.d, class: 'zone', 'data-zone': z.k, 'data-fdi': fdi,
-    role: 'button', tabindex: -1,
-  })));
+  zoneDefs(size, m.right).forEach(z => {
+    const key = z.k === 'C' ? (m.anterior ? 'I' : 'O') : z.k;
+    const path = el('path', { d: z.d, class: 'zone', 'data-zone': z.k, 'data-fdi': fdi, role: 'button', tabindex: -1 });
+    path.appendChild(Object.assign(el('title', {}), { textContent: `Ząb ${fdi} · powierzchnia ${SURFACE_NAME(fdi, key)}` }));
+    grp.appendChild(path);
+  });
   grp.appendChild(el('rect', { class: 'frame', x: f2(-size / 2), y: f2(-size / 2), width: f2(size), height: f2(size), rx: 2 }));
   return grp;
 }
@@ -1190,6 +1204,22 @@ document.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click'
   }).forEach(fdi => state.selection.add(fdi));
   refresh();
 }));
+/* powiększenie diagramu — pozwala trafić w pojedynczą powierzchnię także na dotyku (FR-029b) */
+const archWrap = document.querySelector('.arch-wrap');
+document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => {
+  state.zoom = +b.dataset.zoom;
+  document.querySelectorAll('[data-zoom]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  archWrap.style.setProperty('--arch-zoom', state.zoom);
+  const first = [...state.selection][0];
+  const node = first != null && archSvg.querySelector(`.sbox[data-sbox="${first}"]`);
+  requestAnimationFrame(() => {
+    if (node) {
+      const nb = node.getBoundingClientRect(), wb = archWrap.getBoundingClientRect();
+      archWrap.scrollLeft += (nb.left + nb.width / 2) - (wb.left + wb.width / 2);
+    }
+  });
+}));
+
 document.getElementById('clearSel').addEventListener('click', () => {
   state.selection.clear(); state.surfaces.clear(); state.canal = null; refresh();
 });
