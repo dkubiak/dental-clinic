@@ -20,6 +20,7 @@
   --euc-text: #2F5D57;
   --euc-wash: #D7E8E4;
   --success: #2E6B45;
+  --success-wash: #DCEBE1;
   --warning: #9A5B00;
   --warning-wash: #F7E9D2;
   --error: #A33A32;
@@ -37,6 +38,8 @@
   --tooth-closed-stroke: #2E6B45;
   --tooth-selected-stroke: #7A5A2E;
   --tooth-absent: #8C8480;
+  --canal-treat: #A33A32;
+  --canal-done: #2E6B45;
 
   --shadow-sm: 0 1px 2px rgb(31 29 30 / .07), 0 1px 1px rgb(31 29 30 / .04);
   --shadow-md: 0 6px 22px rgb(31 29 30 / .10), 0 2px 6px rgb(31 29 30 / .06);
@@ -47,306 +50,217 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1A1819;
-    --surface: #2E2C2D;
-    --surface-raised: #363233;
-    --border: #504C4B;
-    --border-strong: #8C8480;
-    --text: #EAE4DC;
-    --text-muted: #A79E96;
-    --text-disabled: #7A726C;
-    --accent: #CBAD89;
-    --accent-text: #E3C9A6;
-    --accent-hover: #E3C9A6;
-    --on-accent: #1A1819;
-    --euc: #7FB3AA;
-    --euc-text: #7FB3AA;
-    --euc-wash: #24413E;
-    --success: #6FBF8E;
-    --warning: #E8A33D;
-    --warning-wash: #4A3413;
-    --error: #E88178;
-    --error-wash: #5A2B27;
-    --info: #8FB2D6;
-    --focus-ring: #E3C9A6;
-    --tooth-fill: #363233;
-    --tooth-stroke: #A79E96;
-    --tooth-root-fill: #2E2C2D;
-    --tooth-diseased-fill: #5A2B27;
-    --tooth-diseased-stroke: #E88178;
-    --tooth-restored-fill: #24413E;
-    --tooth-restored-stroke: #7FB3AA;
-    --tooth-closed-stroke: #6FBF8E;
-    --tooth-selected-stroke: #E3C9A6;
-    --tooth-absent: #7A726C;
+    --bg: #1A1819; --surface: #2E2C2D; --surface-raised: #363233;
+    --border: #504C4B; --border-strong: #8C8480;
+    --text: #EAE4DC; --text-muted: #A79E96; --text-disabled: #7A726C;
+    --accent: #CBAD89; --accent-text: #E3C9A6; --accent-hover: #E3C9A6; --on-accent: #1A1819;
+    --euc: #7FB3AA; --euc-text: #7FB3AA; --euc-wash: #24413E;
+    --success: #6FBF8E; --success-wash: #223D2C;
+    --warning: #E8A33D; --warning-wash: #4A3413;
+    --error: #E88178; --error-wash: #5A2B27;
+    --info: #8FB2D6; --focus-ring: #E3C9A6;
+    --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #2E2C2D;
+    --tooth-diseased-fill: #5A2B27; --tooth-diseased-stroke: #E88178;
+    --tooth-restored-fill: #24413E; --tooth-restored-stroke: #7FB3AA;
+    --tooth-closed-stroke: #6FBF8E; --tooth-selected-stroke: #E3C9A6; --tooth-absent: #7A726C;
+    --canal-treat: #E88178; --canal-done: #6FBF8E;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / .4);
     --shadow-md: 0 8px 26px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .3);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1A1819;
-  --surface: #2E2C2D;
-  --surface-raised: #363233;
-  --border: #504C4B;
-  --border-strong: #8C8480;
-  --text: #EAE4DC;
-  --text-muted: #A79E96;
-  --text-disabled: #7A726C;
-  --accent: #CBAD89;
-  --accent-text: #E3C9A6;
-  --accent-hover: #E3C9A6;
-  --on-accent: #1A1819;
-  --euc: #7FB3AA;
-  --euc-text: #7FB3AA;
-  --euc-wash: #24413E;
-  --success: #6FBF8E;
-  --warning: #E8A33D;
-  --warning-wash: #4A3413;
-  --error: #E88178;
-  --error-wash: #5A2B27;
-  --info: #8FB2D6;
-  --focus-ring: #E3C9A6;
-  --tooth-fill: #363233;
-  --tooth-stroke: #A79E96;
-  --tooth-root-fill: #2E2C2D;
-  --tooth-diseased-fill: #5A2B27;
-  --tooth-diseased-stroke: #E88178;
-  --tooth-restored-fill: #24413E;
-  --tooth-restored-stroke: #7FB3AA;
-  --tooth-closed-stroke: #6FBF8E;
-  --tooth-selected-stroke: #E3C9A6;
-  --tooth-absent: #7A726C;
+  --bg: #1A1819; --surface: #2E2C2D; --surface-raised: #363233;
+  --border: #504C4B; --border-strong: #8C8480;
+  --text: #EAE4DC; --text-muted: #A79E96; --text-disabled: #7A726C;
+  --accent: #CBAD89; --accent-text: #E3C9A6; --accent-hover: #E3C9A6; --on-accent: #1A1819;
+  --euc: #7FB3AA; --euc-text: #7FB3AA; --euc-wash: #24413E;
+  --success: #6FBF8E; --success-wash: #223D2C;
+  --warning: #E8A33D; --warning-wash: #4A3413;
+  --error: #E88178; --error-wash: #5A2B27;
+  --info: #8FB2D6; --focus-ring: #E3C9A6;
+  --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #2E2C2D;
+  --tooth-diseased-fill: #5A2B27; --tooth-diseased-stroke: #E88178;
+  --tooth-restored-fill: #24413E; --tooth-restored-stroke: #7FB3AA;
+  --tooth-closed-stroke: #6FBF8E; --tooth-selected-stroke: #E3C9A6; --tooth-absent: #7A726C;
+  --canal-treat: #E88178; --canal-done: #6FBF8E;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / .4);
   --shadow-md: 0 8px 26px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .3);
 }
 
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
 h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 
-/* ── Szkielet ───────────────────────────────────────────────────────────── */
-.app { min-height: 100vh; display: flex; flex-direction: column; }
-
-.topbar {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  padding: 10px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 30;
-}
+.app { min-height: 100vh; display: flex; flex-direction: column; overflow-x: clip; }
+.topbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 10px 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 30; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand svg { flex: none; }
 .brand b { display: block; font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
 .brand span { display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .09em; }
-
 .patient { display: flex; align-items: baseline; gap: 10px 12px; flex-wrap: wrap; min-width: 0; }
 .patient-name { font-weight: 600; }
 .patient-meta { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
-.alert-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 2px 8px; border-radius: 999px;
-  background: var(--error-wash); color: var(--error);
-  border: 1px solid var(--error);
-  font-size: 12px; font-weight: 600;
-}
+.alert-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px;
+  background: var(--error-wash); color: var(--error); border: 1px solid var(--error); font-size: 12px; font-weight: 600; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
 .seg { display: inline-flex; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 999px; padding: 2px; }
-.seg button {
-  border: 0; background: none; cursor: pointer; border-radius: 999px;
-  padding: 5px 11px; font-size: 13px; color: var(--text-muted);
-}
+.seg button { border: 0; background: none; cursor: pointer; border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--text-muted); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
-
-.icon-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-  padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text-muted);
-}
+.icon-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text-muted); }
 .icon-btn:hover { border-color: var(--border-strong); color: var(--text); }
 .icon-btn[aria-pressed="true"] { background: var(--surface-raised); color: var(--accent-text); border-color: var(--accent); }
 
-/* ── Obszar roboczy ─────────────────────────────────────────────────────── */
 .workspace { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; align-items: start; flex: 1; min-width: 0; }
 .workspace > * { min-width: 0; }
-.panel { min-width: 0; }
-.app { overflow-x: clip; }
-@media (min-width: 1260px) {
-  .workspace { grid-template-columns: minmax(0, 1fr) 400px; padding: 20px; gap: 20px; }
-}
+@media (min-width: 1260px) { .workspace { grid-template-columns: minmax(0, 1fr) 400px; padding: 20px; gap: 20px; } }
 
-.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
-.panel-head {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-}
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); min-width: 0; }
+.panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .panel-head h2 { font-size: 15px; font-weight: 600; }
 .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); font-weight: 600; }
-
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-.chip {
-  border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
-  padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text-muted);
-}
+.chip { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text-muted); }
 .chip[aria-pressed="true"] { background: var(--surface-raised); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
 
-/* pasek zaznaczania */
-.selbar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 10px 16px; border-bottom: 1px solid var(--border);
-  background: var(--surface-raised);
-  border-radius: 0;
-}
-.selbar .count {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  padding: 3px 9px; border-radius: 999px;
-  background: var(--surface); border: 1px solid var(--border);
-  font-variant-numeric: tabular-nums;
-}
+.selbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 16px;
+  border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+.selbar .count { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .selbar .count.on { border-color: var(--accent); color: var(--accent-text); }
 .quick { display: flex; gap: 4px; flex-wrap: wrap; }
-.quick button {
-  border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm);
-  padding: 4px 9px; font-size: 12px; cursor: pointer; color: var(--text-muted); white-space: nowrap;
-}
+.quick button { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm);
+  padding: 4px 9px; font-size: 12px; cursor: pointer; color: var(--text-muted); white-space: nowrap; }
 .quick button:hover { border-color: var(--accent); color: var(--accent-text); }
 .selbar .spacer { margin-left: auto; }
 
-/* ── Łuk zębowy ─────────────────────────────────────────────────────────── */
+/* ── Diagram ─────────────────────────────────────────────────────────────── */
 .arch-wrap { overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 12px 12px; }
-.arch { display: block; min-width: 760px; width: 100%; height: auto; touch-action: pan-x pan-y; }
+.arch { display: block; min-width: 780px; width: 100%; height: auto; touch-action: pan-x pan-y; }
 
 .tooth { cursor: pointer; }
-.tooth .crown, .tooth .root { transition: fill .12s ease, stroke .12s ease; }
-@media (prefers-reduced-motion: reduce) { .tooth .crown, .tooth .root { transition: none; } }
 .tooth .root { fill: var(--tooth-root-fill); stroke: var(--tooth-stroke); stroke-width: 1.1; }
 .tooth .crown { fill: var(--tooth-fill); stroke: var(--tooth-stroke); stroke-width: 1.3; }
-.tooth .canal { stroke: var(--tooth-stroke); stroke-width: 1.1; opacity: .55; fill: none; stroke-linecap: round; }
-.tooth:hover .crown { stroke: var(--accent-hover); }
 .tooth .hit { fill: transparent; }
-
+.tooth:hover .crown { stroke: var(--accent-hover); }
 .tooth.is-diseased .crown { fill: var(--tooth-diseased-fill); stroke: var(--tooth-diseased-stroke); }
 .tooth.is-restored .crown { fill: var(--tooth-restored-fill); stroke: var(--tooth-restored-stroke); }
-.tooth.is-both .crown { fill: var(--tooth-diseased-fill); stroke: var(--tooth-diseased-stroke); }
 .tooth.is-absent .crown, .tooth.is-absent .root { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 3 3; }
 .tooth.is-absent .canal { display: none; }
 .tooth.is-unerupted .crown, .tooth.is-unerupted .root { opacity: .45; stroke-dasharray: 4 3; }
 .tooth.is-selected .crown { stroke: var(--tooth-selected-stroke); stroke-width: 2.4; }
 .tooth.is-selected .root { stroke: var(--tooth-selected-stroke); }
-.tooth-label {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  fill: var(--text-muted); text-anchor: middle; font-variant-numeric: tabular-nums;
-  pointer-events: none; user-select: none;
-}
-.tooth-label.is-sel { fill: var(--accent-text); font-weight: 700; }
-.midline { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
-.quad-label {
-  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-  fill: var(--text-disabled); text-anchor: middle; pointer-events: none;
-}
-.zone { stroke: var(--tooth-stroke); stroke-width: .7; fill: none; opacity: .5; }
-.zone.filled { opacity: 1; stroke-width: .9; }
-.zone.f-diag { fill: url(#hatchDiag); stroke: var(--tooth-diseased-stroke); }
-.zone.f-rest { fill: var(--tooth-restored-stroke); stroke: var(--tooth-restored-stroke); }
-.zone.f-done { fill: none; stroke: var(--tooth-closed-stroke); stroke-width: 1.4; }
 .absent-cross { display: none; }
 .absent-cross path { stroke: var(--tooth-absent); stroke-width: 1.6; stroke-linecap: round; fill: none; }
 .tooth.is-absent .absent-cross { display: block; }
-.tooth.is-absent .zones { display: none !important; }
-.canal-flag { fill: var(--warning); }
 
-/* przegląd */
+/* kanały — wyraźne, trzy stany (FR-066a) */
+.canal { fill: none; stroke-linecap: round; stroke-width: 3.4; }
+.canal.c-treat { stroke: var(--canal-treat); stroke-dasharray: 5 3.4; }
+.canal.c-done { stroke: var(--canal-done); }
+.canal.c-under-body { stroke: var(--canal-done); }
+.canal.c-under-apex { stroke: var(--canal-treat); }
+.canal-apex-dot { fill: var(--canal-treat); }
+
+.tooth-label { font-family: var(--mono); font-size: 11px; font-weight: 600; fill: var(--text-muted);
+  text-anchor: middle; font-variant-numeric: tabular-nums; pointer-events: none; user-select: none; }
+.tooth-label.is-sel { fill: var(--accent-text); font-weight: 700; }
+.midline { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+.quad-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  fill: var(--text-disabled); text-anchor: middle; pointer-events: none; }
+
+/* schemat powierzchni w środkowym pasie (FR-029) */
+.sbox .frame { fill: none; stroke: var(--border-strong); stroke-width: 1.1; }
+.sbox .zone { fill: var(--tooth-fill); stroke: var(--tooth-stroke); stroke-width: .8; cursor: pointer; }
+.sbox .zone:hover { fill: var(--surface-raised); }
+.sbox .zone.f-diag { fill: url(#hatchDiag); stroke: var(--tooth-diseased-stroke); stroke-width: 1.1; }
+.sbox .zone.f-rest { fill: var(--tooth-restored-stroke); stroke: var(--tooth-restored-stroke); }
+.sbox .zone.f-done { fill: var(--tooth-fill); stroke: var(--tooth-closed-stroke); stroke-width: 1.6; }
+.sbox .zone.picked { stroke: var(--tooth-selected-stroke); stroke-width: 2.2; }
+.sbox.is-selected .frame { stroke: var(--tooth-selected-stroke); stroke-width: 2.2; }
+.sbox.is-absent .zone { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 2 2; pointer-events: none; }
+.sbox.is-absent .frame { stroke: var(--tooth-absent); stroke-dasharray: 3 3; }
+@media (pointer: coarse) { .sbox .zone { pointer-events: none; } }
+.sbox .boxhit { fill: transparent; cursor: pointer; }
+
+/* ── Przegląd ────────────────────────────────────────────────────────────── */
 .overview { border-top: 1px solid var(--border); padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
 .ov-stats { display: flex; gap: 8px; flex-wrap: wrap; }
-.ov-stat {
-  display: flex; align-items: baseline; gap: 7px;
-  border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius-sm);
-  padding: 7px 12px; background: var(--surface-raised);
-}
+.ov-stat { display: flex; align-items: baseline; gap: 7px; border: 1px solid var(--border); border-left-width: 3px;
+  border-radius: var(--radius-sm); padding: 7px 12px; background: var(--surface-raised); }
 .ov-stat b { font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; }
 .ov-stat span { font-size: 12px; color: var(--text-muted); }
 .ov-diag { border-left-color: var(--error); }
 .ov-rest { border-left-color: var(--euc); }
 .ov-absent { border-left-color: var(--text-disabled); }
-.ov-canal { border-left-color: var(--warning); }
+.ov-canal { border-left-color: var(--success); }
 .ov-list { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.ov-list .eyebrow { margin-right: 2px; }
-.ov-tooth {
-  display: inline-flex; align-items: center; gap: 5px;
-  border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
-  padding: 3px 10px; font-size: 12px; cursor: pointer;
-}
+.ov-tooth { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
 .ov-tooth b { font-family: var(--mono); font-weight: 600; }
 .ov-tooth:hover { border-color: var(--accent); color: var(--accent-text); }
 .ov-tooth .dotm { width: 7px; height: 7px; border-radius: 2px; }
 
-/* legenda */
 .legend { border-top: 1px solid var(--border); }
 .legend summary { padding: 10px 16px; cursor: pointer; font-size: 13px; color: var(--text-muted); font-weight: 500; }
 .legend summary::marker { color: var(--accent); }
-.legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px 16px; padding: 4px 16px 16px; }
+.legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; padding: 4px 16px 16px; }
 .legend-item { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text-muted); }
 .legend-item svg { flex: none; }
 
-/* ── Inspektor ──────────────────────────────────────────────────────────── */
+/* ── Inspektor ───────────────────────────────────────────────────────────── */
 .inspector { display: flex; flex-direction: column; gap: 14px; }
-.inspector .panel { display: block; }
 .insp-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
-
 .tooth-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .fdi { font-family: var(--mono); font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
 .tooth-anat { font-size: 13px; color: var(--text-muted); }
-
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 400px) { .detail-grid { grid-template-columns: 1fr; } }
 .detail-card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
 .detail-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+.detail-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
-.surface-map { width: 100%; height: auto; display: block; }
+.surface-map { width: 100%; max-width: 210px; height: auto; display: block; margin: 0 auto; }
 .surface-map .sf { cursor: pointer; stroke: var(--tooth-stroke); stroke-width: 1; fill: var(--tooth-fill); }
 .surface-map .sf:hover { fill: var(--surface-raised); }
-.surface-map .sf.picked { fill: var(--accent); stroke: var(--accent-text); stroke-width: 1.6; }
 .surface-map .sf.has-diag { fill: url(#hatchDiag2); stroke: var(--tooth-diseased-stroke); }
 .surface-map .sf.has-rest { fill: var(--tooth-restored-fill); stroke: var(--tooth-restored-stroke); }
-.surface-map .sf.picked.has-diag, .surface-map .sf.picked.has-rest { stroke: var(--accent-text); stroke-width: 2; }
-.surface-map .sf-label { font-family: var(--mono); font-size: 9px; fill: var(--text-muted); text-anchor: middle; pointer-events: none; font-weight: 600; }
-.surface-map .sf.picked + .sf-label { fill: var(--on-accent); }
+.surface-map .sf.picked { fill: var(--accent); stroke: var(--accent-text); stroke-width: 2; }
+.surface-map .sf-label { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); text-anchor: middle; pointer-events: none; font-weight: 600; }
 
-.canal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.stepper { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
-.stepper button { width: 28px; height: 28px; border: 0; background: none; cursor: pointer; color: var(--accent-text); font-size: 16px; line-height: 1; }
-.stepper button:disabled { color: var(--text-disabled); cursor: not-allowed; }
-.stepper .val { min-width: 26px; text-align: center; font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
-.canal-default { font-size: 11.5px; color: var(--text-muted); }
-.canal-default.changed { color: var(--warning); font-weight: 600; }
-.canal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.canal-list li { display: flex; align-items: center; gap: 7px; font-size: 12px; }
-.canal-list button {
-  flex: 1; text-align: left; border: 1px solid var(--border); background: var(--surface);
-  border-radius: var(--radius-sm); padding: 4px 8px; cursor: pointer; font-size: 12px;
-}
-.canal-list button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 600; }
-.canal-list .cn { font-family: var(--mono); color: var(--text-muted); font-size: 11px; }
+/* kanały w inspektorze */
+.canal-empty { display: flex; flex-direction: column; gap: 8px; }
+.canal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.canal-item { display: flex; flex-direction: column; gap: 7px; background: var(--surface);
+  border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius-sm); padding: 8px 9px; }
+.ci-top { display: flex; align-items: flex-start; gap: 8px; }
+.ci-bottom { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.canal-item.s-treat { border-left-color: var(--canal-treat); }
+.canal-item.s-done { border-left-color: var(--canal-done); }
+.canal-item.s-under { border-left-color: var(--warning); }
+.canal-name { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; }
+.canal-name small { display: block; font-weight: 400; color: var(--text-muted); font-size: 11px; }
+.state-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.state-seg button { border: 0; background: var(--surface); cursor: pointer; padding: 4px 9px; font-size: 11.5px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 5px; }
+.state-seg button + button { border-left: 1px solid var(--border); }
+.state-seg button[aria-pressed="true"] { background: var(--surface-raised); color: var(--text); font-weight: 600; }
+.state-dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+.sd-treat { background: var(--canal-treat); }
+.sd-done { background: var(--canal-done); }
+.sd-under { background: linear-gradient(180deg, var(--canal-done) 55%, var(--canal-treat) 55%); }
+.canal-del { border: 0; background: none; cursor: pointer; color: var(--text-muted); font-size: 15px; line-height: 1; padding: 2px 4px; }
+.canal-del:hover { color: var(--error); }
+.canal-pick { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 3px 9px; font-size: 11.5px; cursor: pointer; color: var(--text-muted); }
+.canal-pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.canal-add { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
-/* formularz */
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {
-  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
-  padding: 8px 10px; width: 100%;
-}
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; width: 100%; }
 .field textarea { resize: vertical; min-height: 60px; }
-.search-wrap { position: relative; }
 .dx-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 232px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .dx-group { padding: 6px 10px 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--text-muted); background: var(--surface-raised); position: sticky; top: 0; font-weight: 600; }
 .dx-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; padding: 7px 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
@@ -356,39 +270,27 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .dx-name { flex: 1; font-size: 13px; }
 .dx-meta { font-family: var(--mono); font-size: 10.5px; color: var(--text-muted); }
 .dx-item[aria-pressed="true"] .dx-meta { color: var(--on-accent); }
-.scope-tag {
-  font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
-  padding: 1px 6px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
-}
-.scope-surface { color: var(--info); }
-.scope-tooth { color: var(--accent-text); }
-.scope-root { color: var(--euc-text); }
-.scope-perio { color: var(--warning); }
+.scope-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.scope-surface { color: var(--info); } .scope-tooth { color: var(--accent-text); }
+.scope-root { color: var(--euc-text); } .scope-perio { color: var(--warning); }
 .layer-dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
-.layer-diag { background: var(--error); }
-.layer-rest { background: var(--euc); }
+.layer-diag { background: var(--error); } .layer-rest { background: var(--euc); }
 
-.hint { font-size: 12px; color: var(--text-muted); display: flex; gap: 6px; align-items: flex-start; }
+.hint { font-size: 12px; color: var(--text-muted); display: flex; gap: 6px; align-items: flex-start; margin: 0; }
 .hint.block { color: var(--warning); font-weight: 500; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn {
-  border: 1px solid transparent; border-radius: var(--radius-sm); padding: 9px 16px;
-  font-weight: 600; font-size: 13.5px; cursor: pointer;
-}
+.btn { border: 1px solid transparent; border-radius: var(--radius-sm); padding: 9px 16px; font-weight: 600; font-size: 13.5px; cursor: pointer; }
 .btn-primary { background: var(--accent); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-primary:disabled { background: var(--surface-raised); color: var(--text-disabled); cursor: not-allowed; }
 .btn-ghost { background: none; border-color: var(--border-strong); color: var(--text-muted); }
 .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.btn-sm { padding: 5px 11px; font-size: 12.5px; }
 
-/* wpisy */
 .findings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.finding {
-  border: 1px solid var(--border); border-left: 3px solid var(--error);
-  border-radius: var(--radius-sm); padding: 9px 11px; background: var(--surface);
-}
+.finding { border: 1px solid var(--border); border-left: 3px solid var(--error); border-radius: var(--radius-sm); padding: 9px 11px; background: var(--surface); }
 .finding.rest { border-left-color: var(--euc); }
-.finding.done { border-left-color: var(--success); opacity: .8; }
+.finding.done { border-left-color: var(--success); opacity: .82; }
 .finding.stale { border-left-color: var(--text-disabled); opacity: .65; }
 .finding-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .finding-name { font-weight: 600; font-size: 13.5px; }
@@ -399,32 +301,27 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .link-btn { border: 0; background: none; color: var(--accent-text); font-size: 12px; font-weight: 600; cursor: pointer; padding: 2px 0; text-decoration: underline; text-underline-offset: 2px; }
 .status-pill { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
 .pill-active { background: var(--error-wash); color: var(--error); }
-.pill-done { background: var(--euc-wash); color: var(--success); }
+.pill-done { background: var(--success-wash); color: var(--success); }
 .pill-stale { background: var(--surface-raised); color: var(--text-disabled); }
 .pill-flag { background: var(--warning-wash); color: var(--warning); }
 
 .empty { text-align: center; padding: 22px 12px; color: var(--text-muted); font-size: 13px; }
 .empty svg { display: block; margin: 0 auto 10px; opacity: .5; }
-
-/* odniesienia do wymagań */
 .fr { display: none; font-family: var(--mono); font-size: 9.5px; font-weight: 600; color: var(--accent-text);
   border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; margin-left: 6px; white-space: nowrap; vertical-align: 1px; }
 :root.show-fr .fr { display: inline-block; }
-
-/* toast */
-.toast {
-  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(16px);
-  background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
-  font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow-md);
-  opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 60; max-width: 92vw;
-}
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(16px);
+  background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+  box-shadow: var(--shadow-md); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 60; max-width: 92vw; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.back-to-arch { position: fixed; right: 14px; bottom: 14px; z-index: 40; display: none; align-items: center; gap: 6px;
+  background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-md); cursor: pointer; }
+@media (max-width: 1259px) { .back-to-arch.on { display: inline-flex; } }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
-
 @media (max-width: 719px) {
   .topbar { gap: 8px 12px; padding: 8px 12px; }
-  .patient-meta { display: none; }
-  .brand span { display: none; }
+  .patient-meta, .brand span { display: none; }
   .topbar-actions { gap: 6px; }
   .seg button { padding: 5px 9px; font-size: 12px; }
   .icon-btn { padding: 5px 10px; font-size: 12px; }
@@ -434,27 +331,17 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
   .workspace { padding: 12px; gap: 12px; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-
-/* powrót do łuku na wąskich ekranach (FR-006) */
-.back-to-arch {
-  position: fixed; right: 14px; bottom: 14px; z-index: 40;
-  display: none; align-items: center; gap: 6px;
-  background: var(--accent); color: var(--on-accent); border: 0;
-  border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 600;
-  box-shadow: var(--shadow-md); cursor: pointer;
-}
-@media (max-width: 1259px) { .back-to-arch.on { display: inline-flex; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <pattern id="hatchDiag" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <rect width="5" height="5" fill="var(--tooth-diseased-fill)"></rect>
-      <line x1="0" y1="0" x2="0" y2="5" stroke="var(--tooth-diseased-stroke)" stroke-width="1.6"></line>
+      <line x1="0" y1="0" x2="0" y2="5" stroke="var(--tooth-diseased-stroke)" stroke-width="1.7"></line>
     </pattern>
-    <pattern id="hatchDiag2" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <rect width="6" height="6" fill="var(--tooth-diseased-fill)"></rect>
-      <line x1="0" y1="0" x2="0" y2="6" stroke="var(--tooth-diseased-stroke)" stroke-width="2"></line>
+    <pattern id="hatchDiag2" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="7" height="7" fill="var(--tooth-diseased-fill)"></rect>
+      <line x1="0" y1="0" x2="0" y2="7" stroke="var(--tooth-diseased-stroke)" stroke-width="2.2"></line>
     </pattern>
   </defs>
 </svg>
@@ -466,10 +353,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
         <path d="M6 19c0-6 4-10 9-10s9 4 9 10" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"></path>
         <circle cx="15" cy="22" r="2.4" fill="var(--euc)"></circle>
       </svg>
-      <div>
-        <b>Projekt Uśmiech</b>
-        <span>Karta uzębienia</span>
-      </div>
+      <div><b>Projekt Uśmiech</b><span>Karta uzębienia</span></div>
     </div>
 
     <div class="patient">
@@ -492,17 +376,15 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
         Wymagania
       </button>
       <button type="button" class="icon-btn" id="themeToggle" title="Przełącz motyw jasny/ciemny">
-        <span id="themeIcon" aria-hidden="true">◐</span>
-        <span id="themeLabel">Motyw</span>
+        <span id="themeIcon" aria-hidden="true">◐</span><span id="themeLabel">Motyw</span>
       </button>
     </div>
   </header>
 
   <main class="workspace">
-    <!-- ── ŁUK ZĘBOWY ─────────────────────────────────────────────────── -->
     <section class="panel" aria-labelledby="archHeading">
       <div class="panel-head">
-        <h2 id="archHeading">Łuki zębowe<span class="fr">FR-001</span></h2>
+        <h2 id="archHeading">Łuki zębowe i powierzchnie<span class="fr">FR-001 · FR-029</span></h2>
         <div class="chips" role="group" aria-label="Warstwa wpisów">
           <button type="button" class="chip" data-layer="all" aria-pressed="true">Wszystkie</button>
           <button type="button" class="chip" data-layer="diagnosis" aria-pressed="false">Rozpoznania</button>
@@ -525,22 +407,21 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
         </div>
         <span class="fr">FR-004a · FR-004b</span>
         <span class="spacer"></span>
-        <button type="button" class="btn btn-ghost" id="clearSel" style="padding:4px 10px;font-size:12px">Wyczyść</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="clearSel">Wyczyść</button>
       </div>
 
       <div class="arch-wrap">
-        <svg id="arch" class="arch" role="group" aria-label="Interaktywny schemat uzębienia — dwa łuki zębowe"></svg>
+        <svg id="arch" class="arch" role="group" aria-label="Interaktywny schemat uzębienia — dwa łuki zębowe i schematy powierzchni"></svg>
       </div>
 
       <div class="overview" id="overview"></div>
 
       <details class="legend" id="legend">
-        <summary>Legenda oznaczeń<span class="fr">FR-008 · FR-050</span></summary>
+        <summary>Legenda oznaczeń<span class="fr">FR-008 · FR-050 · FR-066a</span></summary>
         <div class="legend-grid" id="legendGrid"></div>
       </details>
     </section>
 
-    <!-- ── INSPEKTOR ──────────────────────────────────────────────────── -->
     <aside class="inspector" aria-label="Szczegóły zaznaczenia">
       <div class="panel">
         <div class="panel-head">
@@ -560,8 +441,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 (() => {
 'use strict';
 
-/* ══ SŁOWNIK ROZPOZNAŃ (FR-011..FR-020) ═══════════════════════════════════
-   scope: surface | tooth | root | perio   ·   layer: diagnosis | existing   */
+/* ══ SŁOWNIK ROZPOZNAŃ (FR-011..FR-021) ═══════════════════════════════════ */
 const CAT = [
   ['hard',  'Twarde tkanki zęba'],
   ['pulp',  'Miazga i tkanki okołowierzchołkowe'],
@@ -607,7 +487,7 @@ const DX = [
   { code:'FILL',   name:'Wypełnienie',                   cat:'rest', scope:'surface', layer:'existing' },
   { code:'FILLT',  name:'Wypełnienie tymczasowe',        cat:'rest', scope:'surface', layer:'existing' },
   { code:'SEAL',   name:'Uszczelnienie bruzd (lak)',     cat:'rest', scope:'surface', layer:'existing' },
-  { code:'ENDO',   name:'Leczenie kanałowe (stan po)',   cat:'rest', scope:'root',   layer:'existing', sev:['wypełniony','niedopełniony','przepełniony','nieodnaleziony'] },
+  { code:'ENDO',   name:'Leczenie kanałowe (stan po)',   cat:'rest', scope:'root',   layer:'existing' },
   { code:'POST',   name:'Wkład koronowo-korzeniowy',     cat:'rest', scope:'root',   layer:'existing' },
   { code:'CROWN',  name:'Korona protetyczna',            cat:'rest', scope:'tooth',  layer:'existing' },
   { code:'VENEER', name:'Licówka',                       cat:'rest', scope:'surface',layer:'existing' },
@@ -619,11 +499,10 @@ const DX = [
 const DXMAP = Object.fromEntries(DX.map(d => [d.code, d]));
 
 /* ══ ANATOMIA ═════════════════════════════════════════════════════════════ */
-const PERM_UPPER = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
-const PERM_LOWER = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
-const DEC_UPPER  = [55,54,53,52,51,61,62,63,64,65];
-const DEC_LOWER  = [85,84,83,82,81,71,72,73,74,75];
-/* uzębienie mieszane ~7–9 lat: stałe szóstki i siekacze, mleczne 3–5 */
+const PERM_UPPER  = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+const PERM_LOWER  = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+const DEC_UPPER   = [55,54,53,52,51,61,62,63,64,65];
+const DEC_LOWER   = [85,84,83,82,81,71,72,73,74,75];
 const MIXED_UPPER = [16,55,54,53,12,11,21,22,63,64,65,26];
 const MIXED_LOWER = [46,85,84,83,42,41,31,32,73,74,75,36];
 
@@ -637,58 +516,55 @@ function meta(fdi) {
   const q = Math.floor(fdi / 10), p = fdi % 10;
   const deciduous = q >= 5;
   const upper = q === 1 || q === 2 || q === 5 || q === 6;
-  const right = q === 1 || q === 4 || q === 5 || q === 8;   // strona pacjenta
+  const right = q === 1 || q === 4 || q === 5 || q === 8;
   const type = deciduous ? (p <= 2 ? 'incisor' : p === 3 ? 'canine' : 'molar')
                          : (p <= 2 ? 'incisor' : p === 3 ? 'canine' : p <= 5 ? 'premolar' : 'molar');
   const anterior = p <= 3;
-  let roots, canals;
-  if (deciduous) { roots = p <= 3 ? 1 : (upper ? 3 : 2); canals = p <= 3 ? 1 : (upper ? 3 : 2); }
-  else if (p <= 3) { roots = 1; canals = 1; }
-  else if (p <= 5) { roots = (upper && p === 4) ? 2 : 1; canals = (upper && p === 4) ? 2 : 1; }
-  else { roots = upper ? 3 : 2; canals = 3; }
-  const surfaces = ['M','D','B','L', anterior ? 'I' : 'O'];
+  let roots;
+  if (deciduous) roots = p <= 3 ? 1 : (upper ? 3 : 2);
+  else if (p <= 3) roots = 1;
+  else if (p <= 5) roots = (upper && p === 4) ? 2 : 1;
+  else roots = upper ? 3 : 2;
+  const surfaces = ['M', 'D', 'B', 'L', anterior ? 'I' : 'O'];
+  const widths = deciduous
+    ? (upper ? { 1:19, 2:17, 3:18, 4:23, 5:25 } : { 1:15, 2:17, 3:18, 4:22, 5:24 })
+    : (upper ? { 1:23, 2:19, 3:20, 4:21, 5:21, 6:27, 7:26, 8:24 }
+             : { 1:16, 2:17, 3:19, 4:20, 5:21, 6:27, 7:26, 8:24 });
   const name = (deciduous ? POS_NAME_DEC : POS_NAME)[p];
   const quad = (upper ? 'górny ' : 'dolny ') + (right ? 'prawy' : 'lewy');
-  const widths = deciduous
-    ? (upper ? {1:19,2:17,3:18,4:23,5:25} : {1:15,2:17,3:18,4:22,5:24})
-    : (upper ? {1:23,2:19,3:20,4:21,5:21,6:27,7:26,8:24}
-             : {1:16,2:17,3:19,4:20,5:21,6:27,7:26,8:24});
-  return { fdi, q, p, deciduous, upper, right, type, anterior, roots, canals, surfaces,
+  return { fdi, q, p, deciduous, upper, right, type, anterior, roots, surfaces,
            name, quad, label: `${name} ${quad}`, width: widths[p] };
 }
 const SURFACE_NAME = (fdi, s) => {
   const m = meta(fdi);
-  return { M:'mezjalna', D:'dystalna',
-    B: m.anterior ? 'wargowa' : 'policzkowa',
-    L: m.upper ? 'podniebienna' : 'językowa',
-    O:'żująca', I:'sieczna' }[s];
+  return { M:'mezjalna', D:'dystalna', B: m.anterior ? 'wargowa' : 'policzkowa',
+    L: m.upper ? 'podniebienna' : 'językowa', O:'żująca', I:'sieczna' }[s];
 };
-function canalNames(fdi) {
-  const m = meta(fdi), n = state.teeth[fdi].canals;
-  if (n === 1) return ['kanał główny'];
-  if (m.type === 'premolar') return ['policzkowy', 'podniebienny'].slice(0, n);
-  const base = m.upper
-    ? ['policzkowy bliższy (MB)', 'policzkowy dalszy (DB)', 'podniebienny (P)', 'policzkowy bliższy drugi (MB2)']
+/* podpowiedź anatomiczna — NIE jest zapisywana jako dane pacjenta (FR-064) */
+function suggestedCanals(fdi) {
+  const m = meta(fdi);
+  if (m.type === 'incisor' || m.type === 'canine') return ['kanał główny'];
+  if (m.type === 'premolar') return m.upper && m.p === 4 ? ['policzkowy', 'podniebienny'] : ['kanał główny'];
+  if (m.deciduous) return m.upper ? ['policzkowy bliższy', 'policzkowy dalszy', 'podniebienny'] : ['bliższy', 'dalszy'];
+  return m.upper
+    ? ['policzkowy bliższy (MB)', 'policzkowy dalszy (DB)', 'podniebienny (P)', 'MB2']
     : ['bliższy policzkowy (MB)', 'bliższy językowy (ML)', 'dalszy (D)', 'dalszy językowy (DL)'];
-  const out = base.slice(0, n);
-  while (out.length < n) out.push('kanał dodatkowy ' + (out.length + 1));
-  return out;
 }
+const CANAL_STATES = [
+  { key:'treat', short:'Do leczenia', full:'do leczenia' },
+  { key:'done',  short:'Wyleczony',   full:'wyleczony (wypełniony kanałowo)' },
+  { key:'under', short:'Niedoleczony',full:'niedoleczony — do ponownego leczenia' },
+];
+const STATE_LABEL = Object.fromEntries(CANAL_STATES.map(s => [s.key, s.full]));
 
 /* ══ STAN ═════════════════════════════════════════════════════════════════ */
 const state = {
-  dentition: 'permanent',
-  layer: 'all',
-  selection: new Set(),
-  surfaces: new Set(),
-  canal: null,
-  dx: null,
-  scopeAsk: 'tooth',
-  teeth: {},
-  seq: 100,
+  dentition: 'permanent', layer: 'all',
+  selection: new Set(), surfaces: new Set(), canal: null,
+  dx: null, scopeAsk: 'tooth', query: '', teeth: {}, seq: 100, cseq: 500,
 };
 [...PERM_UPPER, ...PERM_LOWER, ...DEC_UPPER, ...DEC_LOWER].forEach(fdi => {
-  state.teeth[fdi] = { presence: 'present', canals: meta(fdi).canals, canalsDefault: meta(fdi).canals, findings: [] };
+  state.teeth[fdi] = { presence: 'present', canals: [], findings: [] };   // FR-063 — zero kanałów na start
 });
 
 function addFinding(fdi, o) {
@@ -703,19 +579,34 @@ function addFinding(fdi, o) {
   if (pres && f.record === 'current') state.teeth[fdi].presence = pres;
   return f;
 }
+function addCanal(fdi, name, st) {
+  const c = { id: 'c' + (state.cseq++), name, state: st || 'treat' };
+  state.teeth[fdi].canals.push(c);
+  return c;
+}
 
-/* dane wyjściowe — realistyczny przypadek, żeby mockup nie był pusty */
-addFinding(36, { dxCode:'K02.1', surfaces:['O','M'], date:'2026-08-30', note:'Ubytek sięgający zębiny, bez objawów ze strony miazgi.' });
+/* dane wyjściowe — realistyczny przypadek */
+addFinding(36, { dxCode:'K02.1', surfaces:['O','M'], date:'2026-08-30', note:'Ubytek sięgający zębiny.' });
+addFinding(36, { dxCode:'K04.0i', date:'2026-08-30', note:'Ból samoistny, nocny — kwalifikacja do leczenia kanałowego.' });
+addCanal(36, 'bliższy policzkowy (MB)', 'treat');
+addCanal(36, 'bliższy językowy (ML)', 'treat');
+addCanal(36, 'dalszy (D)', 'treat');
 addFinding(24, { dxCode:'K02.1s', surfaces:['D'], date:'2026-06-11' });
 addFinding(11, { dxCode:'S02.51', surfaces:['B'], date:'2026-02-03', note:'Uraz sportowy, brzeg sieczny.' });
-addFinding(16, { dxCode:'ENDO', canal:2, severity:'wypełniony', date:'2025-11-20', author:'lek. dent. M. Bąk' });
+addCanal(11, 'kanał główny', 'done');
+addFinding(16, { dxCode:'ENDO', date:'2025-11-20', author:'lek. dent. M. Bąk' });
 addFinding(16, { dxCode:'CROWN', date:'2025-12-08', author:'lek. dent. M. Bąk' });
+const c16 = [
+  addCanal(16, 'policzkowy bliższy (MB)', 'done'),
+  addCanal(16, 'policzkowy dalszy (DB)', 'done'),
+  addCanal(16, 'podniebienny (P)', 'under'),
+];
+state.teeth[16].findings[0].canal = c16[2].id;
 addFinding(26, { dxCode:'FILL', surfaces:['O','M'], date:'2024-09-17', author:'lek. dent. M. Bąk' });
 addFinding(46, { dxCode:'EXTR', date:'2023-05-04', author:'lek. dent. M. Bąk' });
 addFinding(38, { dxCode:'K01.0', date:'2025-03-22' });
 [33,32,31,41,42,43].forEach(t => addFinding(t, { dxCode:'K03.6', date:'2026-08-30', note:'Odcinek przedni dolny — złogi na powierzchniach językowych.' }));
 addFinding(37, { dxCode:'K02.0b', surfaces:['O'], date:'2025-01-14', clinical:'closed', closedAt:'2025-02-02' });
-state.teeth[16].canals = 4;   // MB2 — liczba inna niż domyślna (FR-065)
 
 /* ══ POMOCNIKI ════════════════════════════════════════════════════════════ */
 const f2 = n => Math.round(n * 100) / 100;
@@ -724,41 +615,46 @@ const el = (tag, attrs) => {
   for (const k in attrs) if (attrs[k] != null) n.setAttribute(k, attrs[k]);
   return n;
 };
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (n === 1) return one;
+  if (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) return few;
+  return many;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 const rows = () => state.dentition === 'permanent' ? [PERM_UPPER, PERM_LOWER]
-  : state.dentition === 'deciduous' ? [DEC_UPPER, DEC_LOWER]
-  : [MIXED_UPPER, MIXED_LOWER];
+  : state.dentition === 'deciduous' ? [DEC_UPPER, DEC_LOWER] : [MIXED_UPPER, MIXED_LOWER];
 const visibleTeeth = () => rows().flat();
 const current = fdi => state.teeth[fdi].findings.filter(f => f.record === 'current');
 const activeF = fdi => current(fdi).filter(f => f.clinical === 'active');
 const inLayer = f => state.layer === 'all' || f.layer === (state.layer === 'diagnosis' ? 'diagnosis' : 'existing');
+const canalById = (fdi, id) => state.teeth[fdi].canals.find(c => c.id === id);
 
 function toothStatus(fdi) {
   const t = state.teeth[fdi];
   if (t.presence === 'extracted' || t.presence === 'agenesis') return 'absent';
   if (t.presence === 'unerupted') return 'unerupted';
   const a = activeF(fdi).filter(inLayer);
-  const hasDiag = a.some(f => f.layer === 'diagnosis');
-  const hasRest = a.some(f => f.layer === 'existing');
-  if (hasDiag && hasRest) return 'both';
-  if (hasDiag) return 'diseased';
-  if (hasRest) return 'restored';
+  if (a.some(f => f.layer === 'diagnosis')) return 'diseased';
+  if (a.some(f => f.layer === 'existing')) return 'restored';
   return 'healthy';
 }
 
-/* ══ RYSOWANIE ŁUKU (FR-001, FR-001a, FR-002, FR-026, FR-029) ═════════════ */
-const VW = 1000, VH = 352, MARGIN = 26, GAP = 5, CURVE = 14, TILT = 6;
-const Y_UPPER = 150, Y_LOWER = 202, Y_LABEL_U = 168, Y_LABEL_L = 191;
+/* ══ DIAGRAM ══════════════════════════════════════════════════════════════ */
+const VW = 1000, VH = 378, MARGIN = 26, CURVE = 8, TILT = 5;
+const Y_UPPER = 112, Y_LOWER = 272;
+const BOX_U_CY = 146, BOX_L_CY = 238, LABEL_U_Y = 188, LABEL_L_Y = 204;
+const QUAD_U_Y = 14, QUAD_L_Y = 372;
 const RATIO = {
-  incisor:  { crown: 1.12, root: 1.15, cusps: 1, bump: 0.03 },
-  canine:   { crown: 1.20, root: 1.35, cusps: 1, bump: 0.10 },
-  premolar: { crown: 1.00, root: 1.15, cusps: 2, bump: 0.09 },
-  molar:    { crown: 0.88, root: 0.92, cusps: 3, bump: 0.10 },
+  incisor:  { crown: 0.72, root: 1.10, cusps: 1, bump: 0.03 },
+  canine:   { crown: 0.78, root: 1.30, cusps: 1, bump: 0.09 },
+  premolar: { crown: 0.70, root: 1.10, cusps: 2, bump: 0.08 },
+  molar:    { crown: 0.58, root: 0.92, cusps: 3, bump: 0.09 },
 };
 
 function crownPath(w, h, cusps, dir, bump) {
   const Y = v => f2(dir * v);
-  const nk = w * 0.40, mx = w * 0.50, inset = w * 0.10;
-  const ex = w / 2 - inset;
+  const nk = w * 0.40, mx = w * 0.50, ex = w / 2 - w * 0.10;
   let d = `M ${f2(-nk)} ${Y(h)}`;
   d += ` C ${f2(-mx)} ${Y(h * 0.74)}, ${f2(-mx)} ${Y(h * 0.28)}, ${f2(-ex)} ${Y(h * 0.05)}`;
   const seg = (2 * ex) / cusps;
@@ -771,7 +667,7 @@ function crownPath(w, h, cusps, dir, bump) {
   d += ` C ${f2(mx)} ${Y(h * 0.28)}, ${f2(mx)} ${Y(h * 0.74)}, ${f2(nk)} ${Y(h)} Z`;
   return d;
 }
-function rootGeometry(w, crownH, rootH, n, canals, dir) {
+function rootGeometry(w, crownH, rootH, n, dir) {
   const Y = v => f2(dir * v);
   const CW = w * 0.80, slot = CW / n;
   const yN = crownH, yA = crownH + rootH, yF = crownH + rootH * 0.34;
@@ -779,7 +675,6 @@ function rootGeometry(w, crownH, rootH, n, canals, dir) {
   const centers = [], tips = [];
   for (let i = 0; i < n; i++) { const c = -CW / 2 + slot * (i + 0.5); centers.push(c); tips.push(c * splay); }
   const aw = Math.max(Math.min(slot * 0.22, w * 0.07), w * 0.035);
-
   let d = `M ${f2(-CW / 2)} ${Y(yN)}`, fromX = -CW / 2, fromY = yN;
   for (let i = 0; i < n; i++) {
     const t = tips[i];
@@ -793,30 +688,44 @@ function rootGeometry(w, crownH, rootH, n, canals, dir) {
       d += ` C ${f2(t + aw * 1.9)} ${Y(yA - rootH * 0.26)}, ${f2(CW / 2 * 1.02)} ${Y(yN + (yA - yN) * 0.42)}, ${f2(CW / 2)} ${Y(yN)}`;
     }
   }
-  d += ' Z';
-
-  const per = centers.map(() => 0);
-  for (let i = 0; i < canals; i++) per[i % n]++;
-  const lines = [];
-  centers.forEach((c, ri) => {
-    for (let k = 0; k < per[ri]; k++) {
-      const off = per[ri] === 1 ? 0 : (k - (per[ri] - 1) / 2) * slot * 0.24;
-      lines.push(`M ${f2(c + off)} ${Y(yN + rootH * 0.10)} L ${f2(tips[ri] + off * 0.4)} ${Y(yA - rootH * 0.14)}`);
+  return { d: d + ' Z', centers, tips, slot };
+}
+/* Trzy stany kanału (FR-066a): czerwony / zielony / zielony z czerwonym wierzchołkiem. */
+function canalNodes(canals, rg, crownH, rootH, dir, nRoots) {
+  const Y = v => dir * v;
+  const per = new Array(nRoots).fill(0);
+  canals.forEach((_, i) => per[i % nRoots]++);
+  const used = new Array(nRoots).fill(0);
+  const out = [];
+  canals.forEach((c, i) => {
+    const ri = i % nRoots, k = used[ri]++;
+    const spread = per[ri] === 1 ? 0 : (k - (per[ri] - 1) / 2) * rg.slot * 0.26;
+    const x0 = rg.centers[ri] + spread, y0 = Y(crownH + rootH * 0.14);
+    const x1 = rg.tips[ri] + spread * 0.4, y1 = Y(crownH + rootH * 0.90);
+    const at = t => [f2(x0 + (x1 - x0) * t), f2(y0 + (y1 - y0) * t)];
+    if (c.state === 'under') {
+      const [mx, my] = at(0.58);
+      out.push({ cls: 'canal c-under-body', d: `M ${f2(x0)} ${f2(y0)} L ${mx} ${my}` });
+      out.push({ cls: 'canal c-under-apex', d: `M ${mx} ${my} L ${f2(x1)} ${f2(y1)}` });
+      out.push({ dot: at(1) });
+    } else {
+      out.push({ cls: 'canal ' + (c.state === 'done' ? 'c-done' : 'c-treat'), d: `M ${f2(x0)} ${f2(y0)} L ${f2(x1)} ${f2(y1)}` });
+      if (c.state === 'treat') out.push({ dot: at(1), treat: true });
     }
   });
-  return { d, lines, apexY: yA };
+  return out;
 }
-/* glif 5-strefowy w projekcji okluzyjnej: góra = przedsionkowa, dół = językowa,
-   boki = mezjalna/dystalna zależnie od strony łuku (FR-026) */
-function zoneShapes(s, right) {
-  const o = s / 2, i = s * 0.21;
-  const mesialLeft = !right;      // ćwiartki 2 i 3 → mezjalna po lewej stronie rysunku
+/* schemat powierzchni: góra = przedsionkowa, dół = językowa/podniebienna,
+   boki = mezjalna/dystalna zależnie od strony łuku (FR-026, FR-029) */
+function zoneDefs(size, right) {
+  const o = size / 2, i = size * 0.20;
+  const mesialLeft = !right;
   return [
-    { key: 'B', d: `M ${-o} ${-o} L ${o} ${-o} L ${i} ${-i} L ${-i} ${-i} Z` },
-    { key: 'L', d: `M ${-o} ${o} L ${o} ${o} L ${i} ${i} L ${-i} ${i} Z` },
-    { key: mesialLeft ? 'M' : 'D', d: `M ${-o} ${-o} L ${-i} ${-i} L ${-i} ${i} L ${-o} ${o} Z` },
-    { key: mesialLeft ? 'D' : 'M', d: `M ${o} ${-o} L ${i} ${-i} L ${i} ${i} L ${o} ${o} Z` },
-    { key: 'C', d: `M ${-i} ${-i} L ${i} ${-i} L ${i} ${i} L ${-i} ${i} Z` },
+    { k: 'B', d: `M ${-o} ${-o} L ${o} ${-o} L ${i} ${-i} L ${-i} ${-i} Z` },
+    { k: 'L', d: `M ${-o} ${o} L ${o} ${o} L ${i} ${i} L ${-i} ${i} Z` },
+    { k: mesialLeft ? 'M' : 'D', d: `M ${-o} ${-o} L ${-i} ${-i} L ${-i} ${i} L ${-o} ${o} Z` },
+    { k: mesialLeft ? 'D' : 'M', d: `M ${o} ${-o} L ${i} ${-i} L ${i} ${i} L ${o} ${o} Z` },
+    { k: 'C', d: `M ${-i} ${-i} L ${i} ${-i} L ${i} ${i} L ${-i} ${i} Z` },
   ];
 }
 
@@ -827,77 +736,95 @@ function renderArch() {
   archSvg.textContent = '';
   const g = el('g', {});
   archSvg.appendChild(g);
-
   g.appendChild(el('line', { x1: VW / 2, y1: 8, x2: VW / 2, y2: VH - 8, class: 'midline' }));
+
   const [upper, lower] = rows();
   [[upper, true], [lower, false]].forEach(([list, isUpper]) => {
-    const widths = list.map(t => meta(t).width);
-    const total = widths.reduce((a, b) => a + b, 0) + GAP * (list.length - 1);
-    const scale = (VW - 2 * MARGIN) / total;
-    let x = MARGIN;
+    const n = list.length;
+    const colW = Math.min((VW - 2 * MARGIN) / n, 66);
+    const rowW = colW * n, x0 = (VW - rowW) / 2;
+    const maxRaw = Math.max(...list.map(t => meta(t).width));
+    const tScale = (colW - 8) / maxRaw;
+    const boxSize = Math.min(colW - 6, 54);
+
     list.forEach((fdi, idx) => {
-      const m = meta(fdi), w = widths[idx] * scale, pitch = w + GAP * scale;
-      const cx = x + w / 2;
-      x += w + GAP * scale;
-      const t = (cx - VW / 2) / ((VW - 2 * MARGIN) / 2);
+      const m = meta(fdi), cx = x0 + colW * (idx + 0.5);
+      const t = (cx - VW / 2) / (rowW / 2);
       const dir = isUpper ? -1 : 1;
       const yBase = (isUpper ? Y_UPPER : Y_LOWER) + dir * CURVE * t * t;
       const rot = (isUpper ? 1 : -1) * t * TILT;
-      g.appendChild(drawTooth(fdi, m, w, pitch, cx, yBase, dir, rot));
-      const ly = isUpper ? Y_LABEL_U : Y_LABEL_L;
-      const lbl = el('text', { x: f2(cx), y: ly, class: 'tooth-label', 'data-label': fdi });
+      g.appendChild(drawTooth(fdi, m, m.width * tScale, colW, cx, yBase, dir, rot));
+      g.appendChild(drawSurfaceBox(fdi, m, cx, isUpper ? BOX_U_CY : BOX_L_CY, boxSize, colW));
+      const lbl = el('text', { x: f2(cx), y: isUpper ? LABEL_U_Y : LABEL_L_Y, class: 'tooth-label', 'data-label': fdi });
       lbl.textContent = fdi;
       g.appendChild(lbl);
     });
-    const half = (VW - 2 * MARGIN) / 4;
+
     const qs = isUpper ? ['ćwiartka 1 · prawa górna', 'ćwiartka 2 · lewa górna']
                        : ['ćwiartka 4 · prawa dolna', 'ćwiartka 3 · lewa dolna'];
-    g.appendChild(Object.assign(el('text', { x: MARGIN + half, y: isUpper ? 14 : VH - 4, class: 'quad-label' }), { textContent: qs[0] }));
-    g.appendChild(Object.assign(el('text', { x: VW - MARGIN - half, y: isUpper ? 14 : VH - 4, class: 'quad-label' }), { textContent: qs[1] }));
+    const qy = isUpper ? QUAD_U_Y : QUAD_L_Y;
+    g.appendChild(Object.assign(el('text', { x: VW / 2 - rowW / 4, y: qy, class: 'quad-label' }), { textContent: qs[0] }));
+    g.appendChild(Object.assign(el('text', { x: VW / 2 + rowW / 4, y: qy, class: 'quad-label' }), { textContent: qs[1] }));
   });
   syncArchClasses();
 }
 
-function drawTooth(fdi, m, w, pitch, cx, yBase, dir, rot) {
+function drawTooth(fdi, m, w, colW, cx, yBase, dir, rot) {
   const r = RATIO[m.type];
   const crownH = w * r.crown, rootH = w * r.root;
   const t = state.teeth[fdi];
-  const grp = el('g', {
-    class: 'tooth', transform: `translate(${f2(cx)} ${f2(yBase)}) rotate(${f2(rot)})`,
-    'data-fdi': fdi, tabindex: 0, role: 'button',
-  });
-  const rg = rootGeometry(w, crownH, rootH, m.roots, t.canals, dir);
+  const grp = el('g', { class: 'tooth', transform: `translate(${f2(cx)} ${f2(yBase)}) rotate(${f2(rot)})`,
+    'data-fdi': fdi, tabindex: 0, role: 'button' });
+  const rg = rootGeometry(w, crownH, rootH, m.roots, dir);
   grp.appendChild(el('path', { d: rg.d, class: 'root' }));
-  rg.lines.forEach(d => grp.appendChild(el('path', { d, class: 'canal' })));
   grp.appendChild(el('path', { d: crownPath(w, crownH, r.cusps, dir, r.bump), class: 'crown' }));
-
-  const zg = el('g', { class: 'zones', transform: `translate(0 ${f2(dir * crownH * 0.5)})` });
-  const s = Math.min(w * 0.44, crownH * 0.46);
-  zoneShapes(s, m.right).forEach(z => zg.appendChild(el('path', { d: z.d, class: 'zone', 'data-zone': z.key })));
-  grp.appendChild(zg);
-
-  const xs = w * 0.30, xc = f2(dir * crownH * 0.5);
-  const cross = el('g', { class: 'absent-cross', transform: `translate(0 ${xc})` });
+  if (t.canals.length) {
+    canalNodes(t.canals, rg, crownH, rootH, dir, m.roots).forEach(node => {
+      if (node.dot) grp.appendChild(el('circle', { cx: node.dot[0], cy: node.dot[1], r: 2.6, class: 'canal-apex-dot' }));
+      else grp.appendChild(el('path', { d: node.d, class: node.cls }));
+    });
+  }
+  const xs = w * 0.26, cross = el('g', { class: 'absent-cross', transform: `translate(0 ${f2(dir * crownH * 0.5)})` });
   cross.appendChild(el('path', { d: `M ${f2(-xs)} ${f2(-xs)} L ${f2(xs)} ${f2(xs)} M ${f2(xs)} ${f2(-xs)} L ${f2(-xs)} ${f2(xs)}` }));
   grp.appendChild(cross);
-  if (t.canals !== t.canalsDefault) {
-    grp.appendChild(el('circle', { cx: f2(w * 0.40), cy: f2(dir * (crownH + rootH * 0.70)), r: 3.6, class: 'canal-flag' }));
-  }
   const yTop = dir < 0 ? -(crownH + rootH) - 6 : -8;
-  grp.appendChild(el('rect', { class: 'hit', x: f2(-pitch / 2), y: f2(yTop), width: f2(pitch), height: f2(crownH + rootH + 14) }));
+  grp.appendChild(el('rect', { class: 'hit', x: f2(-colW / 2), y: f2(yTop), width: f2(colW), height: f2(crownH + rootH + 14) }));
   return grp;
 }
 
-/* aktualizacja klas bez przerysowywania geometrii */
+function drawSurfaceBox(fdi, m, cx, cy, size, colW) {
+  const grp = el('g', { class: 'sbox', transform: `translate(${f2(cx)} ${cy})`, 'data-sbox': fdi });
+  grp.appendChild(el('rect', { class: 'boxhit', x: f2(-colW / 2), y: f2(-size / 2 - 6), width: f2(colW), height: f2(size + 12) }));
+  zoneDefs(size, m.right).forEach(z => grp.appendChild(el('path', {
+    d: z.d, class: 'zone', 'data-zone': z.k, 'data-fdi': fdi,
+    role: 'button', tabindex: -1,
+  })));
+  grp.appendChild(el('rect', { class: 'frame', x: f2(-size / 2), y: f2(-size / 2), width: f2(size), height: f2(size), rx: 2 }));
+  return grp;
+}
+
 function syncArchClasses() {
   archSvg.querySelectorAll('.tooth').forEach(g => {
-    const fdi = +g.dataset.fdi, t = state.teeth[fdi], st = toothStatus(fdi);
-    g.classList.toggle('is-diseased', st === 'diseased' || st === 'both');
+    const fdi = +g.dataset.fdi, st = toothStatus(fdi), t = state.teeth[fdi];
+    g.classList.toggle('is-diseased', st === 'diseased');
     g.classList.toggle('is-restored', st === 'restored');
     g.classList.toggle('is-absent', st === 'absent');
     g.classList.toggle('is-unerupted', st === 'unerupted');
     g.classList.toggle('is-selected', state.selection.has(fdi));
-    g.classList.toggle('is-flagged', t.canals !== t.canalsDefault);
+    const act = activeF(fdi);
+    const canalTxt = t.canals.length
+      ? `kanały: ${t.canals.map(c => c.name + ' — ' + STATE_LABEL[c.state]).join('; ')}`
+      : 'brak odnotowanych kanałów';
+    g.setAttribute('aria-label', [`ząb ${fdi}`, meta(fdi).label,
+      act.length ? act.map(f => DXMAP[f.dxCode].name + (f.surfaces.length ? ' — ' + f.surfaces.map(s => 'powierzchnia ' + SURFACE_NAME(fdi, s)).join(', ') : '')).join('; ')
+        : (st === 'absent' ? 'brak zęba' : 'bez odnotowanych zmian'), canalTxt].join(', '));
+    g.setAttribute('aria-pressed', state.selection.has(fdi) ? 'true' : 'false');
+  });
+
+  archSvg.querySelectorAll('.sbox').forEach(box => {
+    const fdi = +box.dataset.sbox, st = toothStatus(fdi);
+    box.classList.toggle('is-selected', state.selection.has(fdi));
+    box.classList.toggle('is-absent', st === 'absent');
     const surf = {};
     current(fdi).filter(inLayer).forEach(f => (f.surfaces || []).forEach(s => {
       const key = (s === 'O' || s === 'I') ? 'C' : s;
@@ -905,112 +832,105 @@ function syncArchClasses() {
       if (!surf[key] || surf[key] < rank) surf[key] = rank;
     }));
     const picked = state.selection.has(fdi) ? state.surfaces : new Set();
-    const zg = g.querySelector('.zones');
-    let any = false;
-    zg.querySelectorAll('.zone').forEach(z => {
-      const k = z.dataset.zone;
-      const mine = k === 'C' ? (surf.C || 0) : (surf[k] || 0);
-      const isPicked = picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
-      z.classList.toggle('filled', mine > 0);
-      z.classList.toggle('f-diag', mine === 3);
-      z.classList.toggle('f-rest', mine === 2);
-      z.classList.toggle('f-done', mine === 1);
-      z.style.stroke = isPicked ? 'var(--tooth-selected-stroke)' : '';
-      z.style.strokeWidth = isPicked ? '1.8' : '';
-      if (mine > 0 || isPicked) any = true;
+    box.querySelectorAll('.zone').forEach(z => {
+      const k = z.dataset.zone, rank = surf[k] || 0;
+      z.classList.toggle('f-diag', rank === 3);
+      z.classList.toggle('f-rest', rank === 2);
+      z.classList.toggle('f-done', rank === 1);
+      z.classList.toggle('picked', picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k));
+      const sName = SURFACE_NAME(fdi, k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
+      z.setAttribute('aria-label', `ząb ${fdi}, powierzchnia ${sName}`);
     });
-    zg.style.display = (any || state.selection.has(fdi)) ? '' : 'none';
-    const names = [`ząb ${fdi}`, meta(fdi).label];
-    const act = activeF(fdi);
-    names.push(act.length ? act.map(f => DXMAP[f.dxCode].name + (f.surfaces.length ? ' — ' + f.surfaces.map(s => 'powierzchnia ' + SURFACE_NAME(fdi, s)).join(', ') : '')).join('; ')
-                          : (st === 'absent' ? 'brak zęba' : 'bez odnotowanych zmian'));
-    names.push(`kanałów: ${t.canals}`);
-    g.setAttribute('aria-label', names.join(', '));
-    g.setAttribute('aria-pressed', state.selection.has(fdi) ? 'true' : 'false');
   });
-  archSvg.querySelectorAll('[data-label]').forEach(n => {
-    const fdi = +n.dataset.label;
-    n.classList.toggle('is-sel', state.selection.has(fdi));
-  });
+
+  archSvg.querySelectorAll('[data-label]').forEach(n =>
+    n.classList.toggle('is-sel', state.selection.has(+n.dataset.label)));
 }
 
 /* ══ INSPEKTOR ════════════════════════════════════════════════════════════ */
 const inspBody = document.getElementById('inspBody');
 const inspHeading = document.getElementById('inspHeading');
 const inspMode = document.getElementById('inspMode');
-/* polska odmiana liczebników */
-function plural(n, one, few, many) {
-  const m10 = n % 10, m100 = n % 100;
-  if (n === 1) return one;
-  if (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) return few;
-  return many;
-}
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function surfaceMapSvg(fdi) {
-  const m = meta(fdi), t = state.teeth[fdi];
-  const occ = m.anterior ? 'I' : 'O';
-  const mesialLeft = !m.right;
-  const S = 168, o = S / 2, i = S * 0.21, cxy = 92;
+  const m = meta(fdi), occ = m.anterior ? 'I' : 'O', mesialLeft = !m.right;
+  const S = 168, o = S / 2, i = S * 0.20, c = 96;
   const zones = [
-    { k: 'B', d: `M ${-o} ${-o} L ${o} ${-o} L ${i} ${-i} L ${-i} ${-i} Z`, lx: 0, ly: -o * 0.72 },
-    { k: 'L', d: `M ${-o} ${o} L ${o} ${o} L ${i} ${i} L ${-i} ${i} Z`, lx: 0, ly: o * 0.78 },
-    { k: mesialLeft ? 'M' : 'D', d: `M ${-o} ${-o} L ${-i} ${-i} L ${-i} ${i} L ${-o} ${o} Z`, lx: -o * 0.72, ly: 4 },
-    { k: mesialLeft ? 'D' : 'M', d: `M ${o} ${-o} L ${i} ${-i} L ${i} ${i} L ${o} ${o} Z`, lx: o * 0.72, ly: 4 },
-    { k: occ, d: `M ${-i} ${-i} L ${i} ${-i} L ${i} ${i} L ${-i} ${i} Z`, lx: 0, ly: 4 },
+    { k:'B', d:`M ${-o} ${-o} L ${o} ${-o} L ${i} ${-i} L ${-i} ${-i} Z`, lx:0, ly:-o * 0.72 },
+    { k:'L', d:`M ${-o} ${o} L ${o} ${o} L ${i} ${i} L ${-i} ${i} Z`, lx:0, ly:o * 0.80 },
+    { k: mesialLeft ? 'M' : 'D', d:`M ${-o} ${-o} L ${-i} ${-i} L ${-i} ${i} L ${-o} ${o} Z`, lx:-o * 0.72, ly:4 },
+    { k: mesialLeft ? 'D' : 'M', d:`M ${o} ${-o} L ${i} ${-i} L ${i} ${i} L ${o} ${o} Z`, lx:o * 0.72, ly:4 },
+    { k: occ, d:`M ${-i} ${-i} L ${i} ${-i} L ${i} ${i} L ${-i} ${i} Z`, lx:0, ly:4 },
   ];
-  const findingsBySurface = {};
+  const bySurface = {};
   current(fdi).filter(inLayer).forEach(f => (f.surfaces || []).forEach(s => {
-    findingsBySurface[s] = f.clinical === 'closed' ? 'done' : f.layer;
+    bySurface[s] = f.clinical === 'closed' ? 'done' : f.layer;
   }));
   const parts = zones.map(z => {
     const cls = ['sf'];
+    if (bySurface[z.k] === 'diagnosis') cls.push('has-diag');
+    if (bySurface[z.k] === 'existing') cls.push('has-rest');
     if (state.surfaces.has(z.k)) cls.push('picked');
-    if (findingsBySurface[z.k] === 'diagnosis') cls.push('has-diag');
-    if (findingsBySurface[z.k] === 'existing') cls.push('has-rest');
     return `<path class="${cls.join(' ')}" d="${z.d}" data-surface="${z.k}" role="button" tabindex="0"
       aria-pressed="${state.surfaces.has(z.k)}" aria-label="powierzchnia ${esc(SURFACE_NAME(fdi, z.k))}"></path>
       <text class="sf-label" x="${z.lx}" y="${z.ly}">${z.k}</text>`;
   }).join('');
-  return `<svg class="surface-map" viewBox="0 0 184 184" aria-label="Powierzchnie zęba ${fdi}">
-    <g transform="translate(${cxy} ${cxy})">${parts}</g></svg>`;
+  return `<svg class="surface-map" viewBox="0 0 192 192" aria-label="Powierzchnie zęba ${fdi}">
+    <g transform="translate(${c} ${c})">${parts}</g></svg>`;
 }
 
 function canalCard(fdi) {
-  const t = state.teeth[fdi], names = canalNames(fdi);
-  const rootHits = {};
-  current(fdi).forEach(f => { if (f.canal != null) rootHits[f.canal] = DXMAP[f.dxCode].name; });
+  const t = state.teeth[fdi];
+  const sug = suggestedCanals(fdi);
+  const rootScope = state.dx && (DXMAP[state.dx].scope === 'root' || (DXMAP[state.dx].scope === 'ask' && state.scopeAsk === 'root'));
+  const findingsByCanal = {};
+  current(fdi).forEach(f => { if (f.canal) (findingsByCanal[f.canal] = findingsByCanal[f.canal] || []).push(DXMAP[f.dxCode].name); });
+
+  if (!t.canals.length) {
+    return `<div class="detail-card">
+      <h3>Kanały korzeniowe<span class="fr">FR-063</span></h3>
+      <div class="canal-empty">
+        <p class="hint">Nie odnotowano kanałów. Kanały zakłada lekarz lub asystentka w trakcie leczenia —
+          system nie zakłada ich z góry.</p>
+        <p class="hint">Typowo dla tego zęba: ${sug.length} (${esc(sug.join(', '))})<span class="fr">FR-064</span></p>
+        <div class="canal-add">
+          <button type="button" class="btn btn-ghost btn-sm" data-add-canal="1">+ Dodaj kanał</button>
+          ${sug.length > 1 ? `<button type="button" class="btn btn-ghost btn-sm" data-add-canal="${Math.min(sug.length, 3)}">+ Dodaj typowe (${Math.min(sug.length, 3)})</button>` : ''}
+        </div>
+      </div></div>`;
+  }
   return `<div class="detail-card">
-    <h3>Kanały korzeniowe<span class="fr">FR-063 · FR-065</span></h3>
-    <div class="canal-row">
-      <div class="stepper">
-        <button type="button" data-canal-step="-1" ${t.canals <= 1 ? 'disabled' : ''} aria-label="Zmniejsz liczbę kanałów">−</button>
-        <span class="val" aria-live="polite">${t.canals}</span>
-        <button type="button" data-canal-step="1" ${t.canals >= 6 ? 'disabled' : ''} aria-label="Zwiększ liczbę kanałów">+</button>
-      </div>
-      <span class="canal-default ${t.canals !== t.canalsDefault ? 'changed' : ''}">
-        ${t.canals === t.canalsDefault ? `domyślnie ${t.canalsDefault}` : `zmieniono z ${t.canalsDefault}`}
-      </span>
-    </div>
-    <ul class="canal-list">${names.map((n, idx) => `
-      <li><span class="cn">${idx + 1}</span>
-        <button type="button" data-canal="${idx}" aria-pressed="${state.canal === idx}">${esc(n)}</button>
-        ${rootHits[idx] ? `<span class="status-pill pill-done" title="${esc(rootHits[idx])}">wpis</span>` : ''}
-      </li>`).join('')}</ul>
+    <h3>Kanały korzeniowe · ${t.canals.length}<span class="fr">FR-065 · FR-066</span></h3>
+    <ul class="canal-list">
+      ${t.canals.map(c => `<li class="canal-item s-${c.state}">
+        <div class="ci-top">
+          <span class="canal-name">${esc(c.name)}<small>${esc(STATE_LABEL[c.state])}${findingsByCanal[c.id] ? ' · ' + esc(findingsByCanal[c.id].join(', ')) : ''}</small></span>
+          <button type="button" class="canal-del" data-canal-del="${c.id}" title="Usuń kanał" aria-label="Usuń kanał ${esc(c.name)}">×</button>
+        </div>
+        <div class="ci-bottom">
+          <span class="state-seg" role="group" aria-label="Stan kanału ${esc(c.name)}">
+            ${CANAL_STATES.map(s => `<button type="button" data-canal-state="${c.id}:${s.key}" aria-pressed="${c.state === s.key}"
+              title="${esc(s.full)}"><span class="state-dot sd-${s.key}"></span>${s.short}</button>`).join('')}
+          </span>
+          ${rootScope ? `<button type="button" class="canal-pick" data-canal-pick="${c.id}" aria-pressed="${state.canal === c.id}">${state.canal === c.id ? 'wybrany' : 'wybierz'}</button>` : ''}
+        </div>
+      </li>`).join('')}
+    </ul>
+    ${t.canals.length < 6 ? `<div class="canal-add"><button type="button" class="btn btn-ghost btn-sm" data-add-canal="1">+ Dodaj kanał</button></div>` : ''}
   </div>`;
 }
 
 function dxPicker(query) {
   const q = (query || '').trim().toLowerCase();
   const hits = DX.filter(d => !q || d.name.toLowerCase().includes(q) || (d.icd || '').toLowerCase().includes(q) || d.code.toLowerCase().includes(q));
-  let html = '', lastCat = null;
+  let html = '';
   CAT.forEach(([key, label]) => {
     const inCat = hits.filter(d => d.cat === key);
     if (!inCat.length) return;
     html += `<li class="dx-group">${label}</li>`;
     inCat.forEach(d => {
-      const scopeCls = { surface: 'scope-surface', tooth: 'scope-tooth', root: 'scope-root', perio: 'scope-perio', ask: 'scope-tooth' }[d.scope];
-      const scopeTxt = { surface: 'powierzchnia', tooth: 'cały ząb', root: 'korzeń/kanał', perio: 'przyzębie', ask: 'wybierz zakres' }[d.scope];
+      const scopeCls = { surface:'scope-surface', tooth:'scope-tooth', root:'scope-root', perio:'scope-perio', ask:'scope-tooth' }[d.scope];
+      const scopeTxt = { surface:'powierzchnia', tooth:'cały ząb', root:'korzeń/kanał', perio:'przyzębie', ask:'wybierz zakres' }[d.scope];
       html += `<li><button type="button" class="dx-item" data-dx="${d.code}" aria-pressed="${state.dx === d.code}">
         <span class="layer-dot ${d.layer === 'diagnosis' ? 'layer-diag' : 'layer-rest'}"></span>
         <span class="dx-name">${esc(d.name)}</span>
@@ -1027,51 +947,53 @@ function effScope() {
   return d.scope === 'ask' ? state.scopeAsk : d.scope;
 }
 function validation() {
-  if (!state.selection.size) return 'Zaznacz co najmniej jeden ząb.';
+  const sel = [...state.selection];
+  if (!sel.length) return 'Zaznacz co najmniej jeden ząb.';
   if (!state.dx) return 'Wybierz pozycję ze słownika rozpoznań.';
   const d = DXMAP[state.dx];
   if (d.needsNote && !document.getElementById('noteField')?.value.trim())
     return 'Pozycja „inne rozpoznanie” wymaga opisu (FR-011a).';
   if (effScope() === 'surface' && !state.surfaces.size)
     return 'To rozpoznanie dotyczy powierzchni — wskaż co najmniej jedną (FR-022).';
+  if (effScope() === 'root' && sel.length === 1 && !state.teeth[sel[0]].canals.length)
+    return 'To rozpoznanie dotyczy korzenia lub kanału — najpierw odnotuj kanał (FR-067).';
   return null;
 }
 
 function findingRow(f) {
-  const d = DXMAP[f.dxCode], m = meta(f.tooth);
+  const d = DXMAP[f.dxCode];
   const cls = ['finding'];
   if (f.layer === 'existing') cls.push('rest');
   if (f.clinical === 'closed') cls.push('done');
   if (f.record === 'superseded') cls.push('stale');
-  const loc = f.surfaces.length ? f.surfaces.map(s => s).join('') + ' · ' + f.surfaces.map(s => SURFACE_NAME(f.tooth, s)).join(', ')
-    : f.canal != null ? 'kanał ' + (f.canal + 1)
+  const c = f.canal ? canalById(f.tooth, f.canal) : null;
+  const loc = f.surfaces.length ? f.surfaces.join('') + ' · ' + f.surfaces.map(s => SURFACE_NAME(f.tooth, s)).join(', ')
+    : f.canal ? (c ? 'kanał: ' + c.name : 'kanał nieobecny w modelu')
     : d.scope === 'perio' ? 'przyzębie' : 'cały ząb';
   const pill = f.record === 'superseded' ? '<span class="status-pill pill-stale">nieaktualny</span>'
     : f.clinical === 'closed' ? '<span class="status-pill pill-done">zakończone</span>'
     : '<span class="status-pill pill-active">aktywne</span>';
   return `<li class="${cls.join(' ')}" data-finding="${f.id}">
-    <div class="finding-top">
-      <span class="finding-name">${esc(d.name)}</span>${pill}
+    <div class="finding-top"><span class="finding-name">${esc(d.name)}</span>${pill}
       ${d.needsNote ? '<span class="status-pill pill-flag">do doprecyzowania</span>' : ''}
-    </div>
+      ${f.canal && !c ? '<span class="status-pill pill-flag">kanał usunięty</span>' : ''}</div>
     <div class="finding-loc">${esc(loc)}${f.severity ? ' · ' + esc(f.severity) : ''}</div>
     <div class="finding-meta">ząb ${f.tooth} · ${f.date} · ${esc(f.author)} (${f.role})${f.closedAt ? ' · zakończono ' + f.closedAt : ''}</div>
     ${f.note ? `<div class="finding-note">${esc(f.note)}</div>` : ''}
     ${f.record === 'current' && f.clinical === 'active' ? `<div class="finding-actions">
       <button type="button" class="link-btn" data-close="${f.id}">Zakończ (wyleczone)</button>
-      <button type="button" class="link-btn" data-correct="${f.id}">Koryguj</button>
-    </div>` : ''}
+      <button type="button" class="link-btn" data-correct="${f.id}">Koryguj</button></div>` : ''}
   </li>`;
 }
 
 function renderInspector() {
-  const sel = [...state.selection];
+  const sel = [...state.selection].sort((a, b) => a - b);
   if (!sel.length) {
     inspHeading.textContent = 'Wybrany ząb';
     inspMode.textContent = 'nic nie zaznaczono';
     inspBody.innerHTML = `<div class="empty">
       <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6c5 0 8 3 8 8 0 6-2 8-3 14-1 4-4 4-5 0-1-6-3-8-3-14 0-5 3-8 3-8z" fill="none" stroke="currentColor" stroke-width="1.6"></path></svg>
-      Dotknij zęba na łuku, żeby zobaczyć jego stan i dodać rozpoznanie.<br>
+      Dotknij zęba albo jego schematu powierzchni, żeby zobaczyć stan i dodać rozpoznanie.<br>
       Przeciągnij po kilku zębach albo użyj skrótów, żeby zaznaczyć grupę.
       <span class="fr">FR-004 · FR-054</span></div>`;
     return;
@@ -1085,44 +1007,38 @@ function renderInspector() {
   const scope = effScope();
   const problem = validation();
 
-  let head;
-  if (multi) {
-    head = `<div><div class="tooth-title"><span class="fdi">${sel.length}</span>
-      <span class="tooth-anat">zaznaczonych zębów · wpis powstanie osobno dla każdego<span class="fr">FR-004a</span></span></div>
-      <div class="finding-meta" style="margin-top:6px">${sel.sort((a, b) => a - b).join(' · ')}</div></div>`;
-  } else {
-    head = `<div><div class="tooth-title"><span class="fdi">${fdi}</span>
-      <span class="tooth-anat">${esc(m.label)}${m.deciduous ? ' · ząb mleczny' : ''}</span></div>
-      <div class="finding-meta" style="margin-top:4px">
-        ${t.presence === 'present' ? 'ząb obecny' : t.presence === 'extracted' ? 'ząb usunięty' : t.presence === 'agenesis' ? 'wrodzony brak zęba' : 'ząb niewyrznięty / zatrzymany'}
-        · ${m.roots} ${plural(m.roots, 'korzeń', 'korzenie', 'korzeni')} · ${t.canals} ${plural(t.canals, 'kanał', 'kanały', 'kanałów')}
-        <span class="fr">FR-005</span></div></div>`;
-  }
+  const head = multi
+    ? `<div><div class="tooth-title"><span class="fdi">${sel.length}</span>
+        <span class="tooth-anat">zaznaczonych zębów · wpis powstanie osobno dla każdego<span class="fr">FR-004a</span></span></div>
+        <div class="finding-meta" style="margin-top:6px">${sel.join(' · ')}</div></div>`
+    : `<div><div class="tooth-title"><span class="fdi">${fdi}</span>
+        <span class="tooth-anat">${esc(m.label)}${m.deciduous ? ' · ząb mleczny' : ''}</span></div>
+        <div class="finding-meta" style="margin-top:4px">
+          ${t.presence === 'present' ? 'ząb obecny' : t.presence === 'extracted' ? 'ząb usunięty' : t.presence === 'agenesis' ? 'wrodzony brak zęba' : 'ząb niewyrznięty / zatrzymany'}
+          · ${m.roots} ${plural(m.roots, 'korzeń', 'korzenie', 'korzeni')}
+          · ${t.canals.length ? `${t.canals.length} ${plural(t.canals.length, 'kanał', 'kanały', 'kanałów')}` : 'brak odnotowanych kanałów'}
+          <span class="fr">FR-005</span></div></div>`;
 
-  const showSurfaces = !scope || scope === 'surface';
   const detail = multi
     ? `<div class="detail-card"><h3>Części zęba wspólne dla zaznaczenia<span class="fr">FR-004a</span></h3>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${['M', 'D', 'B', 'L', 'O', 'I'].map(s => `<button type="button" class="chip" data-surface-chip="${s}" aria-pressed="${state.surfaces.has(s)}">${s}</button>`).join('')}
+          ${['M','D','B','L','O','I'].map(s => `<button type="button" class="chip" data-surface-chip="${s}" aria-pressed="${state.surfaces.has(s)}">${s}</button>`).join('')}
         </div>
-        <p class="hint" style="margin:8px 0 0">Powierzchnie nieistniejące dla danego zęba (np. żująca w siekaczu) zostaną pominięte i wymienione przed zapisem.</p></div>`
+        <p class="hint" style="margin-top:8px">Powierzchnie nieistniejące dla danego zęba (np. żująca w siekaczu) zostaną pominięte i wymienione przed zapisem.</p></div>`
     : `<div class="detail-card"><h3>Powierzchnie<span class="fr">FR-024 · FR-026</span></h3>${surfaceMapSvg(fdi)}
-        <p class="hint" style="margin-top:6px">${esc(m.surfaces.map(s => s + ' — ' + SURFACE_NAME(fdi, s)).join(' · '))}</p></div>`;
+        <p class="hint" style="margin-top:8px">${esc(m.surfaces.map(s => s + ' — ' + SURFACE_NAME(fdi, s)).join(' · '))}</p></div>`;
 
-  const pool = multi ? sel.flatMap(x => state.teeth[x].findings) : state.teeth[fdi].findings;
+  const pool = multi ? sel.flatMap(x => state.teeth[x].findings) : t.findings;
   const findings = pool.filter(f => f.record === 'current' && f.clinical === 'active');
   const history = pool.filter(f => f.record === 'superseded' || f.clinical === 'closed');
 
   inspBody.innerHTML = `
     ${head}
-    <div class="detail-grid">
-      ${detail}
-      ${multi ? '' : canalCard(fdi)}
-    </div>
+    <div class="detail-grid">${detail}${multi ? '' : canalCard(fdi)}</div>
 
     <div class="field">
       <label for="dxSearch">Jednostka chorobowa / stan<span class="fr">FR-011 · FR-013</span></label>
-      <input type="text" id="dxSearch" placeholder="Szukaj po nazwie lub kodzie ICD-10…" value="${esc(state.query || '')}" autocomplete="off">
+      <input type="text" id="dxSearch" placeholder="Szukaj po nazwie lub kodzie ICD-10…" value="${esc(state.query)}" autocomplete="off">
       <ul class="dx-list" id="dxList">${dxPicker(state.query)}</ul>
     </div>
 
@@ -1147,10 +1063,11 @@ function renderInspector() {
       <input type="date" id="dateField" value="2026-08-30" max="2026-08-30">
     </div>
 
-    ${problem ? `<p class="hint block">▲ ${esc(problem)}</p>` : `<p class="hint">Zapis utworzy ${sel.length === 1 ? 'jeden wpis' : sel.length + ' ' + plural(sel.length, 'odrębny wpis', 'odrębne wpisy', 'odrębnych wpisów')}; każdy z własną historią i możliwością korekty.</p>`}
+    ${problem ? `<p class="hint block">▲ ${esc(problem)}</p>`
+      : `<p class="hint">Zapis utworzy ${sel.length === 1 ? 'jeden wpis' : sel.length + ' ' + plural(sel.length, 'odrębny wpis', 'odrębne wpisy', 'odrębnych wpisów')}; każdy z własną historią i możliwością korekty.</p>`}
 
     <div class="actions">
-      <button type="button" class="btn btn-primary" id="saveBtn" ${problem ? 'disabled' : ''}>Zapisz ${sel.length > 1 ? plural(sel.length, 'wpis', 'wpisy', 'wpisy') : 'wpis'}</button>
+      <button type="button" class="btn btn-primary" id="saveBtn" ${problem ? 'disabled' : ''}>Zapisz ${sel.length > 1 ? 'wpisy' : 'wpis'}</button>
       <button type="button" class="btn btn-ghost" id="resetBtn">Wyczyść formularz</button>
     </div>
 
@@ -1162,8 +1079,7 @@ function renderInspector() {
 
     ${history.length ? `<details><summary style="cursor:pointer;font-size:13px;color:var(--text-muted);font-weight:500">
         Historia zęba (${history.length})<span class="fr">FR-034</span></summary>
-      <ul class="findings" style="margin-top:8px">${history.map(findingRow).join('')}</ul></details>` : ''}
-  `;
+      <ul class="findings" style="margin-top:8px">${history.map(findingRow).join('')}</ul></details>` : ''}`;
 }
 
 /* ══ INTERAKCJE ═══════════════════════════════════════════════════════════ */
@@ -1173,20 +1089,24 @@ function toast(msg) {
   toastEl.innerHTML = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4200);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4600);
 }
+function prefersReduced() { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+function narrow() { return window.innerWidth < 1260; }
+const backBtn = document.getElementById('backToArch');
+function syncBackBtn() { backBtn.classList.toggle('on', narrow() && state.selection.size > 0); }
+backBtn.addEventListener('click', () => document.querySelector('.arch-wrap')
+  .scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: 'start' }));
 
-function refresh() { syncArchClasses(); renderInspector(); updateSelBar(); syncBackBtn(); renderOverview(); }
+function refresh() { syncArchClasses(); renderInspector(); updateSelBar(); renderOverview(); syncBackBtn(); }
 function updateSelBar() {
-  const n = state.selection.size, c = document.getElementById('selCount');
-  const parts = [];
+  const n = state.selection.size, c = document.getElementById('selCount'), parts = [];
   if (n) parts.push(`${n} ${plural(n, 'ząb', 'zęby', 'zębów')}`);
   const sn = state.surfaces.size;
   if (sn) parts.push(`${sn} ${plural(sn, 'powierzchnia', 'powierzchnie', 'powierzchni')}`);
   c.textContent = parts.length ? parts.join(' · ') : 'nic nie zaznaczono';
   c.classList.toggle('on', n > 0);
 }
-
 function selectTooth(fdi, additive) {
   if (additive) {
     state.selection.has(fdi) ? state.selection.delete(fdi) : state.selection.add(fdi);
@@ -1199,9 +1119,23 @@ function selectTooth(fdi, additive) {
   }
   refresh();
 }
+function toggleSurface(s) {
+  state.surfaces.has(s) ? state.surfaces.delete(s) : state.surfaces.add(s);
+  refresh();
+}
 
 let dragging = false, dragAdded = new Set();
 archSvg.addEventListener('pointerdown', e => {
+  const zone = e.target.closest('.zone');
+  if (zone) {
+    const fdi = +zone.dataset.fdi, m = meta(fdi);
+    const key = zone.dataset.zone === 'C' ? (m.anterior ? 'I' : 'O') : zone.dataset.zone;
+    if (!state.selection.has(fdi) || state.selection.size > 1) { state.selection.clear(); state.selection.add(fdi); state.surfaces.clear(); }
+    toggleSurface(key);
+    return;
+  }
+  const box = e.target.closest('.sbox');
+  if (box) { selectTooth(+box.dataset.sbox, e.shiftKey || e.ctrlKey || e.metaKey); return; }
   const g = e.target.closest('.tooth');
   if (!g) return;
   const fdi = +g.dataset.fdi;
@@ -1225,28 +1159,23 @@ archSvg.addEventListener('keydown', e => {
   const g = e.target.closest('.tooth');
   if (!g) return;
   const list = [...archSvg.querySelectorAll('.tooth')];
-  const i = list.indexOf(g);
+  const i = list.indexOf(g), perRow = rows()[0].length;
   let next = null;
-  const perRow = rows()[0].length;
   if (e.key === 'ArrowRight') next = list[Math.min(i + 1, list.length - 1)];
   else if (e.key === 'ArrowLeft') next = list[Math.max(i - 1, 0)];
   else if (e.key === 'ArrowDown') next = list[Math.min(i + perRow, list.length - 1)];
   else if (e.key === 'ArrowUp') next = list[Math.max(i - perRow, 0)];
   else if (e.key === 'Home') next = list[0];
   else if (e.key === 'End') next = list[list.length - 1];
-  else if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    selectTooth(+g.dataset.fdi, e.shiftKey);
-    return;
-  } else return;
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTooth(+g.dataset.fdi, e.shiftKey); return; }
+  else return;
   e.preventDefault();
-  if (next) next.focus({ preventScroll: true });
+  next?.focus({ preventScroll: true });
 });
 
-/* skróty zaznaczania (FR-004b) */
 document.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
-  const kind = b.dataset.pick, vis = visibleTeeth();
-  const pick = vis.filter(fdi => {
+  const kind = b.dataset.pick;
+  visibleTeeth().filter(fdi => {
     const m = meta(fdi);
     switch (kind) {
       case 'q1': return m.q === 1 || m.q === 5;
@@ -1258,66 +1187,58 @@ document.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click'
       case 'anterior': return m.anterior;
       case 'posterior': return !m.anterior;
     }
-  });
-  pick.forEach(fdi => state.selection.add(fdi));
+  }).forEach(fdi => state.selection.add(fdi));
   refresh();
 }));
 document.getElementById('clearSel').addEventListener('click', () => {
   state.selection.clear(); state.surfaces.clear(); state.canal = null; refresh();
 });
-
-/* warstwy (FR-009) */
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => {
   state.layer = b.dataset.layer;
   document.querySelectorAll('[data-layer]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   refresh();
 }));
-
-/* tryb uzębienia (FR-043 · FR-044) */
 document.querySelectorAll('[data-dentition]').forEach(b => b.addEventListener('click', () => {
   state.dentition = b.dataset.dentition;
   document.querySelectorAll('[data-dentition]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   const vis = new Set(visibleTeeth());
-  const hidden = [...state.selection].filter(t => !vis.has(t));
-  const hiddenWithData = visibleHiddenWithFindings(vis);
-  hidden.forEach(t => state.selection.delete(t));
+  const hiddenWithData = Object.keys(state.teeth).map(Number)
+    .filter(t => !vis.has(t) && (state.teeth[t].findings.length || state.teeth[t].canals.length)).sort((a, b) => a - b);
+  [...state.selection].filter(t => !vis.has(t)).forEach(t => state.selection.delete(t));
   renderArch(); refresh();
   if (hiddenWithData.length) toast(`Ukryto ${hiddenWithData.length} ${plural(hiddenWithData.length, 'pozycję', 'pozycje', 'pozycji')} z wpisami (${hiddenWithData.join(', ')}) — nic nie zostało usunięte. <b>FR-047</b>`);
 }));
-function visibleHiddenWithFindings(vis) {
-  return Object.keys(state.teeth).map(Number)
-    .filter(t => !vis.has(t) && state.teeth[t].findings.length)
-    .sort((a, b) => a - b);
-}
 
-/* inspektor — delegacja zdarzeń */
 inspBody.addEventListener('click', e => {
   const surf = e.target.closest('[data-surface]');
-  if (surf) { toggleSurface(surf.dataset.surface); return; }
+  if (surf) return toggleSurface(surf.dataset.surface);
   const chip = e.target.closest('[data-surface-chip]');
-  if (chip) { toggleSurface(chip.dataset.surfaceChip); return; }
+  if (chip) return toggleSurface(chip.dataset.surfaceChip);
   const dxBtn = e.target.closest('[data-dx]');
   if (dxBtn) {
     state.dx = state.dx === dxBtn.dataset.dx ? null : dxBtn.dataset.dx;
     const d = state.dx && DXMAP[state.dx];
     if (d && d.scope !== 'surface' && d.scope !== 'ask') state.surfaces.clear();
-    refresh(); return;
+    return refresh();
   }
-  const step = e.target.closest('[data-canal-step]');
-  if (step) { stepCanals(+step.dataset.canalStep); return; }
-  const canal = e.target.closest('[data-canal]');
-  if (canal) { state.canal = state.canal === +canal.dataset.canal ? null : +canal.dataset.canal; refresh(); return; }
-  if (e.target.id === 'saveBtn') { save(); return; }
-  if (e.target.id === 'resetBtn') { state.dx = null; state.surfaces.clear(); state.canal = null; state.query = ''; refresh(); return; }
+  const add = e.target.closest('[data-add-canal]');
+  if (add) return addCanals(+add.dataset.addCanal);
+  const st = e.target.closest('[data-canal-state]');
+  if (st) return setCanalState(...st.dataset.canalState.split(':'));
+  const pick = e.target.closest('[data-canal-pick]');
+  if (pick) { state.canal = state.canal === pick.dataset.canalPick ? null : pick.dataset.canalPick; return refresh(); }
+  const del = e.target.closest('[data-canal-del]');
+  if (del) return deleteCanal(del.dataset.canalDel);
+  if (e.target.id === 'saveBtn') return save();
+  if (e.target.id === 'resetBtn') { state.dx = null; state.surfaces.clear(); state.canal = null; state.query = ''; return refresh(); }
   const close = e.target.closest('[data-close]');
-  if (close) { closeFinding(close.dataset.close); return; }
+  if (close) return closeFinding(close.dataset.close);
   const corr = e.target.closest('[data-correct]');
-  if (corr) { correctFinding(corr.dataset.correct); return; }
+  if (corr) return correctFinding(corr.dataset.correct);
 });
 inspBody.addEventListener('keydown', e => {
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-surface]')) {
-    e.preventDefault(); toggleSurface(e.target.closest('[data-surface]').dataset.surface);
-  }
+  const s = e.target.closest('[data-surface]');
+  if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleSurface(s.dataset.surface); }
 });
 inspBody.addEventListener('input', e => {
   if (e.target.id === 'dxSearch') {
@@ -1329,28 +1250,38 @@ inspBody.addEventListener('change', e => {
   if (e.target.id === 'scopeSel') { state.scopeAsk = e.target.value; refresh(); }
 });
 
-function toggleSurface(s) {
-  state.surfaces.has(s) ? state.surfaces.delete(s) : state.surfaces.add(s);
-  refresh();
-}
-
-function stepCanals(delta) {
-  const fdi = [...state.selection][0];
-  const t = state.teeth[fdi];
-  const next = Math.min(6, Math.max(1, t.canals + delta));
-  if (next === t.canals) return;
-  if (next < t.canals) {
-    const orphan = current(fdi).filter(f => f.canal != null && f.canal >= next);
-    if (orphan.length && !confirm(
-      `Zmniejszasz liczbę kanałów do ${next}. ${orphan.length} ${plural(orphan.length, 'wpis dotyczy', 'wpisy dotyczą', 'wpisów dotyczy')} kanału, `
-      + 'który przestanie istnieć. Wpisy zostaną zachowane w historii zęba, oznaczone jako dotyczące kanału nieobecnego w modelu. Kontynuować?')) return;
+/* ── kanały (FR-063..FR-069) ── */
+function addCanals(howMany) {
+  const fdi = [...state.selection][0], t = state.teeth[fdi];
+  const sug = suggestedCanals(fdi);
+  let added = 0;
+  for (let i = 0; i < howMany && t.canals.length < 6; i++) {
+    const idx = t.canals.length;
+    addCanal(fdi, sug[idx] || `kanał dodatkowy ${idx + 1}`, 'treat');
+    added++;
   }
-  t.canals = next;
-  if (state.canal != null && state.canal >= next) state.canal = null;
   renderArch(); refresh();
-  toast(next === t.canalsDefault
-    ? `Ząb ${fdi}: przywrócono domyślną liczbę kanałów (${next}).`
-    : `Ząb ${fdi}: liczba kanałów ${next} — inna niż domyślna (${t.canalsDefault}). <b>FR-065</b>`);
+  toast(`Ząb ${fdi}: dodano ${added} ${plural(added, 'kanał', 'kanały', 'kanałów')} ze stanem „do leczenia”. Zmień stan, gdy leczenie postąpi. <b>FR-065</b>`);
+}
+function setCanalState(id, st) {
+  const fdi = [...state.selection][0];
+  const c = canalById(fdi, id);
+  if (!c || c.state === st) return;
+  c.state = st;
+  renderArch(); refresh();
+  toast(`Ząb ${fdi}, ${c.name}: ${STATE_LABEL[st]}. <b>FR-066</b>`);
+}
+function deleteCanal(id) {
+  const fdi = [...state.selection][0], t = state.teeth[fdi];
+  const c = canalById(fdi, id);
+  const attached = current(fdi).filter(f => f.canal === id);
+  if (attached.length && !confirm(
+    `Usuwasz kanał „${c.name}”. ${attached.length} ${plural(attached.length, 'wpis jest do niego przypisany', 'wpisy są do niego przypisane', 'wpisów jest do niego przypisanych')}. `
+    + 'Wpisy zostaną zachowane i oznaczone jako dotyczące kanału nieobecnego w modelu. Kontynuować?')) return;
+  t.canals = t.canals.filter(x => x.id !== id);
+  if (state.canal === id) state.canal = null;
+  renderArch(); refresh();
+  toast(`Ząb ${fdi}: usunięto kanał „${c.name}”. Powiązane wpisy pozostają w historii zęba. <b>FR-068</b>`);
 }
 
 function save() {
@@ -1371,9 +1302,9 @@ function save() {
       if (!surfaces.length) { skipped.push(`${fdi} — brak wskazanych powierzchni w tym zębie`); return; }
     }
     let canal = null;
-    if (scope === 'root' && state.canal != null) {
-      if (state.canal < t.canals) canal = state.canal;
-      else { skipped.push(`${fdi} — ma tylko ${t.canals} ${plural(t.canals, 'kanał', 'kanały', 'kanałów')}`); return; }
+    if (scope === 'root') {
+      if (!t.canals.length) { skipped.push(`${fdi} — brak odnotowanych kanałów (FR-067)`); return; }
+      canal = state.canal && canalById(fdi, state.canal) ? state.canal : null;
     }
     addFinding(fdi, { dxCode: state.dx, surfaces, canal, severity: sev, note, date });
     made.push(fdi);
@@ -1386,7 +1317,9 @@ function save() {
   if (skipped.length) msg += `<br>Pominięto: ${skipped.join('; ')}.`;
   toast(msg);
 }
-
+function findById(id) {
+  for (const k in state.teeth) { const f = state.teeth[k].findings.find(x => x.id === id); if (f) return f; }
+}
 function closeFinding(id) {
   const f = findById(id);
   f.clinical = 'closed';
@@ -1402,42 +1335,36 @@ function correctFinding(id) {
   const dxp = DXMAP[f.dxCode];
   if (dxp.presence && state.teeth[f.tooth].presence === dxp.presence) state.teeth[f.tooth].presence = 'present';
   state.selection.clear(); state.selection.add(f.tooth);
-  state.dx = f.dxCode;
-  state.surfaces = new Set(f.surfaces);
-  state.canal = f.canal;
-  state.query = '';
+  state.dx = f.dxCode; state.surfaces = new Set(f.surfaces); state.canal = f.canal; state.query = '';
   renderArch(); refresh();
   const nf = document.getElementById('noteField');
   if (nf) nf.value = f.note;
-  toast('Poprzedni wpis oznaczony jako nieaktualny i przeniesiony do historii zęba. Popraw dane i zapisz — powstanie nowy wpis wskazujący poprzedni. Nic nie zostało nadpisane. <b>FR-033</b>');
-}
-function findById(id) {
-  for (const k in state.teeth) { const f = state.teeth[k].findings.find(x => x.id === id); if (f) return f; }
+  toast('Poprzedni wpis oznaczony jako nieaktualny i przeniesiony do historii zęba. Popraw dane i zapisz — powstanie nowy wpis wskazujący poprzedni. <b>FR-033</b>');
 }
 
-/* przegląd uzębienia — wypełnia kolumnę treścią, nie ozdobą (US2) */
+/* ── przegląd ── */
 function renderOverview() {
-  const vis = visibleTeeth();
-  let diag = 0, rest = 0, absent = 0, canal = 0;
+  let diag = 0, rest = 0, absent = 0, cTreat = 0, cUnder = 0, cDone = 0;
   const attention = [];
-  vis.forEach(fdi => {
+  visibleTeeth().forEach(fdi => {
     const t = state.teeth[fdi], a = activeF(fdi);
     const d = a.filter(f => f.layer === 'diagnosis');
     if (d.length) { diag += d.length; attention.push({ fdi, kind: 'diag', txt: DXMAP[d[0].dxCode].name }); }
     rest += a.filter(f => f.layer === 'existing').length;
     if (t.presence === 'extracted' || t.presence === 'agenesis') { absent++; attention.push({ fdi, kind: 'absent', txt: 'brak zęba' }); }
-    if (t.canals !== t.canalsDefault) canal++;
+    t.canals.forEach(c => { if (c.state === 'treat') cTreat++; else if (c.state === 'under') cUnder++; else cDone++; });
+    if (t.canals.some(c => c.state === 'under')) attention.push({ fdi, kind: 'under', txt: 'kanał niedoleczony' });
   });
   document.getElementById('overview').innerHTML = `
     <div class="ov-stats">
       <span class="ov-stat ov-diag"><b>${diag}</b><span>${plural(diag, 'aktywne rozpoznanie', 'aktywne rozpoznania', 'aktywnych rozpoznań')}</span></span>
       <span class="ov-stat ov-rest"><b>${rest}</b><span>${plural(rest, 'wpis stanu istniejącego', 'wpisy stanu istniejącego', 'wpisów stanu istniejącego')}</span></span>
       <span class="ov-stat ov-absent"><b>${absent}</b><span>${plural(absent, 'brak zębowy', 'braki zębowe', 'braków zębowych')}</span></span>
-      <span class="ov-stat ov-canal"><b>${canal}</b><span>${plural(canal, 'ząb z nietypową liczbą kanałów', 'zęby z nietypową liczbą kanałów', 'zębów z nietypową liczbą kanałów')}</span></span>
+      <span class="ov-stat ov-canal"><b>${cDone}/${cUnder}/${cTreat}</b><span>kanały: wyleczone / niedoleczone / do leczenia</span></span>
     </div>
     ${attention.length ? `<div class="ov-list"><span class="eyebrow">Wymaga uwagi</span>
       ${attention.slice(0, 14).map(a => `<button type="button" class="ov-tooth" data-goto="${a.fdi}" title="${esc(a.txt)}">
-        <span class="dotm ${a.kind === 'diag' ? 'layer-diag' : ''}" style="${a.kind === 'absent' ? 'background:var(--text-disabled)' : ''}"></span>
+        <span class="dotm" style="background:${a.kind === 'diag' ? 'var(--error)' : a.kind === 'under' ? 'var(--warning)' : 'var(--text-disabled)'}"></span>
         <b>${a.fdi}</b> ${esc(a.txt.length > 22 ? a.txt.slice(0, 21) + '…' : a.txt)}</button>`).join('')}
       ${attention.length > 14 ? `<span class="eyebrow">+${attention.length - 14}</span>` : ''}</div>`
       : `<p class="hint">Brak odnotowanych zmian w widocznym uzębieniu.</p>`}`;
@@ -1449,39 +1376,32 @@ document.getElementById('overview').addEventListener('click', e => {
   document.querySelector(`.tooth[data-fdi="${b.dataset.goto}"]`)?.focus({ preventScroll: true });
 });
 
-/* legenda (FR-008) */
-const LEGEND = [
-  ['bez odnotowanych zmian', 'healthy'],
-  ['aktywne rozpoznanie (kreskowanie ukośne)', 'diseased'],
-  ['stan istniejący / uzupełnienie', 'restored'],
-  ['rozpoznanie zakończone (sam obrys)', 'closed'],
-  ['brak zęba — usunięty lub wrodzony', 'absent'],
-  ['ząb niewyrznięty / zatrzymany', 'unerupted'],
-  ['ząb zaznaczony', 'selected'],
-  ['liczba kanałów inna niż domyślna', 'canal'],
-];
+/* ── legenda ── */
 function renderLegend() {
-  document.getElementById('legendGrid').innerHTML = LEGEND.map(([label, kind]) => {
-    let inner;
-    if (kind === 'canal') inner = '<circle cx="14" cy="14" r="4.5" fill="var(--warning)"></circle>';
-    else {
-      const stroke = { healthy: 'var(--tooth-stroke)', diseased: 'var(--tooth-diseased-stroke)', restored: 'var(--tooth-restored-stroke)', closed: 'var(--tooth-closed-stroke)', absent: 'var(--tooth-absent)', unerupted: 'var(--tooth-stroke)', selected: 'var(--tooth-selected-stroke)' }[kind];
-      const fill = { healthy: 'var(--tooth-fill)', diseased: 'url(#hatchDiag2)', restored: 'var(--tooth-restored-fill)', closed: 'var(--tooth-fill)', absent: 'none', unerupted: 'var(--tooth-fill)', selected: 'var(--tooth-fill)' }[kind];
-      const dash = (kind === 'absent' || kind === 'unerupted') ? ' stroke-dasharray="3 3"' : '';
-      const w = kind === 'selected' ? 2.6 : 1.4;
-      inner = `<rect x="5" y="5" width="18" height="18" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${w}"${dash}></rect>`
-        + (kind === 'absent' ? '<path d="M7 7l14 14M21 7L7 21" stroke="var(--tooth-absent)" stroke-width="1.4"></path>' : '');
-    }
-    return `<span class="legend-item"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">${inner}</svg>${esc(label)}</span>`;
-  }).join('');
+  const box = (fill, stroke, dash, w) =>
+    `<rect x="5" y="5" width="18" height="18" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${w || 1.4}"${dash ? ' stroke-dasharray="3 3"' : ''}></rect>`;
+  const canal = inner => `<g>${inner}</g>`;
+  const items = [
+    ['bez odnotowanych zmian', box('var(--tooth-fill)', 'var(--tooth-stroke)')],
+    ['aktywne rozpoznanie (kreskowanie)', box('url(#hatchDiag2)', 'var(--tooth-diseased-stroke)')],
+    ['stan istniejący / uzupełnienie', box('var(--tooth-restored-fill)', 'var(--tooth-restored-stroke)')],
+    ['rozpoznanie zakończone (sam obrys)', box('var(--tooth-fill)', 'var(--tooth-closed-stroke)', false, 2.2)],
+    ['brak zęba — usunięty lub wrodzony', box('none', 'var(--tooth-absent)', true) + '<path d="M7 7l14 14M21 7L7 21" stroke="var(--tooth-absent)" stroke-width="1.4"></path>'],
+    ['ząb niewyrznięty / zatrzymany', box('var(--tooth-fill)', 'var(--tooth-stroke)', true)],
+    ['ząb zaznaczony', box('var(--tooth-fill)', 'var(--tooth-selected-stroke)', false, 2.6)],
+    ['kanał do leczenia', canal('<path d="M14 4V24" stroke="var(--canal-treat)" stroke-width="3.4" stroke-dasharray="5 3.4" stroke-linecap="round"></path><circle cx="14" cy="24" r="2.6" fill="var(--canal-treat)"></circle>')],
+    ['kanał wyleczony (wypełniony)', canal('<path d="M14 4V24" stroke="var(--canal-done)" stroke-width="3.4" stroke-linecap="round"></path>')],
+    ['kanał niedoleczony (czerwony wierzchołek)', canal('<path d="M14 4V16" stroke="var(--canal-done)" stroke-width="3.4" stroke-linecap="round"></path><path d="M14 16V24" stroke="var(--canal-treat)" stroke-width="3.4" stroke-linecap="round"></path><circle cx="14" cy="24" r="2.6" fill="var(--canal-treat)"></circle>')],
+  ];
+  document.getElementById('legendGrid').innerHTML = items.map(([label, inner]) =>
+    `<span class="legend-item"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">${inner}</svg>${esc(label)}</span>`).join('');
 }
 
-/* motyw i odniesienia do wymagań */
+/* ── motyw i odniesienia do wymagań ── */
 const themeBtn = document.getElementById('themeToggle');
 themeBtn.addEventListener('click', () => {
   const root = document.documentElement;
-  const now = root.getAttribute('data-theme')
-    || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const now = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = now === 'dark' ? 'light' : 'dark';
   root.setAttribute('data-theme', next);
   document.getElementById('themeIcon').textContent = next === 'dark' ? '◑' : '◐';
@@ -1489,22 +1409,12 @@ themeBtn.addEventListener('click', () => {
 });
 const frBtn = document.getElementById('frToggle');
 frBtn.addEventListener('click', () => {
-  const on = document.documentElement.classList.toggle('show-fr');
-  frBtn.setAttribute('aria-pressed', String(on));
+  frBtn.setAttribute('aria-pressed', String(document.documentElement.classList.toggle('show-fr')));
 });
 
-/* powrót do łuku i przewinięcie do inspektora na wąskich ekranach (FR-006) */
-const backBtn = document.getElementById('backToArch');
-backBtn.addEventListener('click', () => {
-  document.querySelector('.arch-wrap').scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: 'start' });
-});
-function prefersReduced() { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
-function narrow() { return window.innerWidth < 1260; }
-function syncBackBtn() { backBtn.classList.toggle('on', narrow() && state.selection.size > 0); }
-
-/* start */
+/* ── start ── */
 document.documentElement.lang = 'pl';
-renderArch(); renderLegend(); refresh();
+renderArch(); renderLegend();
 state.selection.add(36);
 refresh();
 })();

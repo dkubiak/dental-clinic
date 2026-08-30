@@ -42,6 +42,21 @@
   zęba (siekacz, kieł, przedtrzonowiec, trzonowiec), z koroną i korzeniami, nie prostokąty
   (FR-001a).
 
+### Session 2026-08-30 (trzecia tura — po przeglądzie mockupu)
+
+- Q: Gdzie mają być prezentowane powierzchnie zęba na głównym diagramie? → A: Poza koroną — w
+  osobnym, powiększonym schemacie powierzchni umieszczonym w środkowym pasie diagramu, między
+  łukami. Sylwetki zębów mają być mniejsze, bo ich rolą jest anatomia, a nie nośnik danych
+  (FR-029).
+- Q: Czy kanał korzeniowy ma stan kliniczny? → A: Tak, dokładnie trzy stany: `do leczenia`
+  (czerwony), `wyleczony / wypełniony kanałowo` (zielony) oraz `niedoleczony — do ponownego
+  leczenia` (zielony na całej długości z czerwonym wierzchołkiem). Kanały muszą być na diagramie
+  wyraźnie widoczne (FR-066, FR-066a).
+- Q: Czy ząb ma z góry ustaloną liczbę kanałów? → A: Nie. Żadna pozycja nie ma domyślnych kanałów;
+  pierwsze kanały zakłada lekarz lub asystentka dopiero w trakcie leczenia. Tabela wartości
+  domyślnych usunięta; typowa anatomia pozostaje wyłącznie niezapisywaną podpowiedzią przy
+  dodawaniu (FR-063, FR-064).
+
 **Input**: User description: "Interaktywny model wizualizacji zębów (diagram stomatologiczny /
 odontogram): dwa łuki zębowe z klikalnymi zębami, w którym lekarz oznacza który ząb jest chory,
 wybiera z listy szczegółową jednostkę chorobową (rozpoznanie) oraz wyklikuje konkretną
@@ -78,7 +93,7 @@ planowaniem. Nie jest kodem produkcyjnym ani kontraktem — jest wizualnym odpow
 sekcji A, C, G oraz I i służy jako referencja dla `/speckit-plan`. Odwzorowuje: dwa łuki z
 anatomicznymi sylwetkami zębów (FR-001a), zaznaczanie wielu zębów i wielu części
 (FR-004a..FR-004c), słownik z zakresami anatomicznymi (FR-011..FR-021), mapę powierzchni
-(FR-024..FR-026), licznik kanałów z wartością domyślną (FR-063..FR-065), warstwy i legendę
+(FR-024..FR-026), kanały dodawane ręcznie z trzema stanami leczenia (FR-063..FR-066a), warstwy i legendę
 (FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) oraz cele
 dotknięcia ≥ 44 px bez poziomego przewijania strony (FR-049). Przełącznik „Wymagania" w pasku
 górnym pokazuje przy elementach interfejsu numery wymagań, których dotyczą.
@@ -499,8 +514,15 @@ zębów, a każdy da się później skorygować niezależnie.
 - **FR-028**: System MUST umożliwiać — dla pozycji o zakresie `korzeń / tkanki okołowierzchołkowe`
   — wskazanie konkretnego korzenia lub konkretnego kanału korzeniowego w zębach
   wielokorzeniowych/wielokanałowych (patrz sekcja I).
-- **FR-029**: System MUST odwzorowywać wskazane powierzchnie na małym schemacie zęba w widoku
-  całego łuku, a nie tylko w panelu szczegółów.
+- **FR-029**: System MUST prezentować powierzchnie na głównym diagramie **poza sylwetką zęba** —
+  jako osobny, powiększony schemat powierzchni umieszczony w środkowym pasie diagramu, między
+  łukiem górnym a dolnym, w jednej kolumnie z odpowiadającym mu zębem. Sylwetka zęba niesie
+  wyłącznie anatomię (typ zęba, korzenie, kanały) i MUST NOT być używana jako nośnik oznaczeń
+  powierzchniowych; korona MUST być na tyle mała, żeby schemat powierzchni pozostał dominującym
+  elementem odczytu.
+- **FR-029a**: Schemat powierzchni w widoku łuku MUST być klikalny — wskazanie powierzchni
+  bezpośrednio na diagramie MUST zaznaczać odpowiedni ząb i tę powierzchnię, bez konieczności
+  wchodzenia najpierw w panel szczegółów.
 
 #### D. Cykl życia wpisu
 
@@ -599,41 +621,36 @@ zębów, a każdy da się później skorygować niezależnie.
   samych zasadach i z tym samym uwzględnieniem ustawowych okresów retencji dokumentacji medycznej,
   co pozostałe dane kartoteki.
 
-#### I. Kanały korzeniowe i anatomia zęba
+#### I. Kanały korzeniowe
 
-- **FR-063**: System MUST przypisywać każdej pozycji zębowej domyślną liczbę kanałów korzeniowych
-  wynikającą z typowej anatomii dla danego numeru FDI i MUST prezentować ją bez dodatkowej
-  interakcji użytkownika — liczba kanałów jest widoczna od razu po otwarciu panelu zęba.
-- **FR-064**: Domyślne liczby kanałów MUST odpowiadać co najmniej poniższemu rozkładowi
-  (uzębienie stałe):
-
-  | Pozycje FDI | Zęby | Domyślna liczba kanałów |
-  | --- | --- | --- |
-  | 11–13, 21–23, 31–33, 41–43 | siekacze i kły | 1 |
-  | 14, 24 | pierwsze przedtrzonowce górne | 2 |
-  | 15, 25 | drugie przedtrzonowce górne | 1 |
-  | 34, 35, 44, 45 | przedtrzonowce dolne | 1 |
-  | 16, 17, 26, 27 | trzonowce górne | 3 |
-  | 36, 37, 46, 47 | trzonowce dolne | 3 |
-  | 18, 28, 38, 48 | trzecie trzonowce (ósemki) | 3, z założeniem dużej zmienności |
-
-  Dla uzębienia mlecznego: siekacze i kły — 1; trzonowce mleczne górne — 3; trzonowce mleczne
-  dolne — 2.
-- **FR-065**: System MUST umożliwiać operatorowi zmianę liczby kanałów dla konkretnego zęba
-  konkretnego pacjenta w zakresie od 1 do 6, MUST zapisywać autora i datę tej zmiany oraz MUST
-  wizualnie oznaczać ząb, którego liczba kanałów różni się od domyślnej — częsty przypadek
-  kliniczny to czwarty kanał (MB2) w pierwszym trzonowcu górnym.
-- **FR-066**: System MUST prezentować kanały graficznie w panelu zęba, w obrębie odpowiednich
-  korzeni, jako elementy dające się wskazać pojedynczo i nazwane zgodnie z anatomią (np.
-  policzkowy bliższy, policzkowy dalszy, podniebienny).
+- **FR-063**: System MUST NOT zakładać żadnych kanałów korzeniowych z góry. Każda pozycja zębowa
+  zaczyna bez odnotowanych kanałów, a brak kanałów oznacza wyłącznie "nie odnotowano", nigdy
+  "ząb nie ma kanałów". Pierwszy kanał zakłada użytkownik dopiero wtedy, gdy leczenie tego
+  wymaga.
+- **FR-064**: System MAY podpowiadać typową dla danej pozycji FDI liczbę i nazwy kanałów w
+  momencie dodawania, ale ta podpowiedź MUST NOT być zapisywana jako dane pacjenta ani
+  prezentowana jako stan faktyczny dopóki użytkownik jej nie zatwierdzi.
+- **FR-065**: System MUST umożliwiać rolom DOCTOR i ASSISTANT dodanie kanału (do 6 na ząb),
+  nadanie mu nazwy anatomicznej (np. policzkowy bliższy, policzkowy dalszy, podniebienny,
+  MB2) oraz usunięcie omyłkowo dodanego kanału, z zapisem autora i daty każdej z tych operacji.
+- **FR-066**: Każdy kanał MUST mieć dokładnie jeden z trzech stanów leczenia:
+  1. **do leczenia** — kanał rozpoznany, leczenie jeszcze nie wykonane,
+  2. **wyleczony** — kanał wypełniony kanałowo, leczenie zakończone,
+  3. **niedoleczony** — wypełniony niekompletnie, wymaga ponownego leczenia.
+- **FR-066a**: Stany kanałów MUST być czytelne wprost z głównego diagramu, wewnątrz sylwetek
+  korzeni, w następującym kodowaniu: `do leczenia` — czerwony na całej długości; `wyleczony` —
+  zielony na całej długości; `niedoleczony` — zielony na całej długości z czerwonym odcinkiem
+  przywierzchołkowym. Kanały MUST być rysowane wyraźnie (grubiej niż linie pomocnicze rysunku), a
+  każdy stan MUST nieść dodatkowy sygnał nieoparty na kolorze (kreskowanie, znacznik wierzchołka),
+  zgodnie z FR-050.
 - **FR-067**: System MUST umożliwiać przypisanie wpisu o zakresie `korzeń / tkanki
-  okołowierzchołkowe` do konkretnego kanału oraz odnotowanie stanu leczenia kanałowego osobno dla
-  każdego kanału (np. wypełniony, niedopełniony, przepełniony, nieodnaleziony).
-- **FR-068**: Zmniejszenie liczby kanałów MUST NOT usuwać ani ukrywać wpisów przypisanych do
-  kanałów, które przestają istnieć; system MUST ostrzec przed zapisem i zachować takie wpisy w
-  historii zęba, jawnie oznaczone jako dotyczące kanału już nieobecnego w modelu.
-- **FR-069**: Zmiana liczby kanałów MUST być traktowana jak każda inna zmiana danych klinicznych:
-  append-only, z wpisem w dzienniku audytu zawierającym stan przed i po (FR-030, FR-060).
+  okołowierzchołkowe` wyłącznie do kanału, który na tym zębie faktycznie istnieje.
+- **FR-068**: Usunięcie kanału MUST NOT usuwać ani ukrywać wpisów do niego przypisanych; system
+  MUST ostrzec przed operacją i zachować takie wpisy w historii zęba, jawnie oznaczone jako
+  dotyczące kanału już nieobecnego w modelu.
+- **FR-069**: Dodanie, usunięcie i zmiana stanu kanału MUST być traktowane jak każda inna zmiana
+  danych klinicznych: append-only, z wpisem w dzienniku audytu zawierającym stan przed i po
+  (FR-030, FR-060).
 
 #### J. Współbieżność, wydajność, odporność
 
@@ -703,8 +720,9 @@ zębów, a każdy da się później skorygować niezależnie.
   skutkuje cichą utratą zmiany — 100% konfliktów kończy się komunikatem i możliwością przeładowania.
 - **SC-011**: Odontogram w pełnym trybie mieszanym (52 pozycje) reaguje na wskazanie zęba widoczną
   zmianą zaznaczenia w czasie poniżej 0,1 s, niezależnie od czasu zapisu na serwerze.
-- **SC-012**: Domyślna liczba kanałów jest widoczna dla 100% zębów bez żadnej dodatkowej
-  interakcji poza wybraniem zęba, a zmiana tej liczby wymaga nie więcej niż 2 interakcji.
+- **SC-012**: Stan każdego odnotowanego kanału (do leczenia / wyleczony / niedoleczony) jest
+  odczytywalny wprost z głównego diagramu, bez otwierania panelu zęba i bez polegania na samym
+  kolorze; dodanie pierwszego kanału do zęba wymaga nie więcej niż 3 interakcji.
 - **SC-013**: Odnotowanie tego samego stanu na sześciu zębach odcinka przedniego wymaga jednego
   zapisu i nie więcej niż 1/3 liczby interakcji potrzebnych przy oznaczaniu każdego zęba osobno.
 
@@ -741,9 +759,14 @@ zębów, a każdy da się później skorygować niezależnie.
 - **Brak migracji danych**: system nie jest wdrożony produkcyjnie i nie istnieją dane pacjentów,
   więc binarny model `ToothStatus` z `002-patient-records` jest zastępowany bez ścieżki migracyjnej.
   Plan może usunąć go wraz z odpowiadającą mu tabelą, zamiast utrzymywać zgodność wsteczną.
-- Domyślne liczby kanałów korzeniowych są danymi referencyjnymi opisującymi typową anatomię, nie
-  rozpoznaniem — ich obecność w kartotece nie oznacza, że ząb był badany ani leczony
-  endodontycznie.
+- Kanały korzeniowe są danymi wprowadzanymi w trakcie leczenia, nie danymi referencyjnymi. Brak
+  kanałów przy zębie oznacza "nie odnotowano", a nie "ząb nie ma kanałów" — typowa anatomia służy
+  wyłącznie jako podpowiedź przy dodawaniu (FR-064).
+- Trzy stany kanału (do leczenia / wyleczony / niedoleczony) opisują postęp leczenia
+  endodontycznego i są niezależne od statusu klinicznego wpisu (aktywne/zakończone) oraz od
+  statusu korekty (aktualny/nieaktualny).
+- Sylwetka zęba na diagramie jest nośnikiem anatomii, a nie danych powierzchniowych; dane
+  powierzchniowe czyta się ze schematu powierzchni w środkowym pasie diagramu (FR-029).
 - Zaznaczenie wielokrotne jest narzędziem wprowadzania danych, nie osobnym bytem — jego rezultatem
   jest zawsze zbiór niezależnych wpisów, po jednym na ząb, każdy z własną historią i możliwością
   osobnej korekty.
