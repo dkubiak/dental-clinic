@@ -106,7 +106,8 @@ Zależności w obie strony:
 ### Mockup UI (przed `/speckit-plan`)
 
 `mockup/odontogram-mockup.html` to klikalny prototyp interfejsu, uzgodniony z użytkownikiem przed
-planowaniem. Nie jest kodem produkcyjnym ani kontraktem — jest wizualnym odpowiednikiem wymagań z
+planowaniem. Jest samodzielnym dokumentem HTML bez zależności zewnętrznych poza krojami pisma —
+otwiera się wprost z repozytorium, bez serwera ani budowania. Nie jest kodem produkcyjnym ani kontraktem — jest wizualnym odpowiednikiem wymagań z
 sekcji A, C, G oraz I i służy jako referencja dla `/speckit-plan`. Odwzorowuje: dwa łuki z
 anatomicznymi sylwetkami zębów (FR-001a), zaznaczanie wielu zębów i wielu części
 (FR-004a..FR-004c), słownik z zakresami anatomicznymi (FR-011..FR-021), mapę powierzchni

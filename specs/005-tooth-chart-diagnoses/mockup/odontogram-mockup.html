@@ -1,7 +1,18 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta uzębienia Projekt Uśmiech</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
+/* Odpowiednik szkieletu, który host artefaktów dokłada przy publikacji — dzięki
+   temu plik otwarty lokalnie z dysku wygląda tak samo jak opublikowany. */
+:root { color-scheme: light dark; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
 /* ── Tokeny: lustrzane wobec design/brand/_pu-tokens.scss ───────────────── */
 :root {
   --bg: #FAF7F2;
@@ -368,6 +379,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 </style>
 
+</head>
+<body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <pattern id="hatchDiag" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -1663,3 +1676,5 @@ state.selection.add(36);
 refresh();
 })();
 </script>
+</body>
+</html>
