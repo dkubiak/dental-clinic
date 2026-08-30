@@ -12,7 +12,10 @@
     "serve:dist": "http-server dist/dental-clinic-frontend/browser -p 4200 --proxy http://localhost:4200?",
     "e2e:theme": "playwright test e2e/us2-theme-toggle.spec.ts e2e/us5-theme-contrast.spec.ts",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:quiet": "../scripts/quiet.sh npm test",
+    "lint:quiet": "../scripts/quiet.sh npm run lint",
+    "e2e:quiet": "../scripts/quiet.sh npm run e2e"
   },
   "dependencies": {
     "@angular/animations": "^21.0.0",

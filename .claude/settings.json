@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/enforce-quiet-build.mjs",
+            "statusMessage": "Checking for raw gradlew/npm build-test commands..."
+          }
+        ]
+      }
+    ]
+  }
+}

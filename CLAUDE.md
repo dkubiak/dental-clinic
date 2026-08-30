@@ -50,6 +50,17 @@ cd frontend && npm ci && npm run lint && npm test   # Vitest
 cd frontend && npm run e2e             # Playwright — needs a running backend
 ```
 
+`scripts/quiet.sh <command>` wraps any of the above (Gradle's Testcontainers/checkstyle output and
+Playwright's traces are the worst offenders for chewing through context in agent sessions). It
+buffers the command's output: on success it prints one pass line plus the last `QUIET_TAIL_LINES`
+lines (default 20); on failure it prints everything, unfiltered, so a real error is never hidden.
+Run it as `../scripts/quiet.sh ./gradlew build` from `backend/` or `patient-service/`; the frontend
+has it pre-wired as `npm run test:quiet`, `lint:quiet`, `e2e:quiet`. This is enforced, not just a
+suggestion: a `PreToolUse` hook (`.claude/settings.json` → `.claude/hooks/enforce-quiet-build.mjs`)
+blocks raw `gradlew build/test/check` and raw `npm test`/`run lint`/`run e2e` from an agent Bash
+call, pointing at the quiet variant instead. A human running these by hand in a terminal is
+unaffected — the hook only gates the Claude Code agent's own tool calls.
+
 CI runs three jobs: `backend`, `patient-service`, `frontend-unit`. A fourth job, `frontend-e2e`,
 is **disabled** (`if: false` in `ci.yml`) because it needs Postgres and LocalStack, which the job
 does not yet provision. Anything that must actually be gated therefore has to be reachable from
