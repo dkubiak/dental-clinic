@@ -411,7 +411,9 @@ zębów, a każdy da się później skorygować niezależnie.
   jego typu (siekacz, kieł, przedtrzonowiec, trzonowiec, trzonowiec mleczny), z widoczną koroną i
   korzeniami w liczbie odpowiadającej pozycji — nie jako jednolity prostokąt, kółko ani samą
   etykietę z numerem. Zęby górne i dolne MUST być zwrócone koronami do siebie, korzeniami na
-  zewnątrz łuku, tak jak wyglądają w zwarciu.
+  zewnątrz łuku, tak jak wyglądają w zwarciu. Rysunek korzeni MUST
+  pozostać czytelny przy domyślnym powiększeniu — grubość obrysu i kontrast wypełnienia MUST
+  wystarczać, by policzyć korzenie i odczytać stan kanałów bez powiększania diagramu.
 - **FR-002**: System MUST rozmieszczać zęby w konwencji klinicznej: prawa strona pacjenta po lewej
   stronie ekranu, obie połowy łuku odbite względem linii pośrodkowej, oraz MUST oznaczać ćwiartki
   (1–4 dla uzębienia stałego, 5–8 dla mlecznego) etykietami czytelnymi dla użytkownika.
@@ -528,7 +530,9 @@ zębów, a każdy da się później skorygować niezależnie.
 - **FR-029a**: Schemat powierzchni w widoku łuku MUST być klikalny na **każdym rodzaju urządzenia
   wskazującego** — myszą, piórem i dotykiem — a wskazanie powierzchni bezpośrednio na diagramie
   MUST zaznaczać odpowiedni ząb i tę powierzchnię, bez konieczności wchodzenia najpierw w panel
-  szczegółów. Każda strefa MUST mieć podpowiedź z nazwą powierzchni dostępną przed kliknięciem.
+  szczegółów. Każda strefa MUST mieć podpowiedź z nazwą powierzchni dostępną przed kliknięciem, a
+  strefa zaznaczona MUST być jednoznacznie odróżnialna zarówno od stref pustych, jak i od stref z
+  odnotowanym wpisem — samo pogrubienie obrysu nie wystarcza.
 - **FR-029b**: Ponieważ przy widoku całego uzębienia pojedyncza strefa powierzchni jest mniejsza
   niż minimalny cel dotknięcia z FR-049, system MUST udostępniać powiększenie diagramu (co
   najmniej dwa stopnie ponad widok domyślny), przy którym każda strefa osiąga co najmniej 24×24 px

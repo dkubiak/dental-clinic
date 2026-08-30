@@ -30,7 +30,7 @@
 
   --tooth-fill: #FFFFFF;
   --tooth-stroke: #5C5654;
-  --tooth-root-fill: #F2EDE6;
+  --tooth-root-fill: #EAE0D2;
   --tooth-diseased-fill: #F7E3E1;
   --tooth-diseased-stroke: #A33A32;
   --tooth-restored-fill: #D7E8E4;
@@ -59,7 +59,7 @@
     --warning: #E8A33D; --warning-wash: #4A3413;
     --error: #E88178; --error-wash: #5A2B27;
     --info: #8FB2D6; --focus-ring: #E3C9A6;
-    --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #2E2C2D;
+    --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #413C3B;
     --tooth-diseased-fill: #5A2B27; --tooth-diseased-stroke: #E88178;
     --tooth-restored-fill: #24413E; --tooth-restored-stroke: #7FB3AA;
     --tooth-closed-stroke: #6FBF8E; --tooth-selected-stroke: #E3C9A6; --tooth-absent: #7A726C;
@@ -78,7 +78,7 @@
   --warning: #E8A33D; --warning-wash: #4A3413;
   --error: #E88178; --error-wash: #5A2B27;
   --info: #8FB2D6; --focus-ring: #E3C9A6;
-  --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #2E2C2D;
+  --tooth-fill: #363233; --tooth-stroke: #A79E96; --tooth-root-fill: #413C3B;
   --tooth-diseased-fill: #5A2B27; --tooth-diseased-stroke: #E88178;
   --tooth-restored-fill: #24413E; --tooth-restored-stroke: #7FB3AA;
   --tooth-closed-stroke: #6FBF8E; --tooth-selected-stroke: #E3C9A6; --tooth-absent: #7A726C;
@@ -149,8 +149,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .zoomctl button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 600; }
 
 .tooth { cursor: pointer; }
-.tooth .root { fill: var(--tooth-root-fill); stroke: var(--tooth-stroke); stroke-width: 1.1; }
-.tooth .crown { fill: var(--tooth-fill); stroke: var(--tooth-stroke); stroke-width: 1.3; }
+.tooth .root { fill: var(--tooth-root-fill); stroke: var(--tooth-stroke); stroke-width: 2; stroke-linejoin: round; }
+.tooth .crown { fill: var(--tooth-fill); stroke: var(--tooth-stroke); stroke-width: 1.6; stroke-linejoin: round; }
 .tooth .hit { fill: transparent; }
 .tooth:hover .crown { stroke: var(--accent-hover); }
 .tooth.is-diseased .crown { fill: var(--tooth-diseased-fill); stroke: var(--tooth-diseased-stroke); }
@@ -158,8 +158,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .tooth.is-absent .crown, .tooth.is-absent .root { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 3 3; }
 .tooth.is-absent .canal { display: none; }
 .tooth.is-unerupted .crown, .tooth.is-unerupted .root { opacity: .45; stroke-dasharray: 4 3; }
-.tooth.is-selected .crown { stroke: var(--tooth-selected-stroke); stroke-width: 2.4; }
-.tooth.is-selected .root { stroke: var(--tooth-selected-stroke); }
+.tooth.is-selected .crown { stroke: var(--tooth-selected-stroke); stroke-width: 2.8; }
+.tooth.is-selected .root { stroke: var(--tooth-selected-stroke); stroke-width: 2.6; }
 .absent-cross { display: none; }
 .absent-cross path { stroke: var(--tooth-absent); stroke-width: 1.6; stroke-linecap: round; fill: none; }
 .tooth.is-absent .absent-cross { display: block; }
@@ -186,11 +186,21 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .sbox .zone.f-diag { fill: url(#hatchDiag); stroke: var(--tooth-diseased-stroke); stroke-width: 1.1; }
 .sbox .zone.f-rest { fill: var(--tooth-restored-stroke); stroke: var(--tooth-restored-stroke); }
 .sbox .zone.f-done { fill: var(--tooth-fill); stroke: var(--tooth-closed-stroke); stroke-width: 1.6; }
-.sbox .zone.picked { stroke: var(--tooth-selected-stroke); stroke-width: 2.2; }
-.sbox.is-selected .frame { stroke: var(--tooth-selected-stroke); stroke-width: 2.2; }
+.sbox .zone.picked,
+.sbox .zone.f-diag.picked,
+.sbox .zone.f-rest.picked,
+.sbox .zone.f-done.picked { fill: var(--accent); stroke: var(--accent-text); stroke-width: 3; }
+.sbox .ztag { display: none; fill: var(--on-accent); pointer-events: none; text-anchor: middle;
+  font-family: var(--mono); font-weight: 700; }
+.sbox .ztag.on { display: block; }
+.sbox.is-selected .frame { stroke: var(--tooth-selected-stroke); stroke-width: 2.4; }
+.sbox.has-picked .frame { stroke: var(--accent-text); stroke-width: 3; }
 .sbox.is-absent .zone { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 2 2; pointer-events: none; }
 .sbox.is-absent .frame { stroke: var(--tooth-absent); stroke-dasharray: 3 3; }
 .sbox .boxhit { fill: transparent; cursor: pointer; }
+/* strefy nie są w kolejności tabulacji (klawiaturą obsługuje je mapa w panelu),
+   więc prostokątny outline przeglądarki wokół trapezu tylko zaśmieca rysunek */
+.sbox .zone:focus, .sbox .zone:focus-visible, .sbox .boxhit:focus, .sbox .boxhit:focus-visible { outline: none; }
 
 /* ── Przegląd ────────────────────────────────────────────────────────────── */
 .overview { border-top: 1px solid var(--border); padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -807,13 +817,20 @@ function drawTooth(fdi, m, w, colW, cx, yBase, dir, rot) {
 function drawSurfaceBox(fdi, m, cx, cy, size, colW) {
   const grp = el('g', { class: 'sbox', transform: `translate(${f2(cx)} ${cy})`, 'data-sbox': fdi });
   grp.appendChild(el('rect', { class: 'boxhit', x: f2(-colW / 2), y: f2(-size / 2 - 6), width: f2(colW), height: f2(size + 12) }));
+  const o = size / 2, tags = [];
   zoneDefs(size, m.right).forEach(z => {
     const key = z.k === 'C' ? (m.anterior ? 'I' : 'O') : z.k;
     const path = el('path', { d: z.d, class: 'zone', 'data-zone': z.k, 'data-fdi': fdi, role: 'button', tabindex: -1 });
     path.appendChild(Object.assign(el('title', {}), { textContent: `Ząb ${fdi} · powierzchnia ${SURFACE_NAME(fdi, key)}` }));
     grp.appendChild(path);
+    const pos = { B: [0, -o * 0.64], L: [0, o * 0.82], C: [0, size * 0.08] }[z.k]
+      || (z.d.startsWith(`M ${-o}`) ? [-o * 0.72, size * 0.08] : [o * 0.72, size * 0.08]);
+    tags.push(Object.assign(el('text', {
+      class: 'ztag', 'data-ztag': z.k, x: f2(pos[0]), y: f2(pos[1]), 'font-size': f2(size * 0.24),
+    }), { textContent: key }));
   });
   grp.appendChild(el('rect', { class: 'frame', x: f2(-size / 2), y: f2(-size / 2), width: f2(size), height: f2(size), rx: 2 }));
+  tags.forEach(t => grp.appendChild(t));
   return grp;
 }
 
@@ -851,10 +868,20 @@ function syncArchClasses() {
       z.classList.toggle('f-diag', rank === 3);
       z.classList.toggle('f-rest', rank === 2);
       z.classList.toggle('f-done', rank === 1);
-      z.classList.toggle('picked', picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k));
+      const isPicked = picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
+      z.classList.toggle('picked', isPicked);
       const sName = SURFACE_NAME(fdi, k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
-      z.setAttribute('aria-label', `ząb ${fdi}, powierzchnia ${sName}`);
+      z.setAttribute('aria-label', `ząb ${fdi}, powierzchnia ${sName}${isPicked ? ', zaznaczona' : ''}`);
+      z.setAttribute('aria-pressed', isPicked ? 'true' : 'false');
     });
+    let anyPicked = false;
+    box.querySelectorAll('.ztag').forEach(tag => {
+      const k = tag.dataset.ztag;
+      const on = picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
+      tag.classList.toggle('on', on);
+      if (on) anyPicked = true;
+    });
+    box.classList.toggle('has-picked', anyPicked);
   });
 
   archSvg.querySelectorAll('[data-label]').forEach(n =>
