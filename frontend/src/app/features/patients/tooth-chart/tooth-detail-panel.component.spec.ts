@@ -370,9 +370,9 @@ describe('ToothDetailPanelComponent', () => {
     });
 
     // state change
-    const stateSelect = fixture.nativeElement.querySelector('[data-testid="canal-state-c1"]');
-    stateSelect.value = 'TREATED';
-    stateSelect.dispatchEvent(new Event('change'));
+    fixture.nativeElement
+      .querySelector('[data-testid="canal-state-c1-TREATED"]')
+      .dispatchEvent(new Event('click'));
     expect(toothChartService.updateCanal).toHaveBeenCalledWith('p1', 36, 'c1', {
       state: 'TREATED',
       expectedVersion: 0,

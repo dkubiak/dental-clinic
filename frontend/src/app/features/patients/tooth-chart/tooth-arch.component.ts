@@ -29,10 +29,18 @@ interface RenderedTooth {
   hasMultipleFindings: boolean;
   labelPl: string;
   ariaLabel: string;
+  /** Vertical position of the FDI-number label, just past the crown's incisal/occlusal tip
+   * (matches the approved mockup's number row between the two arches). */
+  numberY: number;
 }
 
 const COLUMN_WIDTH = 40;
-const CROWN_H = 26;
+/** Taller than a literal-scale crown would be — the viewBox's width:height ratio is what
+ * ultimately determines the on-screen tooth size once the SVG scales to fill its container
+ * (CSS width, not viewBox units, drives physical size), so this is deliberately generous to
+ * keep individual teeth legible next to the middle-strip surface maps (matches the density of
+ * the approved mockup, research.md D11). */
+const CROWN_H = 55;
 /** More active findings than this can't be told apart on the compact tooth silhouette. */
 const MULTI_FINDING_THRESHOLD = 3;
 
@@ -90,7 +98,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           @if (tooth.hasMultipleFindings) {
             <text
               [attr.x]="0"
-              [attr.y]="dir() === 1 ? -14 : 54"
+              [attr.y]="dir() === 1 ? -30 : 120"
               class="multi-indicator"
               [attr.data-testid]="'tooth-' + tooth.fdiNumber + '-multi-indicator'"
             >
@@ -98,14 +106,17 @@ const MULTI_FINDING_THRESHOLD = 3;
               ✳
             </text>
           }
+          <!-- FDI number under/above each crown, matching the approved mockup. -->
+          <text [attr.x]="0" [attr.y]="tooth.numberY" class="tooth-number">{{ tooth.fdiNumber }}</text>
         </g>
       }
     </svg>
   `,
   styles: `
     .arch {
+      display: block;
       width: 100%;
-      max-width: 640px;
+      height: auto;
       overflow: visible;
     }
     .tooth {
@@ -162,6 +173,13 @@ const MULTI_FINDING_THRESHOLD = 3;
       font-size: 10px;
       fill: currentColor;
       opacity: 0.6;
+    }
+    .tooth-number {
+      font-size: 9px;
+      text-anchor: middle;
+      fill: currentColor;
+      opacity: 0.7;
+      pointer-events: none;
     }
     /* FR-009/FR-039/FR-050 — dimmed by the layer filter, but the status-* class (and its
        shape/stroke cue) stays in place, so the distinction never relies on color alone. */
@@ -240,6 +258,7 @@ export class ToothArchComponent {
           MULTI_FINDING_THRESHOLD,
         labelPl: anatomy.labelPl,
         ariaLabel: this.ariaLabelFor(position, anatomy.labelPl),
+        numberY: dir * (CROWN_H + 9),
       };
     });
   });
@@ -252,7 +271,7 @@ export class ToothArchComponent {
     positions.forEach((position, index) => {
       const quadrant = Math.floor(position.fdiNumber / 10);
       if (quadrant !== lastQuadrant) {
-        labels.push({ quadrant, x: index * COLUMN_WIDTH + COLUMN_WIDTH / 2, y: dir === 1 ? -8 : 46 });
+        labels.push({ quadrant, x: index * COLUMN_WIDTH + COLUMN_WIDTH / 2, y: dir === 1 ? -18 : 105 });
         lastQuadrant = quadrant;
       }
     });
@@ -261,7 +280,7 @@ export class ToothArchComponent {
 
   readonly viewBox = computed(() => {
     const count = Math.max(this.positions().length, 1);
-    return `0 -20 ${count * COLUMN_WIDTH} 60`;
+    return `0 -45 ${count * COLUMN_WIDTH} 140`;
   });
 
   select(fdiNumber: number): void {

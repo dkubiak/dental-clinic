@@ -303,7 +303,7 @@ describe('ToothChartComponent', () => {
       fixture.nativeElement.querySelector('.odontogram').children,
     ) as Element[];
     const archIndices = layoutChildren
-      .map((el, i) => (el.tagName.toLowerCase() === 'app-tooth-arch' ? i : -1))
+      .map((el, i) => (el.classList.contains('arch-wrapper') ? i : -1))
       .filter((i) => i >= 0);
     const stripIndex = layoutChildren.indexOf(strip);
     expect(archIndices.length).toBe(2);

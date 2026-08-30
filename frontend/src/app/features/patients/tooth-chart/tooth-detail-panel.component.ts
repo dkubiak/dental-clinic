@@ -1,6 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import {
+  AnatomicalScope,
   DiagnosisCatalogEntry,
+  DiagnosisCategory,
   RootCanal,
   RootCanalState,
   ToothFinding,
@@ -14,6 +16,34 @@ import { SurfaceMapComponent } from './surface-map.component';
 import { toothAnatomy } from './tooth-geometry';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
+
+/** Ported from the mockup's `CAT` array (FR-011..FR-021) — Polish category labels, in the
+ * approved display order. */
+const CATEGORY_LABELS: Record<DiagnosisCategory, string> = {
+  HARD_TISSUE: 'Twarde tkanki zęba',
+  PULP_PERIAPICAL: 'Miazga i tkanki okołowierzchołkowe',
+  TRAUMA: 'Urazy i pęknięcia',
+  NON_CARIOUS_LESION: 'Ubytki niepróchnicowego pochodzenia',
+  PERIODONTAL_SOFT_TISSUE: 'Przyzębie i tkanki miękkie',
+  ERUPTION_MISSING: 'Wyrzynanie i braki zębowe',
+  POST_TREATMENT_RESTORATION: 'Stan istniejący i uzupełnienia',
+};
+const CATEGORY_ORDER: DiagnosisCategory[] = [
+  'HARD_TISSUE',
+  'PULP_PERIAPICAL',
+  'TRAUMA',
+  'NON_CARIOUS_LESION',
+  'PERIODONTAL_SOFT_TISSUE',
+  'ERUPTION_MISSING',
+  'POST_TREATMENT_RESTORATION',
+];
+/** Ported from the mockup's `dxPicker()` scope-tag labels. */
+const SCOPE_LABELS: Record<AnatomicalScope, string> = {
+  SURFACE: 'powierzchnia',
+  WHOLE_TOOTH: 'cały ząb',
+  ROOT_PERIAPICAL: 'korzeń/kanał',
+  PERIODONTIUM: 'przyzębie',
+};
 
 /**
  * US1/US2/US3/US4 — the tooth-detail form: catalog search, severity, note, surface picker (hidden
@@ -76,16 +106,18 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
                 [value]="canal.name"
                 (change)="renameCanal(canal, $any($event.target).value)"
               />
-              <select
-                [attr.data-testid]="'canal-state-' + canal.id"
-                [attr.aria-label]="'Stan leczenia kanału ' + canal.name"
-                [value]="canal.state"
-                (change)="changeCanalState(canal, $any($event.target).value)"
-              >
-                <option value="NEEDS_TREATMENT">Do leczenia</option>
-                <option value="TREATED">Wyleczony</option>
-                <option value="UNDERTREATED">Leczony niedostatecznie</option>
-              </select>
+              <span class="canal-state-toggle" role="group" [attr.aria-label]="'Stan leczenia kanału ' + canal.name">
+                @for (option of canalStateOptions; track option.value) {
+                  <button
+                    type="button"
+                    [attr.data-testid]="'canal-state-' + canal.id + '-' + option.value"
+                    [attr.aria-pressed]="canal.state === option.value"
+                    (click)="changeCanalState(canal, option.value)"
+                  >
+                    {{ option.labelPl }}
+                  </button>
+                }
+              </span>
               <button
                 type="button"
                 [attr.data-testid]="'canal-remove-' + canal.id"
@@ -215,12 +247,23 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
         @if (searchResults().length > 0) {
           <ul class="search-results" data-testid="catalog-search-results">
-            @for (entry of searchResults(); track entry.id) {
-              <li>
-                <button type="button" [attr.data-testid]="'catalog-entry-' + entry.code" (click)="selectEntry(entry)">
-                  {{ entry.namePl }}
-                </button>
-              </li>
+            @for (group of groupedSearchResults(); track group.category) {
+              <li class="catalog-group-label">{{ group.label }}</li>
+              @for (entry of group.entries; track entry.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="catalog-entry"
+                    [attr.data-testid]="'catalog-entry-' + entry.code"
+                    (click)="selectEntry(entry)"
+                  >
+                    <span class="layer-dot" [class.layer-dot-existing]="entry.layer === 'EXISTING_STATE'"></span>
+                    <span class="catalog-entry-name">{{ entry.namePl }}</span>
+                    <span class="catalog-entry-scope">{{ scopeLabel(entry.anatomicalScope) }}</span>
+                    <span class="catalog-entry-icd">{{ entry.icd10Code ?? '—' }}</span>
+                  </button>
+                </li>
+              }
             }
           </ul>
         }
@@ -300,15 +343,25 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
       border-radius: 10px;
     }
 
-    .presence-options {
+    .presence-options,
+    .canal-state-toggle {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-    .presence-options button[aria-pressed='true'] {
+    .presence-options button[aria-pressed='true'],
+    .canal-state-toggle button[aria-pressed='true'] {
       border-color: var(--pu-accent, #cbad89);
       background: var(--pu-accent, #cbad89);
       font-weight: 600;
+    }
+    .canal-state-toggle button {
+      font-size: 12px;
+      padding: 3px 8px;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      background: var(--pu-surface, #fff);
+      border-radius: 999px;
+      cursor: pointer;
     }
     .canals ul {
       list-style: none;
@@ -326,6 +379,67 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
     .add-canal-form {
       display: flex;
       gap: 6px;
+    }
+    .search-results {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0;
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      border-radius: 8px;
+    }
+    .catalog-group-label {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--pu-text-muted, #5c5654);
+      background: var(--pu-surface-raised, #f2ede6);
+    }
+    .catalog-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--pu-border, #e6dfd5);
+      background: none;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+    .catalog-entry:hover {
+      background: var(--pu-surface-raised, #f2ede6);
+    }
+    .layer-dot {
+      flex: none;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--pu-tooth-diseased-stroke, #b33);
+    }
+    .layer-dot-existing {
+      background: var(--pu-tooth-restored-stroke, #3a6ea5);
+    }
+    .catalog-entry-name {
+      flex: 1;
+    }
+    .catalog-entry-scope {
+      flex: none;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      color: var(--pu-text-muted, #5c5654);
+    }
+    .catalog-entry-icd {
+      flex: none;
+      font-size: 11px;
+      color: var(--pu-text-muted, #5c5654);
+      min-width: 3.5em;
+      text-align: right;
     }
     .close-form {
       display: flex;
@@ -371,6 +485,14 @@ export class ToothDetailPanelComponent {
     { value: 'UNERUPTED', labelPl: 'Niewyrznięty' },
   ];
 
+  /** Ported from the mockup's CANAL_STATES — three treatment states as toggle buttons (FR-066a),
+   * matching the diagram's own red/green/green-with-red-apex non-color cue. */
+  readonly canalStateOptions: Array<{ value: RootCanalState; labelPl: string }> = [
+    { value: 'NEEDS_TREATMENT', labelPl: 'Do leczenia' },
+    { value: 'TREATED', labelPl: 'Wyleczony' },
+    { value: 'UNDERTREATED', labelPl: 'Niedoleczony' },
+  ];
+
   readonly newCanalName = signal('');
 
   private readonly toothChartService = inject(ToothChartService);
@@ -412,6 +534,21 @@ export class ToothDetailPanelComponent {
   readonly nonRemovedCanals = computed<RootCanal[]>(() =>
     this.position().canals.filter((c) => !c.removed),
   );
+
+  /** Ported from the mockup's `dxPicker()` — the catalog search results grouped by category, in
+   * the approved display order, category headers hidden when empty. */
+  readonly groupedSearchResults = computed<Array<{ category: DiagnosisCategory; label: string; entries: DiagnosisCatalogEntry[] }>>(() => {
+    const results = this.searchResults();
+    return CATEGORY_ORDER.map((category) => ({
+      category,
+      label: CATEGORY_LABELS[category],
+      entries: results.filter((e) => e.category === category),
+    })).filter((group) => group.entries.length > 0);
+  });
+
+  scopeLabel(scope: AnatomicalScope): string {
+    return SCOPE_LABELS[scope];
+  }
 
   readonly canSave = computed(() => {
     const entry = this.selectedEntry();

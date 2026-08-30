@@ -61,8 +61,51 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
           </div>
         }
 
+        <!-- FR-006 — two-column layout on wide screens (diagram never obscured by the panel);
+             a single stacked column below the breakpoint. The right column is always present so a
+             tooth selection never causes the page to reflow. -->
+        <div class="page-layout">
+        <section class="chart-panel">
         @if (isEmpty()) {
           <p data-testid="tooth-chart-empty">Brak odnotowanych zmian — wszystkie zęby zdrowe.</p>
+        }
+
+        <!-- Mirrors the approved mockup's summary strip: an at-a-glance count of every active
+             state, plus a "wymaga uwagi" shortlist — purely derived from the already-fetched
+             chart, no new endpoint. -->
+        <div class="summary-strip" data-testid="summary-strip">
+          <div class="summary-card" data-testid="summary-diagnoses">
+            <strong>{{ summary().diagnosisCount }}</strong>
+            <span>{{ summary().diagnosisCount === 1 ? 'aktywne rozpoznanie' : 'aktywnych rozpoznań' }}</span>
+          </div>
+          <div class="summary-card" data-testid="summary-existing">
+            <strong>{{ summary().existingCount }}</strong>
+            <span>{{ summary().existingCount === 1 ? 'wpis stanu istniejącego' : 'wpisy stanu istniejącego' }}</span>
+          </div>
+          <div class="summary-card" data-testid="summary-missing">
+            <strong>{{ summary().missingCount }}</strong>
+            <span>{{ summary().missingCount === 1 ? 'brak zębowy' : 'braki zębowe' }}</span>
+          </div>
+          @if (summary().canalTotal > 0) {
+            <div class="summary-card" data-testid="summary-canals">
+              <strong>{{ summary().canalTreat }}/{{ summary().canalUnder }}/{{ summary().canalDone }}</strong>
+              <span>kanały: do leczenia / niedoleczone / wyleczone</span>
+            </div>
+          }
+        </div>
+
+        @if (summary().attention.length > 0) {
+          <div class="attention-list" data-testid="attention-list">
+            <h4>Wymaga uwagi</h4>
+            <ul>
+              @for (item of summary().attention; track item.fdiNumber + item.label) {
+                <li>
+                  <span class="attention-fdi">{{ item.fdiNumber }}</span>
+                  {{ item.label }}
+                </li>
+              }
+            </ul>
+          </div>
         }
 
         <!-- FR-008 — always reachable, explains every state/layer/surface symbol in Polish. -->
@@ -180,15 +223,20 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
           </div>
         </div>
 
-        <div class="odontogram-layout">
-          <!-- FR-049 — any horizontal overflow from zooming scrolls inside this container only,
-               never the whole page. -->
-          <div
-            class="diagram-scroll-container"
-            data-testid="diagram-scroll-container"
-            [style.overflow-x]="'auto'"
-          >
-            <div class="odontogram">
+        <!-- FR-049 — any horizontal overflow from zooming scrolls inside this container only,
+             never the whole page. -->
+        <div
+          class="diagram-scroll-container"
+          data-testid="diagram-scroll-container"
+          [style.overflow-x]="'auto'"
+        >
+          <div class="odontogram">
+            <!-- The SVG's own width:100% can't resolve inside a width:max-content ancestor
+                 (no definite width to be 100% of, so it would fall back to the browser's default
+                 300px SVG size) — this explicit pixel width, kept in lockstep with the surface
+                 strip's own per-cell zoomSize() below, is what actually drives the on-screen
+                 tooth size and keeps every arch/strip column aligned at every zoom level. -->
+            <div class="arch-wrapper" [style.width.px]="archWidth()">
               <app-tooth-arch
                 [positions]="upperPositions()"
                 [dir]="1"
@@ -199,44 +247,46 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
                 (toothPointerDown)="onToothPointerDown($event)"
                 (toothPointerEnter)="onToothPointerEnter($event)"
               />
+            </div>
 
-              <!-- FR-029 — the middle-strip surface-map row: one instance per visible tooth
-                   column, aligned to its own arch's row, sitting between the two arches. -->
-              <div class="surface-strip" data-testid="surface-strip">
-                <div class="surface-row" data-testid="surface-row-upper">
-                  @for (position of upperPositions(); track position.fdiNumber) {
-                    <div
-                      class="surface-cell"
-                      [attr.data-testid]="'surface-cell-' + position.fdiNumber"
-                      [style.width.px]="zoomSize()"
-                    >
-                      <app-surface-map
-                        [fdiNumber]="position.fdiNumber"
-                        [size]="zoomSize()"
-                        [existingSurfaces]="existingSurfacesFor(position)"
-                        (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
-                      />
-                    </div>
-                  }
-                </div>
-                <div class="surface-row" data-testid="surface-row-lower">
-                  @for (position of lowerPositions(); track position.fdiNumber) {
-                    <div
-                      class="surface-cell"
-                      [attr.data-testid]="'surface-cell-' + position.fdiNumber"
-                      [style.width.px]="zoomSize()"
-                    >
-                      <app-surface-map
-                        [fdiNumber]="position.fdiNumber"
-                        [size]="zoomSize()"
-                        [existingSurfaces]="existingSurfacesFor(position)"
-                        (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
-                      />
-                    </div>
-                  }
-                </div>
+            <!-- FR-029 — the middle-strip surface-map row: one instance per visible tooth
+                 column, aligned to its own arch's row, sitting between the two arches. -->
+            <div class="surface-strip" data-testid="surface-strip">
+              <div class="surface-row" data-testid="surface-row-upper">
+                @for (position of upperPositions(); track position.fdiNumber) {
+                  <div
+                    class="surface-cell"
+                    [attr.data-testid]="'surface-cell-' + position.fdiNumber"
+                    [style.width.px]="zoomSize()"
+                  >
+                    <app-surface-map
+                      [fdiNumber]="position.fdiNumber"
+                      [size]="zoomSize()"
+                      [existingSurfaces]="existingSurfacesFor(position)"
+                      (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
+                    />
+                  </div>
+                }
               </div>
+              <div class="surface-row" data-testid="surface-row-lower">
+                @for (position of lowerPositions(); track position.fdiNumber) {
+                  <div
+                    class="surface-cell"
+                    [attr.data-testid]="'surface-cell-' + position.fdiNumber"
+                    [style.width.px]="zoomSize()"
+                  >
+                    <app-surface-map
+                      [fdiNumber]="position.fdiNumber"
+                      [size]="zoomSize()"
+                      [existingSurfaces]="existingSurfacesFor(position)"
+                      (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
+                    />
+                  </div>
+                }
+              </div>
+            </div>
 
+            <div class="arch-wrapper" [style.width.px]="archWidth()">
               <app-tooth-arch
                 [positions]="lowerPositions()"
                 [dir]="-1"
@@ -249,7 +299,12 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
               />
             </div>
           </div>
+        </div>
+        </section>
 
+        <!-- FR-006 — the right column: always present so selecting a tooth never reflows the
+             page or hides the diagram; shows a placeholder until a tooth is selected. -->
+        <section class="detail-column" data-testid="detail-column">
           @if (selectedPosition(); as position) {
             <app-tooth-detail-panel
               [patientId]="patientId()"
@@ -260,7 +315,12 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
               (positionChanged)="onSaved()"
               (closeRequested)="onPanelClosed()"
             />
+          } @else {
+            <p class="detail-placeholder" data-testid="detail-placeholder">
+              Wybierz ząb na diagramie, aby zobaczyć lub odnotować szczegóły.
+            </p>
           }
+        </section>
         </div>
 
         <app-tooth-context-menu
@@ -278,10 +338,83 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
     }
   `,
   styles: `
-    .odontogram-layout {
+    /* FR-006 — the panel must never obscure the diagram on wide screens: a real two-column
+       layout, not a below-the-fold stack. Single column below the breakpoint (FR-048 mobile-
+       first), matching the approved mockup's side-by-side card layout. */
+    .page-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (min-width: 900px) {
+      .page-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      }
+      .detail-column {
+        position: sticky;
+        top: 12px;
+      }
+    }
+    .chart-panel,
+    .detail-column {
+      background: var(--pu-surface, #fff);
+      border: 1px solid var(--pu-border, #e6dfd5);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .detail-placeholder {
+      color: var(--pu-text-muted, #5c5654);
+      margin: 8px 0;
+    }
+    .summary-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 4px 0 12px;
+    }
+    .summary-card {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 2px;
+      padding: 8px 14px;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      border-radius: 8px;
+      min-width: 120px;
+    }
+    .summary-card strong {
+      font-size: 20px;
+    }
+    .summary-card span {
+      font-size: 12px;
+      color: var(--pu-text-muted, #5c5654);
+    }
+    .attention-list {
+      margin: 0 0 12px;
+    }
+    .attention-list h4 {
+      margin: 0 0 6px;
+    }
+    .attention-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .attention-list li {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      border-radius: 999px;
+      font-size: 12px;
+      background: var(--pu-surface-raised, #f2ede6);
+    }
+    .attention-fdi {
+      font-weight: 700;
     }
     .diagram-scroll-container {
       max-width: 100%;
@@ -293,6 +426,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
       gap: 12px;
       align-items: center;
       width: max-content;
+      min-width: 100%;
       margin: 0 auto;
     }
     .surface-strip {
@@ -425,6 +559,11 @@ export class ToothChartComponent implements OnInit {
   /** FR-029b — 1x is the compact default; 2x/3x are the FR-029b enlargement steps. */
   readonly zoomLevel = signal<1 | 2 | 3>(1);
   readonly zoomSize = computed(() => ZOOM_SIZES[this.zoomLevel()]);
+  /** Explicit pixel width for each arch's SVG wrapper — see the template comment by its usage
+   * for why this is needed instead of a plain CSS `width:100%`. Kept 1:1 with the surface strip's
+   * own per-cell zoomSize() so every column stays aligned between the crown/root row and the
+   * surface-map row beneath it, at every zoom level. */
+  readonly archWidth = computed(() => Math.max(this.upperPositions().length, 1) * this.zoomSize());
   /** FR-029a — set by a direct surface-zone click on the middle strip so the detail panel opens
    * with that tooth+surface already marked, instead of requiring the panel to be opened first. */
   readonly presetSurface = signal<{ fdiNumber: number; surface: ToothSurface } | null>(null);
@@ -466,6 +605,60 @@ export class ToothChartComponent implements OnInit {
   readonly isEmpty = computed(
     () => this.visiblePositions().every((p) => p.currentFindings.length === 0),
   );
+
+  /** Mirrors the approved mockup's summary strip / "wymaga uwagi" shortlist — purely derived
+   * from the already-fetched chart data, no new endpoint or stored state. */
+  readonly summary = computed(() => {
+    let diagnosisCount = 0;
+    let existingCount = 0;
+    let missingCount = 0;
+    let canalTreat = 0;
+    let canalDone = 0;
+    let canalUnder = 0;
+    const attention: Array<{ fdiNumber: number; label: string }> = [];
+
+    for (const position of this.visiblePositions()) {
+      if (position.presence !== 'PRESENT') {
+        missingCount++;
+        attention.push({ fdiNumber: position.fdiNumber, label: 'brak zęba' });
+      }
+      for (const finding of position.currentFindings) {
+        if (finding.clinicalStatus !== 'ACTIVE') {
+          continue;
+        }
+        if (finding.diagnosisCatalogEntry.layer === 'DIAGNOSIS') {
+          diagnosisCount++;
+          attention.push({ fdiNumber: position.fdiNumber, label: finding.diagnosisCatalogEntry.namePl });
+        } else {
+          existingCount++;
+        }
+      }
+      for (const canal of position.canals) {
+        if (canal.removed) {
+          continue;
+        }
+        if (canal.state === 'NEEDS_TREATMENT') {
+          canalTreat++;
+        } else if (canal.state === 'TREATED') {
+          canalDone++;
+        } else {
+          canalUnder++;
+          attention.push({ fdiNumber: position.fdiNumber, label: 'kanał niedoleczony' });
+        }
+      }
+    }
+
+    return {
+      diagnosisCount,
+      existingCount,
+      missingCount,
+      canalTreat,
+      canalDone,
+      canalUnder,
+      canalTotal: canalTreat + canalDone + canalUnder,
+      attention,
+    };
+  });
 
   readonly selectedPosition = computed<ToothPosition | null>(
     () =>
