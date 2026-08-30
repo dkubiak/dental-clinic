@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -191,6 +192,90 @@ class ToothChartControllerTest extends PostgresIntegrationTestBase {
                 + " 'TOOTH_CHART_VIEWED'::audit_event_type ORDER BY id DESC LIMIT 1",
             String.class);
     assertThat(metadata).contains("\"detail\": \"position-history\"");
+  }
+
+  /**
+   * T092 — {@code PATCH .../positions/{fdi}/presence}: RBAC (DOCTOR/ASSISTANT only) and one
+   * TOOTH_POSITION_PRESENCE_CHANGED audit row per successful write.
+   */
+  @Test
+  void doctor_canChangePresence_andItWritesAnAuditEntry() throws Exception {
+    UUID id = createPatient("90011502053");
+    long before = countEntries("TOOTH_POSITION_PRESENCE_CHANGED");
+
+    mockMvc
+        .perform(
+            patch("/patients/" + id + "/tooth-chart/positions/36/presence")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content("{\"presence\":\"EXTRACTED\",\"presenceDate\":\"2026-08-30\",\"expectedVersion\":0}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.presence").value("EXTRACTED"))
+        .andExpect(jsonPath("$.version").value(1));
+
+    assertThat(countEntries("TOOTH_POSITION_PRESENCE_CHANGED")).isEqualTo(before + 1);
+  }
+
+  @Test
+  void reception_isDenied404_onChangePresence() throws Exception {
+    UUID id = createPatient("90011502060");
+
+    mockMvc
+        .perform(
+            patch("/patients/" + id + "/tooth-chart/positions/36/presence")
+                .with(user(UUID.randomUUID().toString()).roles("RECEPTION"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content("{\"presence\":\"EXTRACTED\",\"expectedVersion\":0}"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void changePresence_withStaleExpectedVersion_returns409() throws Exception {
+    UUID id = createPatient("90011502077");
+
+    mockMvc
+        .perform(
+            patch("/patients/" + id + "/tooth-chart/positions/36/presence")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content("{\"presence\":\"EXTRACTED\",\"expectedVersion\":7}"))
+        .andExpect(status().isConflict());
+  }
+
+  /**
+   * T105 — {@code PATCH .../tooth-chart/dentition-mode}: succeeds for DOCTOR/ASSISTANT, persists
+   * across a subsequent GET, audited as DENTITION_MODE_CHANGED.
+   */
+  @Test
+  void doctor_canChangeDentitionMode_andItPersistsAndIsAudited() throws Exception {
+    UUID id = createPatient("90011502084");
+    long before = countEntries("DENTITION_MODE_CHANGED");
+
+    mockMvc
+        .perform(
+            patch("/patients/" + id + "/tooth-chart/dentition-mode")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content("{\"dentitionMode\":\"MIXED\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.dentitionMode").value("MIXED"));
+
+    assertThat(countEntries("DENTITION_MODE_CHANGED")).isEqualTo(before + 1);
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/tooth-chart")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.dentitionMode").value("MIXED"));
   }
 
   private long countEntries(String eventType) {

@@ -17,6 +17,9 @@ interface RenderedTooth {
   canalLines: Array<{ d: string; cls: string }>;
   canalDots: Array<{ x: number; y: number; treat: boolean }>;
   statusClass: 'healthy' | 'diseased' | 'restored' | 'absent' | 'unerupted';
+  /** FR-046 — mixed-dentition mode renders deciduous and permanent positions simultaneously;
+   * this must be visually distinguishable by more than the FDI numbering alone. */
+  deciduous: boolean;
   /** FR-009 — true when this tooth's shown status is driven solely by a layer the current
    * layer-filter excludes; the status class itself is left untouched (FR-039/FR-050 non-color
    * cue), only an opacity-reducing class is layered on top. */
@@ -59,6 +62,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           class="tooth"
           [class]="'tooth status-' + tooth.statusClass"
           [class.layer-dimmed]="tooth.dimmed"
+          [class.tooth-deciduous]="tooth.deciduous"
           [attr.data-testid]="'tooth-' + tooth.fdiNumber"
           [attr.tabindex]="0"
           [attr.role]="'button'"
@@ -161,6 +165,11 @@ const MULTI_FINDING_THRESHOLD = 3;
       fill: var(--pu-accent-text, #7a5a2e);
       pointer-events: none;
     }
+    /* FR-046 — deciduous teeth are already smaller (tooth-geometry.ts's per-position widths); this
+       dotted crown outline is the non-size cue that keeps the distinction visible even at a glance. */
+    .tooth.tooth-deciduous .crown {
+      stroke-dasharray: 2 1.5;
+    }
   `,
 })
 export class ToothArchComponent {
@@ -201,6 +210,7 @@ export class ToothArchComponent {
           .filter((n): n is Extract<typeof n, { kind: 'dot' }> => n.kind === 'dot')
           .map((n) => ({ x: n.x, y: n.y, treat: n.treat })),
         statusClass: this.statusOf(position),
+        deciduous: anatomy.deciduous,
         dimmed: this.isDimmed(position),
         hasMultipleFindings:
           position.currentFindings.filter((f) => f.clinicalStatus === 'ACTIVE').length >

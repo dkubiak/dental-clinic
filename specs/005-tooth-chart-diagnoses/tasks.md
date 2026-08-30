@@ -539,28 +539,28 @@ write and verify the same reload prompt from User Story 3 appears.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T090 [P] [US4] Failing JUnit test: presence `PATCH` with a stale `expectedVersion` → 409
+- [X] T090 [P] [US4] Failing JUnit test: presence `PATCH` with a stale `expectedVersion` → 409
   (FR-070); setting `EXTRACTED` blocks a new `SURFACE`-scope finding (409, FR-040) but allows an
   `allowedForMissingTooth` entry (201, FR-041) in
   `patient-service/src/test/java/com/dentalclinic/patient/toothchart/ToothChartServiceTest.java`
   (extends T030)
-- [ ] T091 [P] [US4] Failing JUnit test: `RootCanalService` enforces max 6 non-removed canals per
+- [X] T091 [P] [US4] Failing JUnit test: `RootCanalService` enforces max 6 non-removed canals per
   position and requires `presence = PRESENT` to add one; rename/state-change with a stale
   `expectedVersion` → 409; soft-removing a canal never deletes or hides findings referencing it
   (FR-068) in
   `patient-service/src/test/java/com/dentalclinic/patient/toothchart/RootCanalServiceTest.java`
-- [ ] T092 [US4] Failing JUnit API test: `PATCH .../positions/{fdi}/presence` and
+- [X] T092 [US4] Failing JUnit API test: `PATCH .../positions/{fdi}/presence` and
   `POST/PATCH/DELETE .../canals[/{id}]` — RBAC (DOCTOR/ASSISTANT only) and audit rows
   (`TOOTH_POSITION_PRESENCE_CHANGED`, `ROOT_CANAL_ADDED`/`ROOT_CANAL_CHANGED`/`ROOT_CANAL_REMOVED`)
   in `patient-service/src/test/java/com/dentalclinic/patient/api/RootCanalControllerTest.java` and
   `patient-service/src/test/java/com/dentalclinic/patient/api/ToothChartControllerTest.java`
   (extends T031)
-- [ ] T093 [P] [US4] Failing Vitest test: presence controls in `tooth-detail-panel.component.ts`
+- [X] T093 [P] [US4] Failing Vitest test: presence controls in `tooth-detail-panel.component.ts`
   mark a tooth extracted/congenitally-missing/unerupted, rendered distinctly from healthy/diseased
   without relying on color alone (FR-039) in
   `frontend/src/app/features/patients/tooth-chart/tooth-detail-panel.component.spec.ts` (extends
   T052)
-- [ ] T094 [P] [US4] Failing Vitest test: root-canal add/rename/state-change/remove controls in
+- [X] T094 [P] [US4] Failing Vitest test: root-canal add/rename/state-change/remove controls in
   `tooth-detail-panel.component.ts`, and canal treatment-state rendering (red/green/green-with-red-
   apex, FR-066a) inside the root silhouette in `tooth-arch.component.ts` in
   `frontend/src/app/features/patients/tooth-chart/tooth-arch.component.spec.ts` and
@@ -568,31 +568,31 @@ write and verify the same reload prompt from User Story 3 appears.
 
 ### Implementation for User Story 4
 
-- [ ] T095 [US4] Implement `changePresence(...)` on `ToothChartService.java` — `@Version`-checked
+- [X] T095 [US4] Implement `changePresence(...)` on `ToothChartService.java` — `@Version`-checked
   update, blocks incompatible findings, audits `TOOTH_POSITION_PRESENCE_CHANGED` (depends on T090)
-- [ ] T096 [US4] Add `PATCH /patients/{patientId}/tooth-chart/positions/{fdiNumber}/presence` to
+- [X] T096 [US4] Add `PATCH /patients/{patientId}/tooth-chart/positions/{fdiNumber}/presence` to
   `ToothChartController.java` (depends on T095, T092)
-- [ ] T097 [US4] Create `RootCanalService.java` — `addCanal`/`updateCanal`/`removeCanal` (soft
+- [X] T097 [US4] Create `RootCanalService.java` — `addCanal`/`updateCanal`/`removeCanal` (soft
   delete only), audits `ROOT_CANAL_ADDED`/`ROOT_CANAL_CHANGED`/`ROOT_CANAL_REMOVED` in
   `patient-service/src/main/java/com/dentalclinic/patient/toothchart/RootCanalService.java`
   (depends on T022, T023, T091)
-- [ ] T098 [P] [US4] Create `RootCanalCreateRequest.java` and `RootCanalPatchRequest.java` per
+- [X] T098 [P] [US4] Create `RootCanalCreateRequest.java` and `RootCanalPatchRequest.java` per
   contracts/patient-api.yaml in
   `patient-service/src/main/java/com/dentalclinic/patient/api/RootCanalCreateRequest.java` and
   `patient-service/src/main/java/com/dentalclinic/patient/api/RootCanalPatchRequest.java`
-- [ ] T099 [US4] Create `RootCanalController.java` — `POST/PATCH/DELETE
+- [X] T099 [US4] Create `RootCanalController.java` — `POST/PATCH/DELETE
   .../positions/{fdiNumber}/canals[/{canalId}]`, `@PreAuthorize("hasAnyRole('DOCTOR','ASSISTANT')")`
   in `patient-service/src/main/java/com/dentalclinic/patient/api/RootCanalController.java` (depends
   on T097, T098, T092)
 - [X] T100 [US4] Add `changePresence`/`addCanal`/`updateCanal`/`removeCanal` methods to
   `tooth-chart.service.ts` (depends on T096, T099)
-- [ ] T101 [US4] Add presence controls to `tooth-detail-panel.component.ts` and the
+- [X] T101 [US4] Add presence controls to `tooth-detail-panel.component.ts` and the
   `tooth-absent`-token rendering to `tooth-arch.component.ts` (depends on T093, T100)
-- [ ] T102 [US4] Add root-canal controls to `tooth-detail-panel.component.ts` and canal rendering
+- [X] T102 [US4] Add root-canal controls to `tooth-detail-panel.component.ts` and canal rendering
   inside the root silhouette to `tooth-arch.component.ts` using the `canal-treat`/`canal-done`
   tokens plus the apex-split non-color cue for `UNDERTREATED` (FR-066a) (depends on T094, T100,
   T049)
-- [ ] T103 [US4] Extend the shared 409-conflict handler built in User Story 3 (T089) to cover
+- [X] T103 [US4] Extend the shared 409-conflict handler built in User Story 3 (T089) to cover
   presence/canal `expectedVersion` conflicts — same reload-prompt UI, no new mechanism (depends on
   T089, T100)
 
@@ -611,32 +611,32 @@ mixed, and confirm no existing finding disappears or becomes inaccessible.
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T104 [P] [US5] Failing JUnit test: `ToothChartInitializer`/`ToothChartService` default
+- [X] T104 [P] [US5] Failing JUnit test: `ToothChartInitializer`/`ToothChartService` default
   `dentitionMode` from age (`DECIDUOUS` <6y, `MIXED` 6-13y, `PERMANENT` else, FR-044); changing mode
   never deletes/modifies any `ToothPosition`/`ToothFinding` row (FR-047) in
   `patient-service/src/test/java/com/dentalclinic/patient/toothchart/ToothChartServiceTest.java`
   (extends T030)
-- [ ] T105 [US5] Failing JUnit API test: `PATCH /patients/{id}/tooth-chart/dentition-mode` succeeds
+- [X] T105 [US5] Failing JUnit API test: `PATCH /patients/{id}/tooth-chart/dentition-mode` succeeds
   for DOCTOR/ASSISTANT, persists across a subsequent `GET`, audited as `DENTITION_MODE_CHANGED` in
   `patient-service/src/test/java/com/dentalclinic/patient/api/ToothChartControllerTest.java`
   (extends T031)
-- [ ] T106 [P] [US5] Failing Vitest test: `tooth-chart.component.ts` renders the 20 deciduous
+- [X] T106 [P] [US5] Failing Vitest test: `tooth-chart.component.ts` renders the 20 deciduous
   positions by default for a child patient, and both deciduous and permanent positions in mixed
   mode, visually distinguished by more than numbering (FR-046) in
   `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts` (extends T035)
 
 ### Implementation for User Story 5
 
-- [ ] T107 [US5] Implement `changeDentitionMode(...)` on `ToothChartService.java` — audits
+- [X] T107 [US5] Implement `changeDentitionMode(...)` on `ToothChartService.java` — audits
   `DENTITION_MODE_CHANGED`, flags in the response when the new mode hides positions with existing
   findings (FR-047) (depends on T104)
-- [ ] T108 [US5] Add `PATCH /patients/{patientId}/tooth-chart/dentition-mode` to
+- [X] T108 [US5] Add `PATCH /patients/{patientId}/tooth-chart/dentition-mode` to
   `ToothChartController.java` (depends on T107, T105)
-- [ ] T109 [P] [US5] Create `DentitionModePatchRequest.java` in
+- [X] T109 [P] [US5] Create `DentitionModePatchRequest.java` in
   `patient-service/src/main/java/com/dentalclinic/patient/api/DentitionModePatchRequest.java`
 - [X] T110 [US5] Add `changeDentitionMode` method to `tooth-chart.service.ts` (depends on T108,
   T109)
-- [ ] T111 [US5] Add the dentition-mode switcher UI to `tooth-chart.component.ts` and
+- [X] T111 [US5] Add the dentition-mode switcher UI to `tooth-chart.component.ts` and
   deciduous/mixed rendering (smaller/marked deciduous silhouettes, FR-046) to
   `tooth-arch.component.ts` (depends on T106, T110)
 

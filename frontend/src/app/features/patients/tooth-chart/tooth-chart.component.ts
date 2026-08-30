@@ -1,5 +1,12 @@
 import { Component, computed, input, OnInit, inject, signal } from '@angular/core';
-import { FindingLayer, ToothChart, ToothFinding, ToothPosition, ToothSurface } from '../patients.models';
+import {
+  DentitionMode,
+  FindingLayer,
+  ToothChart,
+  ToothFinding,
+  ToothPosition,
+  ToothSurface,
+} from '../patients.models';
 import { ToothChartService } from './tooth-chart.service';
 import { ToothArchComponent } from './tooth-arch.component';
 import { ToothContextMenuComponent } from './tooth-context-menu.component';
@@ -88,6 +95,21 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
         </details>
 
         <div class="controls">
+          <!-- FR-044/FR-045 — override the age-defaulted dentition mode; never deletes/hides any
+               finding (FR-047), purely which positions render. -->
+          <div class="dentition-mode" role="group" aria-label="Tryb uzębienia">
+            @for (mode of dentitionModes; track mode.value) {
+              <button
+                type="button"
+                [attr.data-testid]="'dentition-mode-' + mode.value"
+                [attr.aria-pressed]="chart()?.dentitionMode === mode.value"
+                (click)="setDentitionMode(mode.value)"
+              >
+                {{ mode.labelPl }}
+              </button>
+            }
+          </div>
+
           <!-- FR-009 — client-side only, never touches the fetched chart data. -->
           <div class="layer-filter" role="group" aria-label="Filtr warstwy wpisu">
             <button
@@ -195,6 +217,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
               [position]="position"
               [presetSurface]="presetSurfaceFor(position.fdiNumber)"
               (saved)="onSaved()"
+              (positionChanged)="onSaved()"
               (closeRequested)="onPanelClosed()"
             />
           }
@@ -250,11 +273,13 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
       gap: 16px;
       margin: 12px 0;
     }
+    .dentition-mode,
     .layer-filter,
     .zoom-control {
       display: inline-flex;
       gap: 4px;
     }
+    .dentition-mode button,
     .layer-filter button,
     .zoom-control button {
       border: 1px solid var(--pu-border, #e6dfd5);
@@ -263,6 +288,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
       padding: 4px 10px;
       cursor: pointer;
     }
+    .dentition-mode button[aria-pressed='true'],
     .layer-filter button[aria-pressed='true'],
     .zoom-control button[aria-pressed='true'] {
       border-color: var(--pu-accent, #cbad89);
@@ -336,6 +362,12 @@ export class ToothChartComponent implements OnInit {
   readonly chart = signal<ToothChart | null>(null);
   readonly selectedFdiNumber = signal<number | null>(null);
   readonly contextMenu = signal<{ fdiNumber: number; x: number; y: number } | null>(null);
+
+  readonly dentitionModes: Array<{ value: DentitionMode; labelPl: string }> = [
+    { value: 'PERMANENT', labelPl: 'Stałe' },
+    { value: 'MIXED', labelPl: 'Mieszane' },
+    { value: 'DECIDUOUS', labelPl: 'Mleczne' },
+  ];
 
   /** FR-009 — purely a view filter, never mutates chart(). */
   readonly layerFilter = signal<LayerFilter>('ALL');
@@ -425,6 +457,14 @@ export class ToothChartComponent implements OnInit {
    * of truth for the resulting state). */
   onSaved(): void {
     this.refreshChart();
+  }
+
+  /** FR-044/FR-045/FR-047 — overrides the age-defaulted dentition mode; a fresh read afterward is
+   * enough since the mode change never deletes/hides any position or finding server-side. */
+  setDentitionMode(dentitionMode: DentitionMode): void {
+    this.toothChartService
+      .changeDentitionMode(this.patientId(), { dentitionMode })
+      .subscribe((chart) => this.chart.set(chart));
   }
 
   onPanelClosed(): void {

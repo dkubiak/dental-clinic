@@ -1,5 +1,13 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { DiagnosisCatalogEntry, ToothFinding, ToothPosition, ToothSurface } from '../patients.models';
+import {
+  DiagnosisCatalogEntry,
+  RootCanal,
+  RootCanalState,
+  ToothFinding,
+  ToothPosition,
+  ToothPresence,
+  ToothSurface,
+} from '../patients.models';
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
 import { SurfaceMapComponent } from './surface-map.component';
@@ -34,6 +42,76 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
           (surfaceToggled)="canSelectSurfaces() && toggleSurface($event)"
         />
       </header>
+
+      <!-- FR-038/FR-039 — presence controls: extracted/congenitally-missing/unerupted are
+           rendered distinctly from healthy/diseased on the diagram (tooth-arch.component.ts)
+           without relying on color alone; this section is just the write path for that state. -->
+      <section class="presence" aria-label="Stan zęba">
+        <h4>Stan zęba</h4>
+        <div class="presence-options" role="group" aria-label="Stan zęba">
+          @for (option of presenceOptions; track option.value) {
+            <button
+              type="button"
+              [attr.data-testid]="'presence-' + option.value"
+              [attr.aria-pressed]="position().presence === option.value"
+              (click)="setPresence(option.value)"
+            >
+              {{ option.labelPl }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- FR-065/FR-066/FR-068 — root canals: add/rename/change-state/soft-remove, up to 6 per
+           position; rendering inside the root silhouette is tooth-arch.component.ts's job. -->
+      <section class="canals" aria-label="Kanały korzeniowe" data-testid="canal-section">
+        <h4>Kanały korzeniowe</h4>
+        <ul>
+          @for (canal of nonRemovedCanals(); track canal.id) {
+            <li [attr.data-testid]="'canal-' + canal.id">
+              <input
+                type="text"
+                [attr.data-testid]="'canal-name-' + canal.id"
+                [value]="canal.name"
+                (change)="renameCanal(canal, $any($event.target).value)"
+              />
+              <select
+                [attr.data-testid]="'canal-state-' + canal.id"
+                [value]="canal.state"
+                (change)="changeCanalState(canal, $any($event.target).value)"
+              >
+                <option value="NEEDS_TREATMENT">Do leczenia</option>
+                <option value="TREATED">Wyleczony</option>
+                <option value="UNDERTREATED">Leczony niedostatecznie</option>
+              </select>
+              <button
+                type="button"
+                [attr.data-testid]="'canal-remove-' + canal.id"
+                (click)="removeCanal(canal)"
+              >
+                Usuń
+              </button>
+            </li>
+          }
+        </ul>
+        <div class="add-canal-form" data-testid="add-canal-form">
+          <input
+            type="text"
+            data-testid="new-canal-name-input"
+            placeholder="Nazwa kanału (np. MB, policzkowy bliższy)"
+            [value]="newCanalName()"
+            (input)="newCanalName.set($any($event.target).value)"
+          />
+          <button
+            type="button"
+            data-testid="add-canal-submit"
+            [disabled]="!newCanalName().trim() || nonRemovedCanals().length >= 6"
+            (click)="submitAddCanal()"
+          >
+            Dodaj kanał
+          </button>
+        </div>
+      </section>
 
       <section class="findings" data-testid="finding-list">
         <h4>Wpisy</h4>
@@ -218,6 +296,33 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
       border-radius: 10px;
     }
 
+    .presence-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .presence-options button[aria-pressed='true'] {
+      border-color: var(--pu-accent, #cbad89);
+      background: var(--pu-accent, #cbad89);
+      font-weight: 600;
+    }
+    .canals ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .canals li {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .add-canal-form {
+      display: flex;
+      gap: 6px;
+    }
     .close-form {
       display: flex;
       align-items: flex-end;
@@ -250,6 +355,19 @@ export class ToothDetailPanelComponent {
 
   readonly saved = output<ToothFinding>();
   readonly closeRequested = output<void>();
+  /** FR-038/FR-065/FR-066/FR-068 — emitted after a presence/canal write succeeds, so
+   * tooth-chart.component.ts re-fetches the chart the same way it does for `saved` (server is the
+   * sole source of truth for the resulting state). */
+  readonly positionChanged = output<void>();
+
+  readonly presenceOptions: Array<{ value: ToothPresence; labelPl: string }> = [
+    { value: 'PRESENT', labelPl: 'Obecny' },
+    { value: 'EXTRACTED', labelPl: 'Usunięty' },
+    { value: 'CONGENITALLY_MISSING', labelPl: 'Wrodzony brak' },
+    { value: 'UNERUPTED', labelPl: 'Niewyrznięty' },
+  ];
+
+  readonly newCanalName = signal('');
 
   private readonly toothChartService = inject(ToothChartService);
   private readonly diagnosisCatalogService = inject(DiagnosisCatalogService);
@@ -286,6 +404,10 @@ export class ToothDetailPanelComponent {
   );
 
   readonly canSelectSurfaces = computed(() => this.selectedEntry()?.anatomicalScope === 'SURFACE');
+
+  readonly nonRemovedCanals = computed<RootCanal[]>(() =>
+    this.position().canals.filter((c) => !c.removed),
+  );
 
   readonly canSave = computed(() => {
     const entry = this.selectedEntry();
@@ -430,6 +552,61 @@ export class ToothDetailPanelComponent {
         },
         error: () => this.saveState.set('error'),
       });
+  }
+
+  /** FR-038/FR-070 — sets a position's presence, echoing back its version as expectedVersion. */
+  setPresence(presence: ToothPresence): void {
+    this.toothChartService
+      .changePresence(this.patientId(), this.fdiNumber(), {
+        presence,
+        presenceDate: new Date().toISOString().slice(0, 10),
+        expectedVersion: this.position().version,
+      })
+      .subscribe(() => this.positionChanged.emit());
+  }
+
+  /** FR-065 — adds a root canal (server-side enforces the max-6 and PRESENT-only rules). */
+  submitAddCanal(): void {
+    const name = this.newCanalName().trim();
+    if (!name) {
+      return;
+    }
+    this.toothChartService
+      .addCanal(this.patientId(), this.fdiNumber(), { name })
+      .subscribe(() => {
+        this.newCanalName.set('');
+        this.positionChanged.emit();
+      });
+  }
+
+  /** FR-065/FR-070 — rename, echoing back the canal's version as expectedVersion. */
+  renameCanal(canal: RootCanal, name: string): void {
+    if (!name.trim() || name === canal.name) {
+      return;
+    }
+    this.toothChartService
+      .updateCanal(this.patientId(), this.fdiNumber(), canal.id, {
+        name,
+        expectedVersion: canal.version,
+      })
+      .subscribe(() => this.positionChanged.emit());
+  }
+
+  /** FR-066/FR-070 — change treatment state, echoing back the canal's version as expectedVersion. */
+  changeCanalState(canal: RootCanal, state: RootCanalState): void {
+    this.toothChartService
+      .updateCanal(this.patientId(), this.fdiNumber(), canal.id, {
+        state,
+        expectedVersion: canal.version,
+      })
+      .subscribe(() => this.positionChanged.emit());
+  }
+
+  /** FR-068 — soft delete only; findings that reference this canal are never removed or hidden. */
+  removeCanal(canal: RootCanal): void {
+    this.toothChartService
+      .removeCanal(this.patientId(), this.fdiNumber(), canal.id)
+      .subscribe(() => this.positionChanged.emit());
   }
 
   discard(): void {

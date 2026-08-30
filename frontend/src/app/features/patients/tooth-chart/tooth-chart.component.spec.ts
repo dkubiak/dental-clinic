@@ -22,6 +22,7 @@ function position(fdiNumber: number, overrides: Partial<ToothPosition> = {}): To
 }
 
 const PERMANENT_FDI = [1, 2, 3, 4].flatMap((q) => [1, 2, 3, 4, 5, 6, 7, 8].map((p) => q * 10 + p));
+const DECIDUOUS_FDI = [5, 6, 7, 8].flatMap((q) => [1, 2, 3, 4, 5].map((p) => q * 10 + p));
 
 function healthyChart(): ToothChart {
   return {
@@ -31,13 +32,30 @@ function healthyChart(): ToothChart {
   };
 }
 
+function deciduousChart(): ToothChart {
+  return {
+    patientId: 'p1',
+    dentitionMode: 'DECIDUOUS',
+    positions: [...PERMANENT_FDI.map((fdi) => position(fdi)), ...DECIDUOUS_FDI.map((fdi) => position(fdi))],
+  };
+}
+
+function mixedChart(): ToothChart {
+  return { ...deciduousChart(), dentitionMode: 'MIXED' };
+}
+
 describe('ToothChartComponent', () => {
   let fixture: ComponentFixture<ToothChartComponent>;
-  let toothChartService: { getChart: ReturnType<typeof vi.fn>; conflict$: Subject<string> };
+  let toothChartService: {
+    getChart: ReturnType<typeof vi.fn>;
+    changeDentitionMode: ReturnType<typeof vi.fn>;
+    conflict$: Subject<string>;
+  };
 
   beforeEach(async () => {
     toothChartService = {
       getChart: vi.fn().mockReturnValue(of(healthyChart())),
+      changeDentitionMode: vi.fn().mockReturnValue(of(healthyChart())),
       conflict$: new Subject<string>(),
     };
     const diagnosisCatalogService = {
@@ -372,5 +390,47 @@ describe('ToothChartComponent', () => {
 
     expect(toothChartService.getChart).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('[data-testid="conflict-banner"]')).toBeFalsy();
+  });
+
+  it('renders the 20 deciduous positions by default for a child patient, distinguished by more than numbering (T106/FR-046)', () => {
+    toothChartService.getChart.mockReturnValue(of(deciduousChart()));
+    fixture.detectChanges();
+
+    const teethEls = fixture.nativeElement.querySelectorAll(
+      '[data-testid^="tooth-"]:not([data-testid^="tooth-chart"])',
+    );
+    expect(teethEls.length).toBe(20);
+    expect(fixture.nativeElement.querySelector('[data-testid="dentition-mode-DECIDUOUS"]').getAttribute('aria-pressed')).toBe('true');
+    // FR-046 — visually distinguished by more than the FDI numbering: a non-permanent CSS class.
+    expect(
+      Array.from(teethEls as unknown as Element[]).every((el) => el.classList.contains('tooth-deciduous')),
+    ).toBe(true);
+  });
+
+  it('renders both deciduous and permanent positions simultaneously in mixed mode (T106/FR-046)', () => {
+    toothChartService.getChart.mockReturnValue(of(mixedChart()));
+    fixture.detectChanges();
+
+    const teethEls = fixture.nativeElement.querySelectorAll(
+      '[data-testid^="tooth-"]:not([data-testid^="tooth-chart"])',
+    );
+    expect(teethEls.length).toBe(52);
+    const deciduousCount = Array.from(teethEls as unknown as Element[]).filter((el) =>
+      el.classList.contains('tooth-deciduous'),
+    ).length;
+    expect(deciduousCount).toBe(20);
+  });
+
+  it('the dentition-mode switcher calls changeDentitionMode and applies the returned chart', () => {
+    const switched = { ...healthyChart(), dentitionMode: 'MIXED' as const };
+    toothChartService.changeDentitionMode.mockReturnValue(of(switched));
+    fixture.detectChanges();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="dentition-mode-MIXED"]')
+      .dispatchEvent(new Event('click'));
+
+    expect(toothChartService.changeDentitionMode).toHaveBeenCalledWith('p1', { dentitionMode: 'MIXED' });
+    expect(fixture.componentInstance.chart()).toBe(switched);
   });
 });

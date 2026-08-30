@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ToothFinding, ToothPosition } from '../patients.models';
+import { RootCanal, ToothFinding, ToothPosition } from '../patients.models';
 import { ToothArchComponent } from './tooth-arch.component';
 
 function activeFinding(overrides: Partial<ToothFinding> = {}): ToothFinding {
@@ -38,7 +38,11 @@ function activeFinding(overrides: Partial<ToothFinding> = {}): ToothFinding {
   };
 }
 
-function position(fdiNumber: number, currentFindings: ToothFinding[]): ToothPosition {
+function position(
+  fdiNumber: number,
+  currentFindings: ToothFinding[],
+  canals: RootCanal[] = [],
+): ToothPosition {
   return {
     fdiNumber,
     dentitionType: 'PERMANENT',
@@ -46,7 +50,7 @@ function position(fdiNumber: number, currentFindings: ToothFinding[]): ToothPosi
     presence: 'PRESENT',
     presenceDate: null,
     version: 0,
-    canals: [],
+    canals,
     currentFindings,
   };
 }
@@ -82,5 +86,23 @@ describe('ToothArchComponent', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="tooth-11-multi-indicator"]'),
     ).toBeFalsy();
+  });
+
+  it('renders canal treatment-state colors (red/green/green-with-red-apex) inside the root silhouette (T094/FR-066a)', () => {
+    const canals: RootCanal[] = [
+      { id: 'c1', name: 'A', state: 'NEEDS_TREATMENT', removed: false, version: 0 },
+      { id: 'c2', name: 'B', state: 'TREATED', removed: false, version: 0 },
+      { id: 'c3', name: 'C', state: 'UNDERTREATED', removed: false, version: 0 },
+      { id: 'c4', name: 'D (removed)', state: 'TREATED', removed: true, version: 0 },
+    ];
+    fixture.componentRef.setInput('positions', [position(11, [], canals)]);
+    fixture.detectChanges();
+
+    const tooth = fixture.nativeElement.querySelector('[data-testid="tooth-11"]');
+    expect(tooth.querySelectorAll('.canal.c-treat').length).toBeGreaterThan(0);
+    expect(tooth.querySelectorAll('.canal.c-done').length).toBeGreaterThan(0);
+    // UNDERTREATED renders a body(green)+apex(red) split — the split itself is the non-color cue.
+    expect(tooth.querySelectorAll('.canal.c-under-body').length).toBeGreaterThan(0);
+    expect(tooth.querySelectorAll('.canal.c-under-apex').length).toBeGreaterThan(0);
   });
 });

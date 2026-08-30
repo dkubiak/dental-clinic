@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DiagnosisCatalogEntry, ToothFinding, ToothPosition } from '../patients.models';
+import { DiagnosisCatalogEntry, RootCanal, ToothFinding, ToothPosition } from '../patients.models';
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
 import { ToothDetailPanelComponent } from './tooth-detail-panel.component';
@@ -78,6 +78,10 @@ describe('ToothDetailPanelComponent', () => {
     getPositionHistory: ReturnType<typeof vi.fn>;
     closeFinding: ReturnType<typeof vi.fn>;
     correctFinding: ReturnType<typeof vi.fn>;
+    changePresence: ReturnType<typeof vi.fn>;
+    addCanal: ReturnType<typeof vi.fn>;
+    updateCanal: ReturnType<typeof vi.fn>;
+    removeCanal: ReturnType<typeof vi.fn>;
   };
   let diagnosisCatalogService: {
     search: ReturnType<typeof vi.fn>;
@@ -90,6 +94,10 @@ describe('ToothDetailPanelComponent', () => {
       getPositionHistory: vi.fn().mockReturnValue(of([])),
       closeFinding: vi.fn().mockReturnValue(of(activeFinding())),
       correctFinding: vi.fn().mockReturnValue(of(activeFinding())),
+      changePresence: vi.fn().mockReturnValue(of(freshPosition(36))),
+      addCanal: vi.fn().mockReturnValue(of({ id: 'c1', name: 'MB', state: 'NEEDS_TREATMENT', removed: false, version: 0 })),
+      updateCanal: vi.fn().mockReturnValue(of({ id: 'c1', name: 'MB', state: 'TREATED', removed: false, version: 1 })),
+      removeCanal: vi.fn().mockReturnValue(of(undefined)),
     };
     diagnosisCatalogService = {
       search: vi.fn().mockReturnValue(of([CARIES, PULPITIS])),
@@ -301,5 +309,100 @@ describe('ToothDetailPanelComponent', () => {
       'f1',
       expect.objectContaining({ diagnosisCatalogEntryId: CARIES.id, note: 'Stara notatka' }),
     );
+  });
+
+  it('presence controls mark a tooth extracted/congenitally-missing/unerupted (T093/FR-039)', () => {
+    fixture.detectChanges();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="presence-EXTRACTED"]')
+      .dispatchEvent(new Event('click'));
+
+    expect(toothChartService.changePresence).toHaveBeenCalledWith(
+      'p1',
+      36,
+      expect.objectContaining({ presence: 'EXTRACTED', expectedVersion: 0 }),
+    );
+
+    fixture.nativeElement
+      .querySelector('[data-testid="presence-CONGENITALLY_MISSING"]')
+      .dispatchEvent(new Event('click'));
+    expect(toothChartService.changePresence).toHaveBeenCalledWith(
+      'p1',
+      36,
+      expect.objectContaining({ presence: 'CONGENITALLY_MISSING' }),
+    );
+
+    fixture.nativeElement
+      .querySelector('[data-testid="presence-UNERUPTED"]')
+      .dispatchEvent(new Event('click'));
+    expect(toothChartService.changePresence).toHaveBeenCalledWith(
+      'p1',
+      36,
+      expect.objectContaining({ presence: 'UNERUPTED' }),
+    );
+  });
+
+  it('presence buttons show aria-pressed for the current presence', () => {
+    fixture.componentRef.setInput('position', { ...freshPosition(36), presence: 'EXTRACTED' });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="presence-EXTRACTED"]').getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="presence-PRESENT"]').getAttribute('aria-pressed'),
+    ).toBe('false');
+  });
+
+  it('root-canal add/rename/state-change/remove controls call the matching service methods (T094)', () => {
+    const canal: RootCanal = { id: 'c1', name: 'MB', state: 'NEEDS_TREATMENT', removed: false, version: 0 };
+    fixture.componentRef.setInput('position', { ...freshPosition(36), canals: [canal] });
+    fixture.detectChanges();
+
+    // rename
+    const nameInput = fixture.nativeElement.querySelector('[data-testid="canal-name-c1"]');
+    nameInput.value = 'MB2';
+    nameInput.dispatchEvent(new Event('change'));
+    expect(toothChartService.updateCanal).toHaveBeenCalledWith('p1', 36, 'c1', {
+      name: 'MB2',
+      expectedVersion: 0,
+    });
+
+    // state change
+    const stateSelect = fixture.nativeElement.querySelector('[data-testid="canal-state-c1"]');
+    stateSelect.value = 'TREATED';
+    stateSelect.dispatchEvent(new Event('change'));
+    expect(toothChartService.updateCanal).toHaveBeenCalledWith('p1', 36, 'c1', {
+      state: 'TREATED',
+      expectedVersion: 0,
+    });
+
+    // remove
+    fixture.nativeElement.querySelector('[data-testid="canal-remove-c1"]').dispatchEvent(new Event('click'));
+    expect(toothChartService.removeCanal).toHaveBeenCalledWith('p1', 36, 'c1');
+
+    // add
+    const newNameInput = fixture.nativeElement.querySelector('[data-testid="new-canal-name-input"]');
+    newNameInput.value = 'DB';
+    newNameInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('[data-testid="add-canal-submit"]').dispatchEvent(new Event('click'));
+    expect(toothChartService.addCanal).toHaveBeenCalledWith('p1', 36, { name: 'DB' });
+  });
+
+  it('the add-canal button is disabled once 6 non-removed canals exist', () => {
+    const canals: RootCanal[] = Array.from({ length: 6 }, (_, i) => ({
+      id: `c${i}`,
+      name: `Kanał ${i}`,
+      state: 'NEEDS_TREATMENT',
+      removed: false,
+      version: 0,
+    }));
+    fixture.componentRef.setInput('position', { ...freshPosition(36), canals });
+    fixture.componentInstance.newCanalName.set('Kolejny');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="add-canal-submit"]').disabled).toBe(true);
   });
 });
