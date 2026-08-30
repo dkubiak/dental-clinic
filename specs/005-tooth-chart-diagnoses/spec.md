@@ -42,6 +42,18 @@
   zęba (siekacz, kieł, przedtrzonowiec, trzonowiec), z koroną i korzeniami, nie prostokąty
   (FR-001a).
 
+### Session 2026-08-30 (czwarta tura — po przeglądzie mockupu)
+
+- Q: Jak ma wyglądać szybka ścieżka dla asystentki notującej rozpoznania dyktowane przez lekarza?
+  → A: Menu kontekstowe wywoływane prawym przyciskiem myszy albo przytrzymaniem palca na zębie
+  lub na strefie powierzchni, z najczęstszymi jednostkami chorobowymi, brakami zębowymi i
+  uzupełnieniami. Wybór pozycji zapisuje wpis od razu, bez otwierania formularza, i działa też na
+  zaznaczeniu wielu zębów (FR-020a, FR-020b).
+- Q: Czy zaznaczone powierzchnie na głównym diagramie mają być opisane literą? → A: Nie. Litera
+  jest zbędna — wystarczy wypełnienie kolorem i wyróżniona ramka pola. Oznaczenia literowe
+  pozostają wyłącznie na powiększonej mapie powierzchni w panelu szczegółów, gdzie objaśniają
+  układ stref (FR-029a).
+
 ### Session 2026-08-30 (trzecia tura — po przeglądzie mockupu)
 
 - Q: Czy strefy powierzchni na głównym diagramie mają być klikalne także na ekranach dotykowych,
@@ -99,8 +111,9 @@ sekcji A, C, G oraz I i służy jako referencja dla `/speckit-plan`. Odwzorowuje
 anatomicznymi sylwetkami zębów (FR-001a), zaznaczanie wielu zębów i wielu części
 (FR-004a..FR-004c), słownik z zakresami anatomicznymi (FR-011..FR-021), mapę powierzchni
 (FR-024..FR-026), kanały dodawane ręcznie z trzema stanami leczenia (FR-063..FR-066a), warstwy i legendę
-(FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) oraz klikanie
-powierzchni wprost z diagramu z powiększeniem 1×/2×/3× (FR-029a, FR-029b, FR-049). Przełącznik „Wymagania" w pasku
+(FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) klikanie
+powierzchni wprost z diagramu z powiększeniem 1×/2×/3× (FR-029a, FR-029b, FR-049) oraz szybkie
+menu kontekstowe pod prawym przyciskiem i przytrzymaniem (FR-020a, FR-020b). Przełącznik „Wymagania" w pasku
 górnym pokazuje przy elementach interfejsu numery wymagań, których dotyczą.
 
 Moduł pozostaje w klasyfikacji **high-risk "patient records"** (Principle V) i przetwarza dane
@@ -499,6 +512,20 @@ zębów, a każdy da się później skorygować niezależnie.
   treści wpisów już zapisanych w dokumentacji medycznej.
 - **FR-020**: System MUST prezentować listę wyboru rozpoznania w sposób użyteczny przy fotelu:
   najczęściej używane pozycje dostępne bez wyszukiwania, pełna lista dostępna zawsze.
+- **FR-020a**: System MUST udostępniać **szybkie menu kontekstowe** wywoływane bezpośrednio na
+  diagramie — prawym przyciskiem myszy oraz przytrzymaniem palca (długie dotknięcie) — na sylwetce
+  zęba i na strefie powierzchni. Menu MUST zawierać co najmniej: pozycje ostatnio używane,
+  najczęstsze rozpoznania powierzchniowe (gdy wskazano powierzchnie), najczęstsze rozpoznania
+  obejmujące cały ząb i przyzębie, braki zębowe oraz uzupełnienia, a także przejście do pełnego
+  formularza. Wybór pozycji MUST zapisywać wpis natychmiast, bez otwierania formularza.
+  Uzasadnienie: typowy przebieg pracy to lekarz dyktujący rozpoznanie i asystentka notująca je w
+  kartotece — droga „zaznacz powierzchnie → menu → pozycja" musi być krótsza niż wypełnianie
+  formularza.
+- **FR-020b**: Szybkie menu MUST działać na zaznaczeniu wielu zębów: wywołane na zębie należącym
+  do zaznaczenia MUST stosować wybraną pozycję do wszystkich zaznaczonych zębów, jawnie informując
+  o zakresie działania przed wyborem oraz o pozycjach pominiętych po zapisie. Wywołanie menu
+  MUST NOT zmieniać istniejącego zaznaczenia. Każdy zapis z menu MUST oferować natychmiastowe
+  cofnięcie, realizowane jako korekta zgodna z FR-033 (wpis nie znika, staje się nieaktualny).
 
 #### C. Powierzchnie i zakres anatomiczny
 
@@ -532,7 +559,9 @@ zębów, a każdy da się później skorygować niezależnie.
   MUST zaznaczać odpowiedni ząb i tę powierzchnię, bez konieczności wchodzenia najpierw w panel
   szczegółów. Każda strefa MUST mieć podpowiedź z nazwą powierzchni dostępną przed kliknięciem, a
   strefa zaznaczona MUST być jednoznacznie odróżnialna zarówno od stref pustych, jak i od stref z
-  odnotowanym wpisem — samo pogrubienie obrysu nie wystarcza.
+  odnotowanym wpisem — samo pogrubienie obrysu nie wystarcza. Oznaczenia literowe powierzchni
+  (M/D/B/L/O/I) MUST NOT być rysowane na głównym diagramie; ich miejscem jest powiększona mapa
+  powierzchni w panelu szczegółów, gdzie objaśniają układ stref.
 - **FR-029b**: Ponieważ przy widoku całego uzębienia pojedyncza strefa powierzchni jest mniejsza
   niż minimalny cel dotknięcia z FR-049, system MUST udostępniać powiększenie diagramu (co
   najmniej dwa stopnie ponad widok domyślny), przy którym każda strefa osiąga co najmniej 24×24 px
@@ -663,8 +692,10 @@ zębów, a każdy da się później skorygować niezależnie.
   przywierzchołkowym. Kanały MUST być rysowane wyraźnie (grubiej niż linie pomocnicze rysunku), a
   każdy stan MUST nieść dodatkowy sygnał nieoparty na kolorze (kreskowanie, znacznik wierzchołka),
   zgodnie z FR-050.
-- **FR-067**: System MUST umożliwiać przypisanie wpisu o zakresie `korzeń / tkanki
-  okołowierzchołkowe` wyłącznie do kanału, który na tym zębie faktycznie istnieje.
+- **FR-067**: Wpis o zakresie `korzeń / tkanki okołowierzchołkowe` MAY dotyczyć całego korzenia
+  bez wskazania kanału (np. zapalenie tkanek okołowierzchołkowych); jeżeli wskazuje kanał, MUST to
+  być kanał, który na tym zębie faktycznie istnieje. Brak odnotowanych kanałów MUST NOT blokować
+  zapisu takiego wpisu.
 - **FR-068**: Usunięcie kanału MUST NOT usuwać ani ukrywać wpisów do niego przypisanych; system
   MUST ostrzec przed operacją i zachować takie wpisy w historii zęba, jawnie oznaczone jako
   dotyczące kanału już nieobecnego w modelu.

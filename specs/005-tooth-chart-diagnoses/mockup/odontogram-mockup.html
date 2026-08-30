@@ -190,9 +190,6 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .sbox .zone.f-diag.picked,
 .sbox .zone.f-rest.picked,
 .sbox .zone.f-done.picked { fill: var(--accent); stroke: var(--accent-text); stroke-width: 3; }
-.sbox .ztag { display: none; fill: var(--on-accent); pointer-events: none; text-anchor: middle;
-  font-family: var(--mono); font-weight: 700; }
-.sbox .ztag.on { display: block; }
 .sbox.is-selected .frame { stroke: var(--tooth-selected-stroke); stroke-width: 2.4; }
 .sbox.has-picked .frame { stroke: var(--accent-text); stroke-width: 3; }
 .sbox.is-absent .zone { fill: none; stroke: var(--tooth-absent); stroke-dasharray: 2 2; pointer-events: none; }
@@ -325,6 +322,29 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 .fr { display: none; font-family: var(--mono); font-size: 9.5px; font-weight: 600; color: var(--accent-text);
   border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; margin-left: 6px; white-space: nowrap; vertical-align: 1px; }
 :root.show-fr .fr { display: inline-block; }
+.ctxmenu { position: fixed; z-index: 70; min-width: 250px; max-width: 310px; display: none;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 6px; max-height: 78vh; overflow-y: auto; }
+.ctxmenu.on { display: block; }
+.ctx-head { padding: 6px 10px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.ctx-title { font-weight: 600; font-size: 13.5px; }
+.ctx-title b { font-family: var(--mono); }
+.ctx-sub { font-size: 11.5px; color: var(--text-muted); }
+.ctx-scope { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 600;
+  color: var(--accent-text); background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px 9px; }
+.ctx-group { padding: 8px 10px 3px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--text-muted); font-weight: 600; }
+.ctx-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0;
+  background: none; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; }
+.ctx-item:hover, .ctx-item:focus-visible { background: var(--surface-raised); }
+.ctx-item .dx-meta { margin-left: auto; }
+.ctx-item.ghost { color: var(--text-muted); font-size: 12.5px; }
+.ctx-sep { height: 1px; background: var(--border); margin: 6px 4px 2px; }
+.toast-undo { border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px; margin-left: 10px;
+  /* toast sam nie łapie zdarzeń, żeby nie blokował diagramu — ale przycisk cofnięcia musi */
+  pointer-events: auto; }
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(16px);
   background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
   box-shadow: var(--shadow-md); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 60; max-width: 92vw; }
@@ -410,6 +430,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
 
       <div class="selbar">
         <span class="count" id="selCount">nic nie zaznaczono</span>
+        <span class="eyebrow" title="Prawy przycisk myszy albo przytrzymanie palcem otwiera szybkie menu rozpoznań">
+          PPM / przytrzymaj = szybkie menu<span class="fr">FR-020a</span></span>
         <div class="quick" role="group" aria-label="Szybkie zaznaczanie">
           <button type="button" data-pick="q1">Ćw. 1</button>
           <button type="button" data-pick="q2">Ćw. 2</button>
@@ -456,6 +478,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.012em; }
   </main>
 </div>
 
+<div class="ctxmenu" id="ctxmenu" role="menu" aria-label="Szybkie oznaczanie"></div>
 <button type="button" class="back-to-arch" id="backToArch">↑ Łuk zębowy</button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -583,7 +606,7 @@ const STATE_LABEL = Object.fromEntries(CANAL_STATES.map(s => [s.key, s.full]));
 const state = {
   dentition: 'permanent', layer: 'all',
   selection: new Set(), surfaces: new Set(), canal: null,
-  dx: null, scopeAsk: 'tooth', query: '', zoom: 1, teeth: {}, seq: 100, cseq: 500,
+  dx: null, scopeAsk: 'tooth', query: '', zoom: 1, recent: [], teeth: {}, seq: 100, cseq: 500,
 };
 [...PERM_UPPER, ...PERM_LOWER, ...DEC_UPPER, ...DEC_LOWER].forEach(fdi => {
   state.teeth[fdi] = { presence: 'present', canals: [], findings: [] };   // FR-063 — zero kanałów na start
@@ -817,20 +840,13 @@ function drawTooth(fdi, m, w, colW, cx, yBase, dir, rot) {
 function drawSurfaceBox(fdi, m, cx, cy, size, colW) {
   const grp = el('g', { class: 'sbox', transform: `translate(${f2(cx)} ${cy})`, 'data-sbox': fdi });
   grp.appendChild(el('rect', { class: 'boxhit', x: f2(-colW / 2), y: f2(-size / 2 - 6), width: f2(colW), height: f2(size + 12) }));
-  const o = size / 2, tags = [];
   zoneDefs(size, m.right).forEach(z => {
     const key = z.k === 'C' ? (m.anterior ? 'I' : 'O') : z.k;
     const path = el('path', { d: z.d, class: 'zone', 'data-zone': z.k, 'data-fdi': fdi, role: 'button', tabindex: -1 });
     path.appendChild(Object.assign(el('title', {}), { textContent: `Ząb ${fdi} · powierzchnia ${SURFACE_NAME(fdi, key)}` }));
     grp.appendChild(path);
-    const pos = { B: [0, -o * 0.64], L: [0, o * 0.82], C: [0, size * 0.08] }[z.k]
-      || (z.d.startsWith(`M ${-o}`) ? [-o * 0.72, size * 0.08] : [o * 0.72, size * 0.08]);
-    tags.push(Object.assign(el('text', {
-      class: 'ztag', 'data-ztag': z.k, x: f2(pos[0]), y: f2(pos[1]), 'font-size': f2(size * 0.24),
-    }), { textContent: key }));
   });
   grp.appendChild(el('rect', { class: 'frame', x: f2(-size / 2), y: f2(-size / 2), width: f2(size), height: f2(size), rx: 2 }));
-  tags.forEach(t => grp.appendChild(t));
   return grp;
 }
 
@@ -874,14 +890,7 @@ function syncArchClasses() {
       z.setAttribute('aria-label', `ząb ${fdi}, powierzchnia ${sName}${isPicked ? ', zaznaczona' : ''}`);
       z.setAttribute('aria-pressed', isPicked ? 'true' : 'false');
     });
-    let anyPicked = false;
-    box.querySelectorAll('.ztag').forEach(tag => {
-      const k = tag.dataset.ztag;
-      const on = picked.has(k === 'C' ? (meta(fdi).anterior ? 'I' : 'O') : k);
-      tag.classList.toggle('on', on);
-      if (on) anyPicked = true;
-    });
-    box.classList.toggle('has-picked', anyPicked);
+    box.classList.toggle('has-picked', !!box.querySelector('.zone.picked'));
   });
 
   archSvg.querySelectorAll('[data-label]').forEach(n =>
@@ -996,8 +1005,6 @@ function validation() {
     return 'Pozycja „inne rozpoznanie” wymaga opisu (FR-011a).';
   if (effScope() === 'surface' && !state.surfaces.size)
     return 'To rozpoznanie dotyczy powierzchni — wskaż co najmniej jedną (FR-022).';
-  if (effScope() === 'root' && sel.length === 1 && !state.teeth[sel[0]].canals.length)
-    return 'To rozpoznanie dotyczy korzenia lub kanału — najpierw odnotuj kanał (FR-067).';
   return null;
 }
 
@@ -1167,6 +1174,7 @@ function toggleSurface(s) {
 
 let dragging = false, dragAdded = new Set();
 archSvg.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;   // prawy przycisk otwiera menu i NIE zmienia zaznaczenia
   const zone = e.target.closest('.zone');
   if (zone) {
     const fdi = +zone.dataset.fdi, m = meta(fdi);
@@ -1358,14 +1366,12 @@ function save() {
       surfaces = [...state.surfaces].filter(s => m.surfaces.includes(s));
       if (!surfaces.length) { skipped.push(`${fdi} — brak wskazanych powierzchni w tym zębie`); return; }
     }
-    let canal = null;
-    if (scope === 'root') {
-      if (!t.canals.length) { skipped.push(`${fdi} — brak odnotowanych kanałów (FR-067)`); return; }
-      canal = state.canal && canalById(fdi, state.canal) ? state.canal : null;
-    }
+    // zakres korzeniowy może dotyczyć całego korzenia; wskazanie kanału jest opcjonalne (FR-067)
+    const canal = scope === 'root' && state.canal && canalById(fdi, state.canal) ? state.canal : null;
     addFinding(fdi, { dxCode: state.dx, surfaces, canal, severity: sev, note, date });
     made.push(fdi);
   });
+  if (made.length) state.recent = [state.dx, ...state.recent.filter(c => c !== state.dx)].slice(0, 3);
   state.dx = null; state.surfaces.clear(); state.canal = null; state.query = '';
   renderArch(); refresh();
   let msg = made.length
@@ -1398,6 +1404,187 @@ function correctFinding(id) {
   if (nf) nf.value = f.note;
   toast('Poprzedni wpis oznaczony jako nieaktualny i przeniesiony do historii zęba. Popraw dane i zapisz — powstanie nowy wpis wskazujący poprzedni. <b>FR-033</b>');
 }
+
+/* ══ SZYBKIE MENU KONTEKSTOWE (FR-020a, FR-020b) ══════════════════════════
+   Ścieżka dla asystentki notującej dyktowane rozpoznania: zaznacz powierzchnie,
+   prawy przycisk / przytrzymanie, wybierz pozycję — zapis bez otwierania formularza. */
+const QUICK_SURFACE = ['K02.0b', 'K02.1', 'K02.1d', 'K02.1s', 'S02.51'];
+const QUICK_SURFACE_REST = ['FILL', 'FILLT', 'SEAL'];
+const QUICK_TOOTH = [
+  ['Miazga i tkanki okołowierzchołkowe', ['K04.0r', 'K04.0i', 'K04.1', 'K04.4']],
+  ['Przyzębie', ['K03.6', 'K05.1', 'K05.3']],
+  ['Braki zębowe i uzupełnienia', ['EXTR', 'K00.0', 'K01.0', 'IMPL', 'PONTIC', 'CROWN']],
+];
+const menuEl = document.getElementById('ctxmenu');
+let menuCtx = null, lastCreated = [];
+
+function menuTargets(fdi) {
+  return (state.selection.has(fdi) && state.selection.size > 1)
+    ? [...state.selection].sort((a, b) => a - b) : [fdi];
+}
+function menuSurfaces(fdi, clicked) {
+  const m = meta(fdi);
+  const picked = state.selection.has(fdi) ? [...state.surfaces] : [];
+  const all = new Set(picked.filter(x => m.surfaces.includes(x)));
+  if (clicked) all.add(clicked);
+  return [...all];
+}
+function itemHtml(code) {
+  const d = DXMAP[code];
+  return `<button type="button" class="ctx-item" role="menuitem" data-quick="${code}">
+    <span class="layer-dot ${d.layer === 'diagnosis' ? 'layer-diag' : 'layer-rest'}"></span>
+    <span>${esc(d.name)}</span><span class="dx-meta">${d.icd || ''}</span></button>`;
+}
+function openMenu(x, y, ctx) {
+  menuCtx = ctx;
+  const fdi = ctx.fdi, m = meta(fdi), t = state.teeth[fdi];
+  const targets = menuTargets(fdi);
+  const surfaces = menuSurfaces(fdi, ctx.surface);
+  const absent = t.presence === 'extracted' || t.presence === 'agenesis';
+
+  let html = `<div class="ctx-head">
+    <div class="ctx-title">Ząb <b>${fdi}</b></div>
+    <div class="ctx-sub">${esc(m.label)}</div>
+    <span class="ctx-scope">${targets.length > 1 ? `zastosuje do ${targets.length} ${plural(targets.length, 'zęba', 'zębów', 'zębów')}`
+      : surfaces.length ? `powierzchnie: ${surfaces.join(', ')}` : 'cały ząb'}</span>
+  </div>`;
+
+  const recent = state.recent.filter(c => !absent || DXMAP[c].absentOk)
+    .filter(c => DXMAP[c].scope !== 'surface' || surfaces.length);
+  if (recent.length) html += `<div class="ctx-group">Ostatnio używane</div>` + recent.map(itemHtml).join('');
+
+  if (surfaces.length && !absent) {
+    html += `<div class="ctx-group">Rozpoznania powierzchni (${surfaces.join(', ')})</div>`
+      + QUICK_SURFACE.map(itemHtml).join('')
+      + `<div class="ctx-group">Stan istniejący</div>` + QUICK_SURFACE_REST.map(itemHtml).join('');
+  }
+  QUICK_TOOTH.forEach(([label, codes]) => {
+    const usable = codes.filter(c => {
+      const d = DXMAP[c];
+      if (absent) return !!d.absentOk;
+      return !d.absentOnly;
+    });
+    if (usable.length) html += `<div class="ctx-group">${label}</div>` + usable.map(itemHtml).join('');
+  });
+  html += `<div class="ctx-sep"></div>
+    <button type="button" class="ctx-item ghost" role="menuitem" data-quick-open="1">Otwórz pełny formularz…</button>`;
+
+  menuEl.innerHTML = html;
+  menuEl.classList.add('on');
+  const r = menuEl.getBoundingClientRect();
+  menuEl.style.left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8)) + 'px';
+  menuEl.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
+  menuEl.querySelector('.ctx-item')?.focus({ preventScroll: true });
+}
+function closeMenu() { menuEl.classList.remove('on'); menuCtx = null; }
+
+function applyQuick(code) {
+  const ctx = menuCtx;
+  if (!ctx) return;
+  const d = DXMAP[code], fdi = ctx.fdi;
+  const targets = menuTargets(fdi);
+  const surfaces = menuSurfaces(fdi, ctx.surface);
+  closeMenu();
+  const made = [], skipped = [];
+  lastCreated = [];
+  targets.forEach(tf => {
+    const m = meta(tf), t = state.teeth[tf];
+    const absent = t.presence === 'extracted' || t.presence === 'agenesis';
+    if (absent && !d.absentOk) { skipped.push(`${tf} — brak zęba`); return; }
+    if (d.absentOnly && !absent) { skipped.push(`${tf} — pozycja ma własny ząb`); return; }
+    let sf = [];
+    if (d.scope === 'surface') {
+      sf = surfaces.filter(x => m.surfaces.includes(x));
+      if (!sf.length) { skipped.push(`${tf} — brak wskazanych powierzchni`); return; }
+    }
+    lastCreated.push(addFinding(tf, { dxCode: code, surfaces: sf, date: '2026-08-30' }).id);
+    made.push(tf);
+  });
+  state.recent = [code, ...state.recent.filter(c => c !== code)].slice(0, 3);
+  state.surfaces.clear();
+  renderArch(); refresh();
+  let msg = made.length
+    ? `<b>${esc(d.name)}</b> — ${plural(made.length, 'ząb', 'zęby', 'zęby')} ${made.join(', ')}${surfaces.length && d.scope === 'surface' ? ' · ' + surfaces.join('') : ''}.`
+    : 'Nie zapisano żadnego wpisu.';
+  if (skipped.length) msg += ` Pominięto: ${skipped.join('; ')}.`;
+  if (made.length) msg += `<button type="button" class="toast-undo" data-undo="1">Cofnij</button>`;
+  toast(msg);
+}
+function undoLast() {
+  if (!lastCreated.length) return;
+  let n = 0;
+  lastCreated.forEach(id => {
+    const f = findById(id);
+    if (!f) return;
+    f.record = 'superseded';
+    f.note = 'Cofnięte zaraz po zapisie.';
+    const dxp = DXMAP[f.dxCode];
+    if (dxp.presence && state.teeth[f.tooth].presence === dxp.presence) state.teeth[f.tooth].presence = 'present';
+    n++;
+  });
+  lastCreated = [];
+  renderArch(); refresh();
+  toast(`Cofnięto ${n} ${plural(n, 'wpis', 'wpisy', 'wpisów')} — zgodnie z zasadą append-only ${plural(n, 'wpis pozostaje', 'wpisy pozostają', 'wpisy pozostają')} w historii zęba jako nieaktualne. <b>FR-030 · FR-033</b>`);
+}
+
+menuEl.addEventListener('click', e => {
+  const q = e.target.closest('[data-quick]');
+  if (q) return applyQuick(q.dataset.quick);
+  if (e.target.closest('[data-quick-open]')) {
+    const ctx = menuCtx;
+    closeMenu();
+    state.selection.clear(); state.selection.add(ctx.fdi);
+    if (ctx.surface) state.surfaces.add(ctx.surface);
+    refresh();
+    document.getElementById('dxSearch')?.focus({ preventScroll: true });
+  }
+});
+menuEl.addEventListener('keydown', e => {
+  const items = [...menuEl.querySelectorAll('.ctx-item')];
+  const i = items.indexOf(document.activeElement);
+  if (e.key === 'Escape') { closeMenu(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); items[Math.min(i + 1, items.length - 1)]?.focus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); items[Math.max(i - 1, 0)]?.focus(); }
+});
+toastEl.addEventListener('click', e => { if (e.target.closest('[data-undo]')) undoLast(); });
+document.addEventListener('pointerdown', e => {
+  if (menuEl.classList.contains('on') && !e.target.closest('#ctxmenu')) closeMenu();
+}, true);
+window.addEventListener('blur', closeMenu);
+
+function ctxFromEvent(e) {
+  const zone = e.target.closest('.zone');
+  if (zone) {
+    const fdi = +zone.dataset.fdi, m = meta(fdi);
+    return { fdi, surface: zone.dataset.zone === 'C' ? (m.anterior ? 'I' : 'O') : zone.dataset.zone };
+  }
+  const box = e.target.closest('.sbox');
+  if (box) return { fdi: +box.dataset.sbox, surface: null };
+  const g = e.target.closest('.tooth');
+  return g ? { fdi: +g.dataset.fdi, surface: null } : null;
+}
+archSvg.addEventListener('contextmenu', e => {
+  const ctx = ctxFromEvent(e);
+  if (!ctx) return;
+  e.preventDefault();
+  if (!state.selection.has(ctx.fdi)) { state.selection.clear(); state.selection.add(ctx.fdi); state.surfaces.clear(); refresh(); }
+  openMenu(e.clientX, e.clientY, ctx);
+});
+/* przytrzymanie palcem — ta sama ścieżka na tablecie przy fotelu */
+let holdTimer = null, holdStart = null;
+archSvg.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const ctx = ctxFromEvent(e);
+  if (!ctx) return;
+  holdStart = { x: e.clientX, y: e.clientY };
+  holdTimer = setTimeout(() => { holdTimer = null; dragging = false; openMenu(holdStart.x, holdStart.y, ctx); }, 480);
+});
+const cancelHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+archSvg.addEventListener('pointermove', e => {
+  if (holdTimer && holdStart && Math.hypot(e.clientX - holdStart.x, e.clientY - holdStart.y) > 10) cancelHold();
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => archSvg.addEventListener(ev, cancelHold));
+archWrap.addEventListener('scroll', closeMenu);
 
 /* ── przegląd ── */
 function renderOverview() {
