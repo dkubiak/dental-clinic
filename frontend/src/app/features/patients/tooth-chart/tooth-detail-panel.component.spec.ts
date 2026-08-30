@@ -382,16 +382,26 @@ describe('ToothDetailPanelComponent', () => {
     fixture.nativeElement.querySelector('[data-testid="canal-remove-c1"]').dispatchEvent(new Event('click'));
     expect(toothChartService.removeCanal).toHaveBeenCalledWith('p1', 36, 'c1');
 
-    // add
-    const newNameInput = fixture.nativeElement.querySelector('[data-testid="new-canal-name-input"]');
-    newNameInput.value = 'DB';
-    newNameInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
+    // add — FR-064: no free-text input, a one-click suggestion instead (fdi 36 is a lower first
+    // molar; with one canal already present, the next suggestion is "bliższy językowy (ML)").
     fixture.nativeElement.querySelector('[data-testid="add-canal-submit"]').dispatchEvent(new Event('click'));
-    expect(toothChartService.addCanal).toHaveBeenCalledWith('p1', 36, { name: 'DB' });
+    expect(toothChartService.addCanal).toHaveBeenCalledWith('p1', 36, { name: 'bliższy językowy (ML)' });
   });
 
-  it('the add-canal button is disabled once 6 non-removed canals exist', () => {
+  it('shows a "typowo dla tego zęba" suggestion and an "add typical" shortcut only while no canals exist yet (FR-064)', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="canal-suggestion-hint"]').textContent).toContain(
+      'bliższy policzkowy (MB)',
+    );
+    const addTypical = fixture.nativeElement.querySelector('[data-testid="add-typical-canals"]');
+    expect(addTypical).toBeTruthy();
+
+    addTypical.dispatchEvent(new Event('click'));
+    expect(toothChartService.addCanal).toHaveBeenNthCalledWith(1, 'p1', 36, { name: 'bliższy policzkowy (MB)' });
+  });
+
+  it('the add-canal form disappears once 6 non-removed canals exist', () => {
     const canals: RootCanal[] = Array.from({ length: 6 }, (_, i) => ({
       id: `c${i}`,
       name: `Kanał ${i}`,
@@ -400,9 +410,8 @@ describe('ToothDetailPanelComponent', () => {
       version: 0,
     }));
     fixture.componentRef.setInput('position', { ...freshPosition(36), canals });
-    fixture.componentInstance.newCanalName.set('Kolejny');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="add-canal-submit"]').disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('[data-testid="add-canal-form"]')).toBeFalsy();
   });
 });

@@ -13,7 +13,7 @@ import {
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
 import { SurfaceMapComponent } from './surface-map.component';
-import { toothAnatomy } from './tooth-geometry';
+import { suggestedCanalNames as suggestedCanalNamesFor, toothAnatomy } from './tooth-geometry';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -129,24 +129,32 @@ const SCOPE_LABELS: Record<AnatomicalScope, string> = {
             </li>
           }
         </ul>
-        <div class="add-canal-form" data-testid="add-canal-form">
-          <input
-            type="text"
-            data-testid="new-canal-name-input"
-            aria-label="Nazwa nowego kanału"
-            placeholder="Nazwa kanału (np. MB, policzkowy bliższy)"
-            [value]="newCanalName()"
-            (input)="newCanalName.set($any($event.target).value)"
-          />
-          <button
-            type="button"
-            data-testid="add-canal-submit"
-            [disabled]="!newCanalName().trim() || nonRemovedCanals().length >= 6"
-            (click)="submitAddCanal()"
-          >
-            Dodaj kanał
-          </button>
-        </div>
+        <!-- FR-063/FR-064 — system never assumes canals up front; a suggestion (never saved as
+             patient data until added) speeds up the common case without requiring free-text
+             typing, matching the mockup's canalCard()/suggestedCanals(). -->
+        @if (nonRemovedCanals().length === 0) {
+          <p class="canal-hint" data-testid="canal-suggestion-hint">
+            Nie odnotowano kanałów. Typowo dla tego zęba: {{ suggestedCanalNames().length }}
+            ({{ suggestedCanalNames().join(', ') }}).
+          </p>
+        }
+        @if (nonRemovedCanals().length < 6) {
+          <div class="add-canal-form" data-testid="add-canal-form">
+            <button
+              type="button"
+              data-testid="add-canal-submit"
+              [attr.aria-label]="'Dodaj kanał: ' + nextSuggestedCanalName()"
+              (click)="addSuggestedCanal()"
+            >
+              + Dodaj kanał ({{ nextSuggestedCanalName() }})
+            </button>
+            @if (nonRemovedCanals().length === 0 && suggestedCanalNames().length > 1) {
+              <button type="button" data-testid="add-typical-canals" (click)="addTypicalCanals()">
+                + Dodaj typowe ({{ typicalCanalCount() }})
+              </button>
+            }
+          </div>
+        }
       </section>
 
       <section class="findings" data-testid="finding-list">
@@ -378,7 +386,13 @@ const SCOPE_LABELS: Record<AnatomicalScope, string> = {
     }
     .add-canal-form {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
+    }
+    .canal-hint {
+      font-size: 12px;
+      color: var(--pu-text-muted, #5c5654);
+      margin: 4px 0 8px;
     }
     .search-results {
       list-style: none;
@@ -493,8 +507,6 @@ export class ToothDetailPanelComponent {
     { value: 'UNDERTREATED', labelPl: 'Niedoleczony' },
   ];
 
-  readonly newCanalName = signal('');
-
   private readonly toothChartService = inject(ToothChartService);
   private readonly diagnosisCatalogService = inject(DiagnosisCatalogService);
 
@@ -534,6 +546,22 @@ export class ToothDetailPanelComponent {
   readonly nonRemovedCanals = computed<RootCanal[]>(() =>
     this.position().canals.filter((c) => !c.removed),
   );
+
+  /** FR-064 — a non-binding, anatomically-typical name list for this position; never saved as
+   * patient data until the user actually adds a canal (research.md D11, ported 1:1 from the
+   * mockup's suggestedCanals()). */
+  readonly suggestedCanalNames = computed(() => suggestedCanalNamesFor(this.fdiNumber()));
+
+  /** The next suggestion to offer — one slot past however many canals already exist, falling back
+   * to a generic label once the suggestion list is exhausted (matches the mockup's
+   * addCanals()/`sug[idx] || "kanał dodatkowy N"`). */
+  readonly nextSuggestedCanalName = computed(() => {
+    const suggestions = this.suggestedCanalNames();
+    const index = this.nonRemovedCanals().length;
+    return suggestions[index] ?? `kanał dodatkowy ${index + 1}`;
+  });
+
+  readonly typicalCanalCount = computed(() => Math.min(this.suggestedCanalNames().length, 3));
 
   /** Ported from the mockup's `dxPicker()` — the catalog search results grouped by category, in
    * the approved display order, category headers hidden when empty. */
@@ -706,18 +734,30 @@ export class ToothDetailPanelComponent {
       .subscribe(() => this.positionChanged.emit());
   }
 
-  /** FR-065 — adds a root canal (server-side enforces the max-6 and PRESENT-only rules). */
-  submitAddCanal(): void {
-    const name = this.newCanalName().trim();
-    if (!name) {
-      return;
-    }
+  /** FR-064/FR-065 — adds one canal named after the next suggestion (server-side enforces the
+   * max-6 and PRESENT-only rules); the suggestion is never patient data until this fires. */
+  addSuggestedCanal(): void {
     this.toothChartService
-      .addCanal(this.patientId(), this.fdiNumber(), { name })
-      .subscribe(() => {
-        this.newCanalName.set('');
-        this.positionChanged.emit();
-      });
+      .addCanal(this.patientId(), this.fdiNumber(), { name: this.nextSuggestedCanalName() })
+      .subscribe(() => this.positionChanged.emit());
+  }
+
+  /** FR-064 — adds every typical canal for this position in one action (mockup's "+ Dodaj typowe
+   * (N)"), sequentially so each add's suggested name still accounts for the ones before it. */
+  addTypicalCanals(): void {
+    const names = this.suggestedCanalNames().slice(0, this.typicalCanalCount());
+    const addNext = (index: number): void => {
+      if (index >= names.length) {
+        return;
+      }
+      this.toothChartService
+        .addCanal(this.patientId(), this.fdiNumber(), { name: names[index] })
+        .subscribe(() => {
+          this.positionChanged.emit();
+          addNext(index + 1);
+        });
+    };
+    addNext(0);
   }
 
   /** FR-065/FR-070 — rename, echoing back the canal's version as expectedVersion. */

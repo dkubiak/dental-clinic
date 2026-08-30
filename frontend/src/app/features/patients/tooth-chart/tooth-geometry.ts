@@ -129,6 +129,27 @@ export function surfaceNamePl(fdiNumber: number, surface: ToothSurfaceName): str
   }
 }
 
+/** Ported from the mockup's `suggestedCanals()` (FR-064) — a non-binding, anatomically-typical
+ * name list for the position, offered as one-click add buttons instead of free-text entry; never
+ * saved as patient data until the user actually adds a canal (FR-064). */
+export function suggestedCanalNames(fdiNumber: number): string[] {
+  const anatomy = toothAnatomy(fdiNumber);
+  if (anatomy.toothType === 'INCISOR' || anatomy.toothType === 'CANINE') {
+    return ['kanał główny'];
+  }
+  if (anatomy.toothType === 'PREMOLAR') {
+    return anatomy.upper && anatomy.position === 4 ? ['policzkowy', 'podniebienny'] : ['kanał główny'];
+  }
+  if (anatomy.deciduous) {
+    return anatomy.upper
+      ? ['policzkowy bliższy', 'policzkowy dalszy', 'podniebienny']
+      : ['bliższy', 'dalszy'];
+  }
+  return anatomy.upper
+    ? ['policzkowy bliższy (MB)', 'policzkowy dalszy (DB)', 'podniebienny (P)', 'MB2']
+    : ['bliższy policzkowy (MB)', 'bliższy językowy (ML)', 'dalszy (D)', 'dalszy językowy (DL)'];
+}
+
 export interface CrownRootRatio {
   crown: number;
   root: number;
