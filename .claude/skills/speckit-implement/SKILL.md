@@ -194,30 +194,18 @@ that phase's Checkpoint is confirmed and before starting the next phase.
    - **Task details**: ID, description, file paths, parallel markers [P]
    - **Execution flow**: Order and dependency requirements
 
-6. Execute implementation following the task plan, using two execution modes depending on the
-   phase's kind:
-
-   **Setup and Foundational phases** (the phases before the first `[Story]`-tagged phase in
-   tasks.md): execute directly in the current context, in order. These are one-time, shared
-   groundwork every story depends on — not user-story-scoped — so they are not delegated to a
-   subagent and do not trigger the after-user-story hook.
-
-   **Each User Story phase** (every phase tagged with a `[Story]` marker, taken in the order
-   tasks.md lists them, respecting any cross-story dependency notes in `Dependencies & Execution
-   Order` / `Shared-File Sequencing Across Stories`):
-   - **Delegate to a fresh subagent**: dispatch that story's tasks (test tasks before their
-     implementation tasks, `[P]`-marked tasks run together, tasks sharing a file run sequentially)
-     to a new subagent with a clean context via the Agent tool, instead of continuing to implement
-     inline in the current context. Give the subagent the story's slice of tasks.md, the paths to
-     plan.md/data-model.md/contracts/research.md, and the story's `**Checkpoint**:` line as its
-     definition of done. Wait for it to report back before proceeding.
-   - **Verify the Checkpoint**: confirm the story's Checkpoint condition actually holds (tasks
-     marked `[X]`, tests passing) before treating the story as done. If the subagent reports
-     failure or the checkpoint doesn't hold, halt and surface the problem to the user — do not run
-     the hook below or start the next story.
-   - **Run the after-user-story hook** (see "Per-User-Story Hook" section above) before moving on
-     to the next User Story phase.
+6. Execute implementation following the task plan:
+   - **Phase-by-phase execution**: Complete each phase before moving to the next, directly in the
+     current context (no subagent delegation)
+   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together
+   - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
+   - **File-based coordination**: Tasks affecting the same files must run sequentially
    - **Validation checkpoints**: Verify each phase completion before proceeding
+   - **After each User Story phase** (every phase tagged with a `[Story]` marker): once its
+     `**Checkpoint**:` condition actually holds (tasks marked `[X]`, tests passing), run the
+     after-user-story hook (see "Per-User-Story Hook" section above) before moving on to the next
+     User Story phase. If the checkpoint doesn't hold, halt and surface the problem — do not run
+     the hook or start the next story.
 
 7. Implementation execution rules:
    - **Setup first**: Initialize project structure, dependencies, configuration
@@ -285,6 +273,6 @@ Report final status with summary of completed work.
 
 - [ ] All tasks in tasks.md completed and marked `[X]`
 - [ ] Implementation validated against specification, plan, and test coverage
-- [ ] Each User Story phase was delegated to a fresh subagent and its Checkpoint verified before the after-user-story hook ran
+- [ ] Each User Story phase's Checkpoint was verified before the after-user-story hook ran
 - [ ] Extension hooks dispatched or skipped according to the rules in Mandatory Post-Execution Hooks above
 - [ ] Completion reported to user with summary of completed work
