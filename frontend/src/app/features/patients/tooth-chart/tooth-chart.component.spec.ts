@@ -33,10 +33,13 @@ function healthyChart(): ToothChart {
 
 describe('ToothChartComponent', () => {
   let fixture: ComponentFixture<ToothChartComponent>;
-  let toothChartService: { getChart: ReturnType<typeof vi.fn> };
+  let toothChartService: { getChart: ReturnType<typeof vi.fn>; conflict$: Subject<string> };
 
   beforeEach(async () => {
-    toothChartService = { getChart: vi.fn().mockReturnValue(of(healthyChart())) };
+    toothChartService = {
+      getChart: vi.fn().mockReturnValue(of(healthyChart())),
+      conflict$: new Subject<string>(),
+    };
     const diagnosisCatalogService = {
       search: vi.fn().mockReturnValue(of([])),
       recentEntries: vi.fn().mockReturnValue([]),
@@ -345,5 +348,29 @@ describe('ToothChartComponent', () => {
       const height = Math.max(...ys) - Math.min(...ys);
       return Math.min(width, height);
     }
+  });
+
+  it('a 409 conflict from any write method surfaces a Polish message with a przeładuj action, never a silent failure (FR-070/SC-010)', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="conflict-banner"]')).toBeFalsy();
+
+    toothChartService.conflict$.next(
+      'Ktoś inny zmienił ten wpis w międzyczasie. Przeładuj dane, aby zobaczyć aktualny stan.',
+    );
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('[data-testid="conflict-banner"]');
+    expect(banner).toBeTruthy();
+    expect(banner.textContent).toContain('Przeładuj');
+
+    toothChartService.getChart.mockClear();
+    fixture.nativeElement
+      .querySelector('[data-testid="conflict-reload"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect(toothChartService.getChart).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[data-testid="conflict-banner"]')).toBeFalsy();
   });
 });

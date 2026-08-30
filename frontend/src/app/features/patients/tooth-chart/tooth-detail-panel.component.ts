@@ -42,9 +42,47 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
         } @else {
           <ul>
             @for (finding of position().currentFindings; track finding.id) {
-              <li data-testid="finding-item">{{ finding.diagnosisCatalogEntry.namePl }}</li>
+              <li data-testid="finding-item">
+                {{ finding.diagnosisCatalogEntry.namePl }}
+                @if (finding.clinicalStatus === 'ACTIVE') {
+                  <button
+                    type="button"
+                    [attr.data-testid]="'correct-finding-' + finding.id"
+                    (click)="startCorrect(finding)"
+                  >
+                    Koryguj
+                  </button>
+                  <button
+                    type="button"
+                    [attr.data-testid]="'close-finding-' + finding.id"
+                    (click)="startClose(finding.id)"
+                  >
+                    Zamknij rozpoznanie
+                  </button>
+                }
+              </li>
             }
           </ul>
+        }
+
+        <!-- FR-032 — "Zamknij rozpoznanie": routes through the same supersede primitive as a
+             correction, but only asks for the date treatment concluded. -->
+        @if (closingFindingId(); as closingId) {
+          <form class="close-form" data-testid="close-form" (submit)="submitClose($event, closingId)">
+            <label>
+              Data zamknięcia
+              <input
+                type="date"
+                data-testid="close-resolved-date-input"
+                [value]="closeResolvedDate()"
+                (input)="closeResolvedDate.set($any($event.target).value)"
+              />
+            </label>
+            <button type="submit" data-testid="close-submit" [disabled]="!closeResolvedDate()">
+              Potwierdź zamknięcie
+            </button>
+            <button type="button" data-testid="close-cancel" (click)="cancelClose()">Anuluj</button>
+          </form>
         }
 
         <!-- FR-034 — resolved/superseded entries stay out of the default list above and are
@@ -78,6 +116,11 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
       </section>
 
       <form (submit)="save($event)">
+        @if (correctingFindingId(); as correctingId) {
+          <p data-testid="correcting-notice">
+            Korygujesz wpis. <button type="button" data-testid="cancel-correct" (click)="cancelCorrect()">Anuluj korektę</button>
+          </p>
+        }
         <label>
           Rozpoznanie
           <input
@@ -149,7 +192,9 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
             />
           </label>
 
-          <button type="submit" data-testid="save-finding" [disabled]="!canSave()">Zapisz</button>
+          <button type="submit" data-testid="save-finding" [disabled]="!canSave()">
+            {{ correctingFindingId() ? 'Zapisz korektę' : 'Zapisz' }}
+          </button>
           <button type="button" data-testid="discard-finding" (click)="discard()">Anuluj</button>
         }
       </form>
@@ -171,6 +216,15 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
       background: var(--pu-surface, #fff);
       border: 1px solid var(--pu-border, #e6dfd5);
       border-radius: 10px;
+    }
+
+    .close-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--pu-border, #e6dfd5);
+      border-radius: 8px;
     }
 
     /* FR-006 — side-by-side on wide viewports, slide-over drawer on narrow ones; the content
@@ -213,6 +267,15 @@ export class ToothDetailPanelComponent {
   /** FR-034 — "historia zęba": collapsed by default, fetched lazily on first expansion. */
   readonly historyOpen = signal(false);
   readonly history = signal<ToothFinding[] | null>(null);
+
+  /** FR-033 — set while the main form is pre-filled to correct this finding rather than create a
+   * new one; save() routes to correctFinding instead of addFinding while this is set. */
+  readonly correctingFindingId = signal<string | null>(null);
+
+  /** FR-032 — "Zamknij rozpoznanie": a separate, minimal form (just the resolution date) shown
+   * alongside the main one, keyed to the finding being closed. */
+  readonly closingFindingId = signal<string | null>(null);
+  readonly closeResolvedDate = signal('');
 
   readonly anatomicalName = computed(() => toothAnatomy(this.fdiNumber()).labelPl);
 
@@ -294,7 +357,7 @@ export class ToothDetailPanelComponent {
       return;
     }
     this.saveState.set('saving');
-    const request$ = this.toothChartService.addFinding(this.patientId(), {
+    const request = {
       fdiNumber: this.fdiNumber(),
       diagnosisCatalogEntryId: entry.id,
       surfaces: entry.anatomicalScope === 'SURFACE' ? this.selectedSurfaces() : null,
@@ -302,7 +365,11 @@ export class ToothDetailPanelComponent {
       freeTextDescription: this.freeTextDescription() || null,
       note: this.note() || null,
       diagnosisDate: this.diagnosisDate(),
-    });
+    };
+    const correctingId = this.correctingFindingId();
+    const request$ = correctingId
+      ? this.toothChartService.correctFinding(this.patientId(), correctingId, request)
+      : this.toothChartService.addFinding(this.patientId(), request);
     this.diagnosisCatalogService.withRecencyTracking(entry.code, request$).subscribe({
       next: (finding) => {
         this.saveState.set('success');
@@ -314,6 +381,55 @@ export class ToothDetailPanelComponent {
         this.saveState.set('error');
       },
     });
+  }
+
+  /** FR-033 — "Koryguj": pre-fills the main form with this finding's current values; save()
+   * then submits through correctFinding (supersede) instead of addFinding. */
+  startCorrect(finding: ToothFinding): void {
+    this.closingFindingId.set(null);
+    this.correctingFindingId.set(finding.id);
+    this.selectedEntry.set(finding.diagnosisCatalogEntry);
+    this.query.set(finding.diagnosisCatalogEntry.namePl);
+    this.searchResults.set([]);
+    this.selectedSurfaces.set(finding.surfaces ?? []);
+    this.severity.set(finding.severity ?? '');
+    this.freeTextDescription.set(finding.freeTextDescription ?? '');
+    this.note.set(finding.note ?? '');
+    this.diagnosisDate.set(finding.diagnosisDate);
+  }
+
+  cancelCorrect(): void {
+    this.correctingFindingId.set(null);
+    this.resetForm();
+  }
+
+  /** FR-032 — "Zamknij rozpoznanie": opens the minimal close form for this finding. */
+  startClose(findingId: string): void {
+    this.correctingFindingId.set(null);
+    this.closingFindingId.set(findingId);
+    this.closeResolvedDate.set('');
+  }
+
+  cancelClose(): void {
+    this.closingFindingId.set(null);
+    this.closeResolvedDate.set('');
+  }
+
+  submitClose(event: Event, findingId: string): void {
+    event.preventDefault();
+    if (!this.closeResolvedDate()) {
+      return;
+    }
+    this.toothChartService
+      .closeFinding(this.patientId(), findingId, { resolvedDate: this.closeResolvedDate() })
+      .subscribe({
+        next: (finding) => {
+          this.cancelClose();
+          this.saveState.set('success');
+          this.saved.emit(finding);
+        },
+        error: () => this.saveState.set('error'),
+      });
   }
 
   discard(): void {
@@ -341,5 +457,6 @@ export class ToothDetailPanelComponent {
     this.freeTextDescription.set('');
     this.note.set('');
     this.diagnosisDate.set(new Date().toISOString().slice(0, 10));
+    this.correctingFindingId.set(null);
   }
 }

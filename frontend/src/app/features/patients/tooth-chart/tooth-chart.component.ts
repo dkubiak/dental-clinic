@@ -41,6 +41,17 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
         </p>
       }
       @case ('loaded') {
+        <!-- FR-070/SC-010 — a stale write is never lost silently: whichever child component
+             triggered it, one reload prompt appears here. -->
+        @if (conflictMessage(); as message) {
+          <div class="conflict-banner" data-testid="conflict-banner" role="alert">
+            <p>{{ message }}</p>
+            <button type="button" data-testid="conflict-reload" (click)="reloadAfterConflict()">
+              Przeładuj
+            </button>
+          </div>
+        }
+
         @if (isEmpty()) {
           <p data-testid="tooth-chart-empty">Brak odnotowanych zmian — wszystkie zęby zdrowe.</p>
         }
@@ -258,6 +269,23 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
       background: var(--pu-accent, #cbad89);
       font-weight: 600;
     }
+    .conflict-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      margin: 12px 0;
+      background: var(--pu-tooth-diseased-fill, #f6cccc);
+      border: 1px solid var(--pu-tooth-diseased-stroke, #b33);
+      border-radius: 8px;
+    }
+    .conflict-banner button {
+      border: 1px solid var(--pu-tooth-diseased-stroke, #b33);
+      background: var(--pu-surface, #fff);
+      border-radius: 6px;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
     .legend {
       margin: 12px 0;
     }
@@ -318,6 +346,10 @@ export class ToothChartComponent implements OnInit {
    * with that tooth+surface already marked, instead of requiring the panel to be opened first. */
   readonly presetSurface = signal<{ fdiNumber: number; surface: ToothSurface } | null>(null);
 
+  /** FR-070/SC-010 — set from ToothChartService.conflict$ whenever any write (from this
+   * component or a child) hits a 409; cleared once the user reloads. */
+  readonly conflictMessage = signal<string | null>(null);
+
   /** FR-043/FR-046 — dentitionMode is a pure view filter over the 52 positions that always exist
    * (research.md D2); MIXED shows both dentition types, PERMANENT/DECIDUOUS show only their own. */
   readonly visiblePositions = computed<ToothPosition[]>(() => {
@@ -355,6 +387,10 @@ export class ToothChartComponent implements OnInit {
     const position = (this.chart()?.positions ?? []).find((p) => p.fdiNumber === menu.fdiNumber);
     return position?.currentFindings.at(-1) ?? null;
   });
+
+  constructor() {
+    this.toothChartService.conflict$.subscribe((message) => this.conflictMessage.set(message));
+  }
 
   ngOnInit(): void {
     this.loadState.set('loading');
@@ -394,6 +430,13 @@ export class ToothChartComponent implements OnInit {
   onPanelClosed(): void {
     this.selectedFdiNumber.set(null);
     this.presetSurface.set(null);
+  }
+
+  /** FR-070/SC-010 — the reload prompt's action: dismiss the banner and re-fetch the chart so the
+   * user sees the current, authoritative state instead of retrying blind against stale data. */
+  reloadAfterConflict(): void {
+    this.conflictMessage.set(null);
+    this.refreshChart();
   }
 
   existingSurfacesFor(position: ToothPosition): ToothSurface[] {

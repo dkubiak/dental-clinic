@@ -492,11 +492,11 @@ verify the UI shows a message with a reload action rather than failing silently.
   DOCTOR-authored finding shows both authors in `.../history` (FR-058) in
   `patient-service/src/test/java/com/dentalclinic/patient/api/ToothFindingControllerTest.java`
   (extends T051)
-- [ ] T082 [P] [US3] Failing Vitest test: "Zamknij rozpoznanie" requires a `resolvedDate` and
+- [X] T082 [P] [US3] Failing Vitest test: "Zamknij rozpoznanie" requires a `resolvedDate` and
   "Koryguj" pre-fills the current values and submits with `supersedesFindingId` set in
   `frontend/src/app/features/patients/tooth-chart/tooth-detail-panel.component.spec.ts` (extends
   T052)
-- [ ] T083 [P] [US3] Failing Vitest test: a `409` response from any `tooth-chart.service.ts` write
+- [X] T083 [P] [US3] Failing Vitest test: a `409` response from any `tooth-chart.service.ts` write
   method surfaces a readable Polish message with a "przeładuj" (reload) action in
   `tooth-chart.component.ts`, never a silent failure or a generic unhandled-error state (FR-070/
   SC-010) in `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts`
@@ -513,9 +513,9 @@ verify the UI shows a message with a reload action rather than failing silently.
   `ToothFindingController.java` (depends on T084, T085, T081)
 - [X] T087 [US3] Add `closeFinding`/`correctFinding` methods to `tooth-chart.service.ts` (depends on
   T086)
-- [ ] T088 [US3] Add "Zamknij rozpoznanie"/"Koryguj" actions to `tooth-detail-panel.component.ts`,
+- [X] T088 [US3] Add "Zamknij rozpoznanie"/"Koryguj" actions to `tooth-detail-panel.component.ts`,
   diagram stops showing "aktywne rozpoznanie" for a closed finding (depends on T082, T087, T076)
-- [ ] T089 [US3] Add a shared, typed 409-conflict handler to `tooth-chart.service.ts` (catches the
+- [X] T089 [US3] Add a shared, typed 409-conflict handler to `tooth-chart.service.ts` (catches the
   optimistic-lock/supersede-conflict response) and a reload-prompt affordance to
   `tooth-chart.component.ts` (FR-070/SC-010) (depends on T083, T087)
 
@@ -584,7 +584,7 @@ write and verify the same reload prompt from User Story 3 appears.
   .../positions/{fdiNumber}/canals[/{canalId}]`, `@PreAuthorize("hasAnyRole('DOCTOR','ASSISTANT')")`
   in `patient-service/src/main/java/com/dentalclinic/patient/api/RootCanalController.java` (depends
   on T097, T098, T092)
-- [ ] T100 [US4] Add `changePresence`/`addCanal`/`updateCanal`/`removeCanal` methods to
+- [X] T100 [US4] Add `changePresence`/`addCanal`/`updateCanal`/`removeCanal` methods to
   `tooth-chart.service.ts` (depends on T096, T099)
 - [ ] T101 [US4] Add presence controls to `tooth-detail-panel.component.ts` and the
   `tooth-absent`-token rendering to `tooth-arch.component.ts` (depends on T093, T100)
@@ -634,7 +634,7 @@ mixed, and confirm no existing finding disappears or becomes inaccessible.
   `ToothChartController.java` (depends on T107, T105)
 - [ ] T109 [P] [US5] Create `DentitionModePatchRequest.java` in
   `patient-service/src/main/java/com/dentalclinic/patient/api/DentitionModePatchRequest.java`
-- [ ] T110 [US5] Add `changeDentitionMode` method to `tooth-chart.service.ts` (depends on T108,
+- [X] T110 [US5] Add `changeDentitionMode` method to `tooth-chart.service.ts` (depends on T108,
   T109)
 - [ ] T111 [US5] Add the dentition-mode switcher UI to `tooth-chart.component.ts` and
   deciduous/mixed rendering (smaller/marked deciduous silhouettes, FR-046) to
@@ -692,7 +692,7 @@ existing quick context-menu on a multi-selection and confirm it applies to every
   `patient-service/src/main/java/com/dentalclinic/patient/api/ToothFindingBulkResultResponse.java`
 - [ ] T118 [US6] Add `POST /patients/{patientId}/tooth-chart/findings/bulk` to
   `ToothFindingController.java` (depends on T116, T117, T113)
-- [ ] T119 [US6] Add `addFindingsBulk` method to `tooth-chart.service.ts` (depends on T118)
+- [X] T119 [US6] Add `addFindingsBulk` method to `tooth-chart.service.ts` (depends on T118)
 - [ ] T120 [US6] Add multi-select state, quadrant/arch/segment shortcuts, and drag-select to
   `tooth-chart.component.ts` (depends on T114, T063)
 - [ ] T121 [US6] Extend `tooth-context-menu.component.ts` (US1, T065) to detect an active
@@ -719,10 +719,10 @@ accessibility audit, and end-to-end validation across every user story.
   `patient-service/src/main/java/com/dentalclinic/patient/rodo/PatientExportService.java` and
   `patient-service/src/main/java/com/dentalclinic/patient/api/PatientFullExportResponse.java`
   (depends on T055, T097, T107)
-- [ ] T124 [P] Confirm `PatientErasureService`'s existing retention-aware erasure procedure covers
+- [X] T124 [P] Confirm `PatientErasureService`'s existing retention-aware erasure procedure covers
   the five new tables by construction (FR-062) — no new erasure endpoint or special-cased logic
   needed, same posture as feature 004's own `TODO(T060)` deferral
-- [ ] T125 Verify no `@PatchMapping`/`@DeleteMapping` exists on `ToothFindingController.java`
+- [X] T125 Verify no `@PatchMapping`/`@DeleteMapping` exists on `ToothFindingController.java`
   (append-only enforced by API surface, FR-030) — grep the file and confirm zero matches
 - [ ] T126 [P] Run `specs/005-tooth-chart-diagnoses/quickstart.md` Scenarios 1-8 end-to-end against a
   local stack (Testcontainers Postgres + `backend` + `patient-service` + `frontend`); Scenario 8's

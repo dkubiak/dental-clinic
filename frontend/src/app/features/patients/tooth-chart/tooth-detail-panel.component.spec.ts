@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DiagnosisCatalogEntry, ToothPosition } from '../patients.models';
+import { DiagnosisCatalogEntry, ToothFinding, ToothPosition } from '../patients.models';
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
 import { ToothDetailPanelComponent } from './tooth-detail-panel.component';
@@ -49,11 +49,35 @@ function freshPosition(fdiNumber: number): ToothPosition {
   };
 }
 
+function activeFinding(overrides: Partial<ToothFinding> = {}): ToothFinding {
+  return {
+    id: 'f1',
+    fdiNumber: 36,
+    diagnosisCatalogEntry: CARIES,
+    surfaces: ['MESIAL'],
+    rootCanalId: null,
+    severity: null,
+    freeTextDescription: null,
+    note: null,
+    diagnosisDate: '2026-01-01',
+    resolvedDate: null,
+    clinicalStatus: 'ACTIVE',
+    recordStatus: 'CURRENT',
+    supersedesFindingId: null,
+    authorAccountId: 'a1',
+    authorRole: 'DOCTOR',
+    createdAt: '2026-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 describe('ToothDetailPanelComponent', () => {
   let fixture: ComponentFixture<ToothDetailPanelComponent>;
   let toothChartService: {
     addFinding: ReturnType<typeof vi.fn>;
     getPositionHistory: ReturnType<typeof vi.fn>;
+    closeFinding: ReturnType<typeof vi.fn>;
+    correctFinding: ReturnType<typeof vi.fn>;
   };
   let diagnosisCatalogService: {
     search: ReturnType<typeof vi.fn>;
@@ -61,7 +85,12 @@ describe('ToothDetailPanelComponent', () => {
   };
 
   beforeEach(async () => {
-    toothChartService = { addFinding: vi.fn(), getPositionHistory: vi.fn().mockReturnValue(of([])) };
+    toothChartService = {
+      addFinding: vi.fn(),
+      getPositionHistory: vi.fn().mockReturnValue(of([])),
+      closeFinding: vi.fn().mockReturnValue(of(activeFinding())),
+      correctFinding: vi.fn().mockReturnValue(of(activeFinding())),
+    };
     diagnosisCatalogService = {
       search: vi.fn().mockReturnValue(of([CARIES, PULPITIS])),
       withRecencyTracking: vi.fn((_code: string, obs) => obs),
@@ -216,5 +245,61 @@ describe('ToothDetailPanelComponent', () => {
 
     expect(toothChartService.getPositionHistory).toHaveBeenCalledWith('p1', 36);
     expect(fixture.nativeElement.querySelectorAll('[data-testid="history-item"]').length).toBe(2);
+  });
+
+  it('"Zamknij rozpoznanie" requires a resolvedDate (T082)', () => {
+    const finding = activeFinding();
+    fixture.componentRef.setInput('position', {
+      ...freshPosition(36),
+      currentFindings: [finding],
+    });
+    fixture.detectChanges();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="close-finding-f1"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    const submitButton = fixture.nativeElement.querySelector('[data-testid="close-submit"]');
+    expect(submitButton.disabled).toBe(true);
+
+    fixture.componentInstance.closeResolvedDate.set('2026-08-30');
+    fixture.detectChanges();
+    expect(submitButton.disabled).toBe(false);
+
+    fixture.nativeElement
+      .querySelector('[data-testid="close-form"]')
+      .dispatchEvent(new Event('submit'));
+
+    expect(toothChartService.closeFinding).toHaveBeenCalledWith('p1', 'f1', {
+      resolvedDate: '2026-08-30',
+    });
+  });
+
+  it('"Koryguj" pre-fills the current values and submits through correctFinding with the original id (T082)', () => {
+    const finding = activeFinding({ note: 'Stara notatka' });
+    fixture.componentRef.setInput('position', {
+      ...freshPosition(36),
+      currentFindings: [finding],
+    });
+    toothChartService.correctFinding.mockReturnValue(of({ ...finding, id: 'f2', supersedesFindingId: 'f1' }));
+    fixture.detectChanges();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="correct-finding-f1"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.selectedEntry()).toBe(CARIES);
+    expect(fixture.componentInstance.selectedSurfaces()).toEqual(['MESIAL']);
+    expect(fixture.componentInstance.note()).toBe('Stara notatka');
+
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+
+    expect(toothChartService.correctFinding).toHaveBeenCalledWith(
+      'p1',
+      'f1',
+      expect.objectContaining({ diagnosisCatalogEntryId: CARIES.id, note: 'Stara notatka' }),
+    );
   });
 });
