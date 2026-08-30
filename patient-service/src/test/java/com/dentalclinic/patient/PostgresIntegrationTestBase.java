@@ -94,7 +94,9 @@ public abstract class PostgresIntegrationTestBase {
               + " 'TOOTH_STATE_CHANGED', 'TOOTH_CHART_VIEWED', 'PATIENT_DATA_EXPORTED',"
               + " 'PATIENT_DATA_ERASURE_REQUESTED', 'PATIENT_DATA_ERASURE_COMPLETED',"
               + " 'LOGIN_SUCCESS', 'MEDICAL_HISTORY_ENTRY_ADDED', 'MEDICAL_HISTORY_ENTRY_VIEWED',"
-              + " 'MEDICAL_HISTORY_HISTORY_VIEWED'); END IF; END $$;");
+              + " 'MEDICAL_HISTORY_HISTORY_VIEWED', 'TOOTH_POSITION_PRESENCE_CHANGED',"
+              + " 'DENTITION_MODE_CHANGED', 'ROOT_CANAL_ADDED', 'ROOT_CANAL_CHANGED',"
+              + " 'ROOT_CANAL_REMOVED', 'TOOTH_FINDING_ADDED'); END IF; END $$;");
       statement.execute(
           """
           CREATE TABLE IF NOT EXISTS audit_log_entry (

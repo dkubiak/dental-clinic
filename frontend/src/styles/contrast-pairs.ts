@@ -53,6 +53,13 @@ export const contrastPairs: ContrastPair[] = [
   { foreground: 'tooth-healthy-stroke', background: 'tooth-healthy-fill', minRatio: 3.0 },
   { foreground: 'tooth-diseased-stroke', background: 'tooth-diseased-fill', minRatio: 3.0 },
   { foreground: 'tooth-selected-stroke', background: 'tooth-healthy-fill', minRatio: 3.0 },
+
+  // Feature 005 (odontogram z rozpoznaniami) — research.md D10.
+  { foreground: 'tooth-restored-stroke', background: 'tooth-restored-fill', minRatio: 3.0 },
+  { foreground: 'tooth-closed-stroke', background: 'tooth-healthy-fill', minRatio: 3.0 },
+  { foreground: 'tooth-absent', background: 'bg', minRatio: 3.0 },
+  { foreground: 'canal-treat', background: 'tooth-root-fill', minRatio: 3.0 },
+  { foreground: 'canal-done', background: 'tooth-root-fill', minRatio: 3.0 },
 ];
 
 contrastPairs.forEach(assertPairAllowed);

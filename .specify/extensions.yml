@@ -2,8 +2,8 @@
 #
 # NOTE: this is hand-authored for dental-clinic-app, not an installed upstream
 # github/spec-kit extension package (none was available to install here). The
-# `git` entry below is backed by the local skill at
-# .claude/skills/speckit-git-branch/SKILL.md.
+# `git` entries below are backed by the local skills at
+# .claude/skills/speckit-git-branch/SKILL.md and .claude/skills/speckit-git-push/SKILL.md.
 
 hooks:
   before_specify:
@@ -14,5 +14,16 @@ hooks:
         name (e.g. 004-patient-medical-history), branching from origin/main, before
         spec.md is written. Mirrors the branch-per-feature convention already used
         by 001-staff-auth-rbac.
+      optional: false
+      enabled: true
+
+  after_user_story:
+    - extension: "git"
+      command: "speckit.git.push"
+      description: >-
+        Commit and push the current feature branch to origin once a User Story's
+        tasks.md Checkpoint passes during /speckit-implement, so each story lands on
+        origin (and CI runs) incrementally instead of one push at the end of the
+        whole feature.
       optional: false
       enabled: true

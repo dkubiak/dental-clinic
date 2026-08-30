@@ -1,8 +1,6 @@
 package com.dentalclinic.patient.api;
 
 import com.dentalclinic.patient.toothchart.ToothChartService;
-import com.dentalclinic.patient.toothchart.ToothState;
-import com.dentalclinic.patient.toothchart.ToothStatus;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -15,9 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * {@code GET/PATCH /patients/{patientId}/tooth-chart[/{toothNumber}]} per
- * contracts/patient-api.yaml — US2 (FR-005/FR-006). {@code @PreAuthorize} restricted to
- * DOCTOR/ASSISTANT (RECEPTION excluded, rbac-policy.md).
+ * {@code GET /patients/{patientId}/tooth-chart[/positions/{fdiNumber}/history]}, {@code PATCH
+ * .../positions/{fdiNumber}/presence}, {@code PATCH .../dentition-mode} per
+ * contracts/patient-api.yaml (FR-005/FR-034/FR-038/FR-044). {@code @PreAuthorize} restricted to
+ * DOCTOR/ASSISTANT (RECEPTION excluded, rbac-policy.md); deny→404.
  */
 @RestController
 public class ToothChartController {
@@ -30,27 +29,56 @@ public class ToothChartController {
 
   @GetMapping("/patients/{patientId}/tooth-chart")
   @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
-  public ResponseEntity<List<ToothStateResponse>> getChart(
+  public ResponseEntity<ToothChartResponse> getChart(
       @PathVariable UUID patientId, Principal principal) {
-    List<ToothState> teeth = toothChartService.getChart(patientId, actorId(principal));
-    return ResponseEntity.ok(teeth.stream().map(ToothStateResponse::from).toList());
+    ToothChartService.ChartView view = toothChartService.getChart(patientId, actorId(principal));
+    return ResponseEntity.ok(ToothChartResponse.from(view));
   }
 
-  @PatchMapping("/patients/{patientId}/tooth-chart/{toothNumber}")
+  @PatchMapping("/patients/{patientId}/tooth-chart/positions/{fdiNumber}/presence")
   @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
-  public ResponseEntity<ToothStateResponse> setStatus(
+  public ResponseEntity<ToothPositionResponse> changePresence(
       @PathVariable UUID patientId,
-      @PathVariable int toothNumber,
-      @RequestBody ToothStatusRequest request,
+      @PathVariable int fdiNumber,
+      @RequestBody PositionPresencePatchRequest request,
       Principal principal) {
-    ToothState tooth =
-        toothChartService.setStatus(patientId, toothNumber, request.status(), actorId(principal));
-    return ResponseEntity.ok(ToothStateResponse.from(tooth));
+    var view =
+        toothChartService.changePresence(
+            patientId,
+            fdiNumber,
+            request.presence(),
+            request.presenceDate(),
+            request.expectedVersion(),
+            actorId(principal));
+    return ResponseEntity.ok(ToothPositionResponse.from(view));
   }
 
-  private static UUID actorId(Principal principal) {
+  @PatchMapping("/patients/{patientId}/tooth-chart/dentition-mode")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<ToothChartResponse> changeDentitionMode(
+      @PathVariable UUID patientId,
+      @RequestBody DentitionModePatchRequest request,
+      Principal principal) {
+    ToothChartService.ChartView view =
+        toothChartService.changeDentitionMode(
+            patientId, request.dentitionMode(), actorId(principal));
+    return ResponseEntity.ok(ToothChartResponse.from(view));
+  }
+
+  @GetMapping("/patients/{patientId}/tooth-chart/positions/{fdiNumber}/history")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<List<ToothFindingResponse>> getPositionHistory(
+      @PathVariable UUID patientId, @PathVariable int fdiNumber, Principal principal) {
+    List<ToothChartService.FindingView> history =
+        toothChartService.getPositionHistory(patientId, fdiNumber, actorId(principal));
+    List<ToothFindingResponse> response =
+        history.stream()
+            .map(fv -> ToothFindingResponse.from(fv.finding(), fdiNumber, fv.entry()))
+            .toList();
+    return ResponseEntity.ok(response);
+  }
+
+  static UUID actorId(Principal principal) {
     return UUID.fromString(principal.getName());
   }
-
-  public record ToothStatusRequest(ToothStatus status) {}
 }

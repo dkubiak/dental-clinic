@@ -74,6 +74,28 @@
   domyślnych usunięta; typowa anatomia pozostaje wyłącznie niezapisywaną podpowiedzią przy
   dodawaniu (FR-063, FR-064).
 
+### Session 2026-08-30 (piąta tura — po `/speckit-analyze`)
+
+- Q: Jak pozycja słownika "inne rozpoznanie" ma otrzymać zakres anatomiczny, skoro FR-011a wymaga
+  jawnego wskazania tego zakresu przez użytkownika, a `anatomicalScope` jest polem stałym na
+  wierszu słownika (jeden wiersz = jeden zakres)? → A: Słownik zawiera cztery odrębne wiersze
+  "inne rozpoznanie" — po jednym dla każdego z czterech zakresów anatomicznych (`powierzchnia
+  zęba`, `cały ząb`, `korzeń / tkanki okołowierzchołkowe`, `przyzębie wokół zęba`). Użytkownik
+  wybiera z wyszukiwarki słownika wiersz odpowiadający zamierzonemu zakresowi — mechanizm "zakres
+  wynika ze słownika" pozostaje jednolity dla wszystkich wpisów, bez zmiany kontraktu API ani
+  modelu danych poza samym seedem (FR-011a).
+- Q: Czy szybkie menu kontekstowe (FR-020a) dla pojedynczego zęba powinno być dostępne już w US1
+  (P1), czy pozostać w całości odsunięte do US6 (P3, zaznaczenie wielokrotne)? → A: Menu dla
+  pojedynczego zęba należy do US1 — FR-020a opisuje asystentkę notującą rozpoznanie dyktowane przez
+  lekarza na jednym zębie, co nie wymaga zaznaczenia wielokrotnego. US6 dokłada wyłącznie
+  rozszerzenie menu na aktywne zaznaczenie wielu zębów (FR-020b), nie wprowadza go od zera.
+- Q: Dla kryteriów opartych na liczbie interakcji/czasie (SC-001, SC-012, SC-013), bez żadnego
+  zadania weryfikującego — dopisać zautomatyzowane testy, czy uznać za tę samą kategorię
+  akceptowanej luki co SC-004/SC-009/SC-011? → A: Uznać za akceptowaną lukę tej samej kategorii.
+  Są to metryki UX/czasowe, których zautomatyzowany test w Vitest/jsdom i tak nie zmierzyłby
+  wiarygodnie (liczyłby wywołania metod, nie realny czas użytkownika) — spójne z `plan.md`'s
+  dotychczasowym podejściem do SC-004/SC-009/SC-011.
+
 **Input**: User description: "Interaktywny model wizualizacji zębów (diagram stomatologiczny /
 odontogram): dwa łuki zębowe z klikalnymi zębami, w którym lekarz oznacza który ząb jest chory,
 wybiera z listy szczegółową jednostkę chorobową (rozpoznanie) oraz wyklikuje konkretną
@@ -166,6 +188,11 @@ mlecznego.
 7. **Given** wybrane rozpoznanie o zakresie "cały ząb" (np. "zapalenie miazgi"), **When** lekarz
    otwiera formularz, **Then** wybór powierzchni jest niedostępny/ukryty, a zapis nie wymaga
    wskazania powierzchni.
+8. **Given** ząb 36 bez zaznaczenia wielokrotnego, **When** asystentka wywołuje szybkie menu
+   kontekstowe prawym przyciskiem myszy albo przytrzymaniem palca na zębie lub strefie powierzchni
+   i wybiera pozycję z listy najczęstszych, **Then** wpis zapisuje się od razu, bez otwierania
+   pełnego formularza (FR-020a; session 2026-08-30 piąta tura — dostępność tej ścieżki dla
+   pojedynczego zęba nie zależy od trybu zaznaczenia wielokrotnego z US6).
 
 ---
 
@@ -316,7 +343,9 @@ nie warunek działania.
 
 **Uwaga**: zaznaczenie wielokrotne obejmuje zarówno zęby, jak i części zęba — operator może wskazać
 np. sześć zębów przednich i w każdym z nich powierzchnię przedsionkową, a następnie zapisać jeden
-wspólny stan (FR-004a..FR-004c).
+wspólny stan (FR-004a..FR-004c). Samo szybkie menu kontekstowe (FR-020a) już istnieje od US1 dla
+pojedynczego zęba — ta historyjka dokłada wyłącznie jego rozszerzenie na aktywne zaznaczenie wielu
+zębów (FR-020b, session 2026-08-30 piąta tura), nie wprowadza menu od zera.
 
 **Independent Test**: Można przetestować zaznaczając wielokrotnie kilka zębów, przypisując im jedno
 rozpoznanie o zakresie przyzębia i weryfikując, że powstało tyle odrębnych wpisów, ile zaznaczono
@@ -470,11 +499,13 @@ zębów, a każdy da się później skorygować niezależnie.
   słownika, a nie wpisuje rozpoznania z wolnej ręki. Słownik MUST NOT być edytowalny przez
   użytkowników aplikacji, w tym ADMINISTRATORA — jego zmiana przechodzi przez ten sam pipeline, co
   każda inna zmiana w systemie (Principle VI).
-- **FR-011a**: Słownik MUST zawierać zapasową pozycję "inne rozpoznanie", dla której system MUST
-  wymagać opisu tekstowego, i MUST oznaczać wpisy z tą pozycją jako wymagające doprecyzowania, tak
-  aby dało się je odnaleźć i uzupełnić po rozszerzeniu słownika. Pozycja "inne rozpoznanie" MUST
-  wymagać jawnego wskazania zakresu anatomicznego (FR-021) przez użytkownika, ponieważ nie wynika
-  on ze słownika.
+- **FR-011a**: Słownik MUST zawierać cztery zapasowe pozycje "inne rozpoznanie" — po jednej dla
+  każdego z czterech zakresów anatomicznych z FR-021 — dla których system MUST wymagać opisu
+  tekstowego, i MUST oznaczać wpisy z taką pozycją jako wymagające doprecyzowania, tak aby dało się
+  je odnaleźć i uzupełnić po rozszerzeniu słownika. Użytkownik wskazuje zamierzony zakres
+  anatomiczny wybierając z wyszukiwarki słownika odpowiedni wiersz "inne rozpoznanie" (session
+  2026-08-30 piąta tura) — zakres nadal wynika wyłącznie ze słownika, tak jak dla każdej innej
+  pozycji.
 - **FR-012**: Każda pozycja słownika MUST mieć: unikalny kod techniczny, nazwę w języku polskim,
   kategorię, zakres anatomiczny (patrz FR-021) oraz — tam, gdzie istnieje odpowiednik —
   przypisany kod ICD-10.
@@ -822,6 +853,11 @@ zębów, a każdy da się później skorygować niezależnie.
 - Zaznaczenie wielokrotne jest narzędziem wprowadzania danych, nie osobnym bytem — jego rezultatem
   jest zawsze zbiór niezależnych wpisów, po jednym na ząb, każdy z własną historią i możliwością
   osobnej korekty.
+- **Pokrycie testowe kryteriów interakcji/czasu**: SC-001, SC-012 i SC-013 (liczba interakcji i
+  czas realizacji przepływu) są, tak jak wcześniej zaakceptowane SC-004/SC-009/SC-011, akceptowaną
+  luką pokrycia automatycznego — Vitest/jsdom nie zmierzy wiarygodnie realnego czasu ani liczby
+  interakcji użytkownika, więc te kryteria pozostają manualną/strukturalną walidacją, a nie
+  przedmiotem dedykowanego testu jednostkowego (session 2026-08-30 piąta tura).
 - **Zależność międzymodułowa**: ta specyfikacja zastępuje binarny model stanu zęba z
   `002-patient-records` i rozszerza system tokenów z `003-brand-ui-theme`. Uprawnienia ról
   pozostają zgodne z FR-006a z `002` (DOCTOR i ASSISTANT z prawem zapisu, RECEPTION bez dostępu).

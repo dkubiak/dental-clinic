@@ -2,16 +2,11 @@ import { expect, test } from '@playwright/test';
 import { currentTotpCode, loadSeedAccounts } from './support/seed-accounts';
 
 /**
- * T044 — covers spec.md US2 Acceptance Scenarios 1–4 (tooth-chart view/edit). Requires the
- * backend (auth-service + patient-service) running locally with
- * `-Dspring.profiles.active=e2e-seed` (see quickstart.md Prerequisites).
- *
- * <p>Scenarios 1–3 (toggle/revert/default-healthy) are exercised with the DOCTOR seed account;
- * ASSISTANT's equal tooth-chart access (rbac-policy.md) is re-proven end to end by the dedicated
- * ASSISTANT test below (T061 added the seed account) as well as server-side by
- * ToothChartApiTest#assistant_canToggleToothStatus. Scenario 4 (RECEPTION denied) is proven here
- * client-side (no tooth-chart tab renders) — the server-side 404 is proven by
- * ToothChartApiTest#reception_isDenied404_onReadChart/onToggleToothStatus.
+ * Feature 005 (005-tooth-chart-diagnoses) — covers spec.md User Story 1 Acceptance Scenarios 1-5
+ * (quickstart.md Scenario 1). Replaces the old binary tooth-state e2e suite this feature's
+ * migration (V4__tooth_chart_diagnoses.sql) drops outright — requires the backend
+ * (auth-service + patient-service) running locally with `-Dspring.profiles.active=e2e-seed`
+ * (see quickstart.md Prerequisites).
  */
 
 const seedAccounts = loadSeedAccounts();
@@ -32,11 +27,6 @@ async function loginWithMfa(
 }
 
 async function createPatient(page: import('@playwright/test').Page, lastName: string) {
-  // `new-patient-action` exists twice (desktop nav link + mobile FAB, app-shell.component.ts,
-  // since feature 003's responsive redesign) — exactly one is visible per viewport (CSS media
-  // query), the other `display:none`. `.first()` (DOM order) always grabbed the desktop one,
-  // hanging on mobile-chromium/mobile-webkit/tablet-chromium; `:visible` picks whichever one the
-  // current viewport actually renders.
   await page.locator('[data-testid="new-patient-action"]:visible').click();
   await page.waitForURL('**/patients/new');
 
@@ -51,59 +41,88 @@ async function createPatient(page: import('@playwright/test').Page, lastName: st
   await page.waitForURL(/\/patients\/[0-9a-f-]{36}$/);
 }
 
-test.describe('US2 — Wizualne oznaczanie stanu uzębienia', () => {
-  test('Scenario 3: a newly created record defaults every tooth to healthy', async ({ page }) => {
-    await loginWithMfa(page, seedAccounts.doctor);
-    await createPatient(page, 'Testowy-E2E-Tooth-3');
+const teethLocator = (page: import('@playwright/test').Page) =>
+  page.locator('[data-testid^="tooth-"]:not([data-testid^="tooth-chart"])');
 
-    await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
-    await expect(page.locator('[data-testid^="tooth-"]')).toHaveCount(32);
-    await expect(page.locator('[data-testid^="tooth-"].sick')).toHaveCount(0);
-  });
-
-  test('Scenario 1 & 2: doctor marks a tooth sick, then reverts it to healthy', async ({
+test.describe('US1 — Lekarz odnotowuje rozpoznanie na konkretnej powierzchni zęba', () => {
+  test('Scenario 1: a fresh chart renders both arches with an empty-state message', async ({
     page,
   }) => {
     await loginWithMfa(page, seedAccounts.doctor);
     await createPatient(page, 'Testowy-E2E-Tooth-1');
 
     await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
-    await page.locator('[data-testid="tooth-11"]').click();
-    await page.getByTestId('toggle-status').click();
-    await expect(page.locator('[data-testid="tooth-11"]')).toHaveClass(/sick/);
-
-    await page.getByTestId('toggle-status').click();
-    await expect(page.locator('[data-testid="tooth-11"]')).not.toHaveClass(/sick/);
+    await expect(teethLocator(page)).toHaveCount(32);
+    await expect(page.getByTestId('tooth-chart-empty')).toBeVisible();
   });
 
-  test('SC-002: a tooth-state toggle is reflected within 15 seconds of opening the record', async ({
+  test('Scenario 2-5: doctor records a surface-scoped finding and it persists after reload', async ({
     page,
   }) => {
     await loginWithMfa(page, seedAccounts.doctor);
-    await createPatient(page, 'Testowy-E2E-Tooth-SC002');
+    await createPatient(page, 'Testowy-E2E-Tooth-2');
+    const url = page.url();
 
-    // Timer starts once the record's tooth-chart tab is open (spec.md SC-002: "od otwarcia
-    // kartoteki pacjenta") and ends when the toggled visual state is reflected.
-    const start = Date.now();
     await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
-    await page.locator('[data-testid="tooth-18"]').click();
-    await page.getByTestId('toggle-status').click();
-    await expect(page.locator('[data-testid="tooth-18"]')).toHaveClass(/sick/);
-    const elapsedMs = Date.now() - start;
+    await page.locator('[data-testid="tooth-36"]').click();
 
-    expect(elapsedMs).toBeLessThan(15_000);
+    await expect(page.locator('[data-testid="finding-list-empty"]')).toBeVisible();
+
+    await page.getByTestId('catalog-search-input').fill('próchnica zębiny');
+    await page.getByTestId('catalog-entry-K02.1').click();
+
+    // Scenario 3 — blocked without a surface.
+    await expect(page.getByTestId('save-finding')).toBeDisabled();
+
+    // Scenario 4 — pick a surface, then save.
+    await page.getByTestId('surface-zone-OCCLUSAL_INCISAL').click();
+    await expect(page.getByTestId('save-finding')).toBeEnabled();
+    await page.getByTestId('save-finding').click();
+    await expect(page.getByTestId('save-success')).toBeVisible();
+
+    // Scenario 5 — reload and verify persistence.
+    await page.goto(url);
+    await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
+    await page.locator('[data-testid="tooth-36"]').click();
+    await expect(page.getByTestId('finding-item')).toContainText('Próchnica zębiny');
   });
 
-  test('Scenario 4: reception has no access to the tooth chart', async ({ page }) => {
+  test('Scenario 6: an incisor offers an incisal surface, not an occlusal one', async ({
+    page,
+  }) => {
+    await loginWithMfa(page, seedAccounts.doctor);
+    await createPatient(page, 'Testowy-E2E-Tooth-6');
+
+    await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
+    await page.locator('[data-testid="tooth-11"]').click();
+
+    const occlusalIncisalZone = page.getByTestId('surface-zone-OCCLUSAL_INCISAL');
+    await expect(occlusalIncisalZone).toHaveAttribute('aria-label', /sieczna/);
+  });
+
+  test('Scenario 7: a WHOLE_TOOTH-scope entry hides the surface picker', async ({ page }) => {
+    await loginWithMfa(page, seedAccounts.doctor);
+    await createPatient(page, 'Testowy-E2E-Tooth-7');
+
+    await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
+    await page.locator('[data-testid="tooth-36"]').click();
+    await page.getByTestId('catalog-search-input').fill('zapalenie miazgi nieodwracalne');
+    await page.getByTestId('catalog-entry-K04.0i').click();
+
+    await expect(page.getByTestId('surface-picker')).toHaveCount(0);
+    await expect(page.getByTestId('save-finding')).toBeEnabled();
+  });
+
+  test('reception has no access to the tooth chart tab', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.reception);
-    await createPatient(page, 'Testowy-E2E-Tooth-4');
+    await createPatient(page, 'Testowy-E2E-Tooth-Reception');
 
     await expect(page.getByRole('tab', { name: 'Stan uzębienia' })).toHaveCount(0);
   });
 
-  test('Scenario 1: assistant marks a tooth sick on the same terms as doctor', async ({ page }) => {
+  test('assistant has the same write access as doctor (FR-057)', async ({ page }) => {
     await loginWithMfa(page, seedAccounts.doctor);
-    await createPatient(page, 'Testowy-E2E-Tooth-5');
+    await createPatient(page, 'Testowy-E2E-Tooth-Assistant');
     const url = page.url();
 
     await page.goto('/login');
@@ -116,10 +135,12 @@ test.describe('US2 — Wizualne oznaczanie stanu uzębienia', () => {
     await page.waitForURL('**/patients');
 
     await page.goto(url);
-    await expect(page.getByRole('heading', { name: 'Testowy-E2E-Tooth-5' })).toBeVisible();
     await page.getByRole('tab', { name: 'Stan uzębienia' }).click();
     await page.locator('[data-testid="tooth-21"]').click();
-    await page.getByTestId('toggle-status').click();
-    await expect(page.locator('[data-testid="tooth-21"]')).toHaveClass(/sick/);
+    await page.getByTestId('catalog-search-input').fill('próchnica zębiny');
+    await page.getByTestId('catalog-entry-K02.1').click();
+    await page.getByTestId('surface-zone-MESIAL').click();
+    await page.getByTestId('save-finding').click();
+    await expect(page.getByTestId('save-success')).toBeVisible();
   });
 });

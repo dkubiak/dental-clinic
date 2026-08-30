@@ -1,0 +1,106 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { describe, expect, it, vi } from 'vitest';
+import { SurfaceMapComponent } from './surface-map.component';
+
+describe('SurfaceMapComponent', () => {
+  let fixture: ComponentFixture<SurfaceMapComponent>;
+
+  async function setup(fdiNumber: number): Promise<void> {
+    await TestBed.configureTestingModule({ imports: [SurfaceMapComponent] }).compileComponents();
+    fixture = TestBed.createComponent(SurfaceMapComponent);
+    fixture.componentRef.setInput('fdiNumber', fdiNumber);
+    fixture.detectChanges();
+  }
+
+  it('offers an incisal-lettered zone (I) for an incisor, never occlusal (O)', async () => {
+    await setup(11);
+
+    const occlusalIncisalZone = fixture.nativeElement.querySelector(
+      '[data-testid="surface-zone-OCCLUSAL_INCISAL"]',
+    );
+    expect(occlusalIncisalZone).toBeTruthy();
+    // labels are off by default (main-diagram usage) — verify via aria-label text instead
+    expect(occlusalIncisalZone.getAttribute('aria-label')).toContain('sieczna');
+  });
+
+  it('offers an occlusal-lettered zone (O) for a molar, never incisal (I)', async () => {
+    await setup(16);
+
+    const occlusalIncisalZone = fixture.nativeElement.querySelector(
+      '[data-testid="surface-zone-OCCLUSAL_INCISAL"]',
+    );
+    expect(occlusalIncisalZone.getAttribute('aria-label')).toContain('żująca');
+  });
+
+  it('renders exactly five zones, one per FR-024 surface', async () => {
+    await setup(36);
+
+    const zones = fixture.nativeElement.querySelectorAll('[data-testid^="surface-zone-"]');
+    expect(zones.length).toBe(5);
+  });
+
+  it('clicking a zone toggles its selection', async () => {
+    await setup(36);
+    let emitted: string | undefined;
+    fixture.componentInstance.surfaceToggled.subscribe((s: string) => (emitted = s));
+
+    fixture.nativeElement.querySelector('[data-testid="surface-zone-MESIAL"]').dispatchEvent(new Event('click'));
+
+    expect(emitted).toBe('MESIAL');
+  });
+
+  it('shows letter labels only when showLabels is true (FR-029a)', async () => {
+    await setup(36);
+    expect(fixture.nativeElement.querySelectorAll('.zone-label').length).toBe(0);
+
+    fixture.componentRef.setInput('showLabels', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.zone-label').length).toBe(5);
+  });
+
+  it('marks a selected zone distinctly from an empty or has-entry zone', async () => {
+    await setup(36);
+    fixture.componentRef.setInput('selectedSurfaces', ['MESIAL']);
+    fixture.componentRef.setInput('existingSurfaces', ['DISTAL']);
+    fixture.detectChanges();
+
+    const mesial = fixture.nativeElement.querySelector('[data-testid="surface-zone-MESIAL"]');
+    const distal = fixture.nativeElement.querySelector('[data-testid="surface-zone-DISTAL"]');
+    const vestibular = fixture.nativeElement.querySelector('[data-testid="surface-zone-VESTIBULAR"]');
+
+    expect(mesial.classList.contains('selected')).toBe(true);
+    expect(distal.classList.contains('has-entry')).toBe(true);
+    expect(vestibular.classList.contains('selected')).toBe(false);
+    expect(vestibular.classList.contains('has-entry')).toBe(false);
+  });
+
+  it('right-clicking a zone emits zoneContextMenu with that surface and the click position (FR-020a/T066)', async () => {
+    await setup(36);
+    let emitted: { surface: string; x: number; y: number } | undefined;
+    fixture.componentInstance.zoneContextMenu.subscribe((e: { surface: string; x: number; y: number }) => (emitted = e));
+
+    fixture.nativeElement
+      .querySelector('[data-testid="surface-zone-DISTAL"]')
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 12, clientY: 34 }));
+
+    expect(emitted).toEqual({ surface: 'DISTAL', x: 12, y: 34 });
+  });
+
+  it('a touch long-press on a zone emits zoneContextMenu after the long-press delay', async () => {
+    vi.useFakeTimers();
+    await setup(36);
+    let emitted: { surface: string } | undefined;
+    fixture.componentInstance.zoneContextMenu.subscribe((e: { surface: string }) => (emitted = e));
+
+    const zone = fixture.nativeElement.querySelector('[data-testid="surface-zone-OCCLUSAL_INCISAL"]');
+    const pointerDown = new Event('pointerdown');
+    Object.assign(pointerDown, { pointerType: 'touch', clientX: 5, clientY: 6 });
+    zone.dispatchEvent(pointerDown);
+    expect(emitted).toBeUndefined();
+
+    vi.advanceTimersByTime(500);
+    expect(emitted).toEqual(expect.objectContaining({ surface: 'OCCLUSAL_INCISAL' }));
+    vi.useRealTimers();
+  });
+});

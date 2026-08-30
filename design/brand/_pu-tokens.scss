@@ -51,6 +51,17 @@ $pu-info:         #3B5A7A; $pu-info-dark:    #8FB2D6; // 6.71 / 6.28
 // sygnał niezależny od koloru, zob. contracts/design-tokens.md §2) ───────────
 $pu-tooth-diseased-fill:       #F7E3E1; $pu-tooth-diseased-fill-dark: #5A2B27;
 
+// ── feature 005 (odontogram z rozpoznaniami) — siedem nowych ról, research.md D10.
+// Reużywają istniejących, już zweryfikowanych par kolorów (eukaliptus/success/error/stone) zamiast
+// wprowadzać nowe odcienie — kontrast pilnowany przez contrast-audit.spec.ts.
+$pu-tooth-root-fill:           #EAE0D2; $pu-tooth-root-fill-dark: #413C3B;
+$pu-tooth-restored-fill:       #D7E8E4; $pu-tooth-restored-fill-dark: #24413E;
+$pu-tooth-restored-stroke:     #3E7A72; $pu-tooth-restored-stroke-dark: #7FB3AA;
+$pu-tooth-closed-stroke:       #2E6B45; $pu-tooth-closed-stroke-dark: #6FBF8E;
+$pu-tooth-absent:              #8C8480; $pu-tooth-absent-dark: #7A726C;
+$pu-canal-treat:               #A33A32; $pu-canal-treat-dark: #E88178;
+$pu-canal-done:                #2E6B45; $pu-canal-done-dark: #6FBF8E;
+
 // ── role semantyczne ─────────────────────────────────────────────────────────
 :root {
   --pu-bg:          #{$pu-paper};
@@ -69,6 +80,13 @@ $pu-tooth-diseased-fill:       #F7E3E1; $pu-tooth-diseased-fill-dark: #5A2B27;
   --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill};
   --pu-tooth-diseased-stroke: #{$pu-error}; // 5.31:1 na tooth-diseased-fill
   --pu-tooth-selected-stroke: #{$pu-gold-800}; // 6.31:1 na tooth-healthy-fill; zastępuje obcy marce #1a73e8
+  --pu-tooth-root-fill:       #{$pu-tooth-root-fill};
+  --pu-tooth-restored-fill:   #{$pu-tooth-restored-fill};
+  --pu-tooth-restored-stroke: #{$pu-tooth-restored-stroke}; // ≥3:1 na tooth-restored-fill (euc-500/euc-100)
+  --pu-tooth-closed-stroke:   #{$pu-tooth-closed-stroke}; // ≥3:1 na tooth-healthy-fill
+  --pu-tooth-absent:          #{$pu-tooth-absent}; // 3.43:1 na bg
+  --pu-canal-treat:           #{$pu-canal-treat}; // ≥3:1 na tooth-root-fill
+  --pu-canal-done:            #{$pu-canal-done}; // ≥3:1 na tooth-root-fill
 }
 
 [data-theme='dark'] {
@@ -88,4 +106,11 @@ $pu-tooth-diseased-fill:       #F7E3E1; $pu-tooth-diseased-fill-dark: #5A2B27;
   --pu-tooth-diseased-fill:   #{$pu-tooth-diseased-fill-dark};
   --pu-tooth-diseased-stroke: #{$pu-error-dark}; // 4.33:1 na tooth-diseased-fill
   --pu-tooth-selected-stroke: #{$pu-gold-300}; // 7.93:1 na tooth-healthy-fill
+  --pu-tooth-root-fill:       #{$pu-tooth-root-fill-dark};
+  --pu-tooth-restored-fill:   #{$pu-tooth-restored-fill-dark};
+  --pu-tooth-restored-stroke: #{$pu-tooth-restored-stroke-dark};
+  --pu-tooth-closed-stroke:   #{$pu-tooth-closed-stroke-dark};
+  --pu-tooth-absent:          #{$pu-tooth-absent-dark};
+  --pu-canal-treat:           #{$pu-canal-treat-dark};
+  --pu-canal-done:            #{$pu-canal-done-dark};
 }
