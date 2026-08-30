@@ -21,20 +21,17 @@ class DiagnosisCatalogSeedTest extends PostgresIntegrationTestBase {
 
   private static final List<String> FR015_CODES =
       List.of(
-          "K02.0a", "K02.0b", "K02.1", "K02.1d", "K02.1s", "K02.2",
-          "K04.0r", "K04.0i", "K04.1",
-          "K04.4", "K04.7", "K04.8",
-          "S02.51", "S02.53", "K03.81", "S02.52",
-          "K03.0", "K03.1", "K03.2", "K03.19", "K03.8",
-          "K05.1", "K05.3", "K06.0", "K03.6", "K05.31",
-          "K01.0", "K00.6", "K07.3", "K00.0",
-          "EXTR",
-          "FILL", "FILLT", "SEAL", "ENDO", "POST", "CROWN", "VENEER", "PONTIC", "IMPL", "ABUT");
+          "K02.0a", "K02.0b", "K02.1", "K02.1d", "K02.1s", "K02.2", "K04.0r", "K04.0i", "K04.1",
+          "K04.4", "K04.7", "K04.8", "S02.51", "S02.53", "K03.81", "S02.52", "K03.0", "K03.1",
+          "K03.2", "K03.19", "K03.8", "K05.1", "K05.3", "K06.0", "K03.6", "K05.31", "K01.0",
+          "K00.6", "K07.3", "K00.0", "EXTR", "FILL", "FILLT", "SEAL", "ENDO", "POST", "CROWN",
+          "VENEER", "PONTIC", "IMPL", "ABUT");
 
   @Test
   void catalog_containsEveryFr015Code_withUniqueCodes() {
     List<DiagnosisCatalogEntry> all = repository.findAll();
-    Set<String> codes = all.stream().map(DiagnosisCatalogEntry::getCode).collect(Collectors.toSet());
+    Set<String> codes =
+        all.stream().map(DiagnosisCatalogEntry::getCode).collect(Collectors.toSet());
 
     assertThat(codes).hasSize(all.size()); // uniqueness
     assertThat(codes).containsAll(FR015_CODES);
@@ -48,7 +45,9 @@ class DiagnosisCatalogSeedTest extends PostgresIntegrationTestBase {
 
     assertThat(freeTextRows).hasSize(4);
     Set<AnatomicalScope> scopes =
-        freeTextRows.stream().map(DiagnosisCatalogEntry::getAnatomicalScope).collect(Collectors.toSet());
+        freeTextRows.stream()
+            .map(DiagnosisCatalogEntry::getAnatomicalScope)
+            .collect(Collectors.toSet());
     assertThat(scopes)
         .containsExactlyInAnyOrder(
             AnatomicalScope.SURFACE,
@@ -59,8 +58,9 @@ class DiagnosisCatalogSeedTest extends PostgresIntegrationTestBase {
 
   @Test
   void catalog_diseaseCodes_areLayerDiagnosis_restorationCodesAreLayerExistingState() {
-    var byCode = repository.findAll().stream()
-        .collect(Collectors.toMap(DiagnosisCatalogEntry::getCode, e -> e));
+    var byCode =
+        repository.findAll().stream()
+            .collect(Collectors.toMap(DiagnosisCatalogEntry::getCode, e -> e));
 
     assertThat(byCode.get("K02.1").getLayer()).isEqualTo(FindingLayer.DIAGNOSIS);
     assertThat(byCode.get("K02.1").getCategory()).isEqualTo(DiagnosisCategory.HARD_TISSUE);

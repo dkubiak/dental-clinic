@@ -12,8 +12,8 @@ import org.hibernate.type.SqlTypes;
 
 /**
  * data-model.md DiagnosisCatalogEntry — Flyway-seeded reference data (research.md D5, V4
- * migration); read-only through the application, never written by {@code patient-service} code.
- * No setters exist — a row's shape only ever changes via a new migration.
+ * migration); read-only through the application, never written by {@code patient-service} code. No
+ * setters exist — a row's shape only ever changes via a new migration.
  */
 @Entity
 @Table(name = "diagnosis_catalog_entry")

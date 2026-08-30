@@ -46,6 +46,35 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error';
             }
           </ul>
         }
+
+        <!-- FR-034 — resolved/superseded entries stay out of the default list above and are
+             only fetched/shown once the clinician explicitly asks for them. -->
+        <button
+          type="button"
+          data-testid="history-toggle"
+          [attr.aria-expanded]="historyOpen()"
+          (click)="toggleHistory()"
+        >
+          Historia zęba
+        </button>
+        @if (historyOpen()) {
+          @if (history(); as h) {
+            @if (h.length === 0) {
+              <p data-testid="history-empty">Brak wcześniejszych wpisów.</p>
+            } @else {
+              <ul data-testid="history-list">
+                @for (item of h; track item.id) {
+                  <li data-testid="history-item">
+                    {{ item.diagnosisCatalogEntry.namePl }} — {{ item.recordStatus }} /
+                    {{ item.clinicalStatus }}
+                  </li>
+                }
+              </ul>
+            }
+          } @else {
+            <p data-testid="history-loading">Wczytywanie historii…</p>
+          }
+        }
       </section>
 
       <form (submit)="save($event)">
@@ -161,6 +190,9 @@ export class ToothDetailPanelComponent {
   readonly patientId = input.required<string>();
   readonly fdiNumber = input.required<number>();
   readonly position = input.required<ToothPosition>();
+  /** FR-029a — set by a direct surface-zone click on the main diagram's middle strip, so the
+   * surface is already marked here without the user having to open this panel first. */
+  readonly presetSurface = input<ToothSurface | null>(null);
 
   readonly saved = output<ToothFinding>();
   readonly closeRequested = output<void>();
@@ -177,6 +209,10 @@ export class ToothDetailPanelComponent {
   readonly note = signal('');
   readonly diagnosisDate = signal(new Date().toISOString().slice(0, 10));
   readonly saveState = signal<SaveState>('idle');
+
+  /** FR-034 — "historia zęba": collapsed by default, fetched lazily on first expansion. */
+  readonly historyOpen = signal(false);
+  readonly history = signal<ToothFinding[] | null>(null);
 
   readonly anatomicalName = computed(() => toothAnatomy(this.fdiNumber()).labelPl);
 
@@ -213,6 +249,15 @@ export class ToothDetailPanelComponent {
       });
       onCleanup(() => (cancelled = true));
     });
+
+    effect(() => {
+      const surface = this.presetSurface();
+      if (surface) {
+        this.selectedSurfaces.update((current) =>
+          current.includes(surface) ? current : [...current, surface],
+        );
+      }
+    });
   }
 
   onQueryChange(value: string): void {
@@ -224,6 +269,16 @@ export class ToothDetailPanelComponent {
     this.selectedSurfaces.set([]);
     this.searchResults.set([]);
     this.query.set(entry.namePl);
+  }
+
+  toggleHistory(): void {
+    const opening = !this.historyOpen();
+    this.historyOpen.set(opening);
+    if (opening && this.history() === null) {
+      this.toothChartService
+        .getPositionHistory(this.patientId(), this.fdiNumber())
+        .subscribe((history) => this.history.set(history));
+    }
   }
 
   toggleSurface(surface: ToothSurface): void {

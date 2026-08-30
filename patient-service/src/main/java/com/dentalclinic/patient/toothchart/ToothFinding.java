@@ -17,10 +17,10 @@ import org.hibernate.type.SqlTypes;
 /**
  * data-model.md ToothFinding — the append-only clinical entry (research.md D3). Immutable once
  * created except via the supersede operation: {@code recordStatus} flips {@code CURRENT ->
- * SUPERSEDED} only as the side effect of a new row being inserted with {@code
- * supersedesFindingId} pointing back at this one (FR-030/FR-033); {@code clinicalStatus} likewise
- * only ever changes via that same new row (a "close" is a correction whose only semantic change is
- * {@code clinicalStatus}/{@code resolvedDate}). No setters beyond {@link #supersede()} exist.
+ * SUPERSEDED} only as the side effect of a new row being inserted with {@code supersedesFindingId}
+ * pointing back at this one (FR-030/FR-033); {@code clinicalStatus} likewise only ever changes via
+ * that same new row (a "close" is a correction whose only semantic change is {@code
+ * clinicalStatus}/{@code resolvedDate}). No setters beyond {@link #supersede()} exist.
  */
 @Entity
 @Table(name = "tooth_finding")
@@ -41,8 +41,7 @@ public class ToothFinding {
   @Column(name = "root_canal_id")
   private UUID rootCanalId;
 
-  @Column
-  private String severity;
+  @Column private String severity;
 
   @Column(name = "free_text_description")
   private String freeTextDescription;
@@ -118,7 +117,9 @@ public class ToothFinding {
     this.createdAt = Instant.now();
   }
 
-  /** FR-033 — applied only as the side effect of a new correcting/closing finding being inserted. */
+  /**
+   * FR-033 — applied only as the side effect of a new correcting/closing finding being inserted.
+   */
   public void supersede() {
     this.recordStatus = FindingRecordStatus.SUPERSEDED;
   }

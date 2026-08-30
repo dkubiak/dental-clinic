@@ -13,10 +13,10 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * data-model.md RootCanal — a small, mutable-in-place entity (research.md D4), not the
- * append-only correction machinery {@link ToothFinding} uses. Removing a canal only ever sets
- * {@code removed = true} (FR-068) — rows are never hard-deleted so findings that reference one
- * keep a valid, flaggable reference.
+ * data-model.md RootCanal — a small, mutable-in-place entity (research.md D4), not the append-only
+ * correction machinery {@link ToothFinding} uses. Removing a canal only ever sets {@code removed =
+ * true} (FR-068) — rows are never hard-deleted so findings that reference one keep a valid,
+ * flaggable reference.
  */
 @Entity
 @Table(name = "root_canal")

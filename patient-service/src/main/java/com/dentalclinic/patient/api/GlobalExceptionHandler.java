@@ -29,7 +29,11 @@ public class GlobalExceptionHandler {
         .body(new ErrorBody("NOT_FOUND", "The requested resource was not found.", Instant.now()));
   }
 
-  @ExceptionHandler({InvalidPeselException.class, MethodArgumentNotValidException.class, InvalidFindingException.class})
+  @ExceptionHandler({
+    InvalidPeselException.class,
+    MethodArgumentNotValidException.class,
+    InvalidFindingException.class
+  })
   public ResponseEntity<ErrorBody> handleBadRequest(RuntimeException e) {
     String message =
         switch (e) {

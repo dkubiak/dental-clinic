@@ -5,9 +5,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-/** contracts/patient-api.yaml ToothFindingCreateRequest schema — also the body shape for
- * {@code .../correct} (FR-033), where {@code fdiNumber} is ignored (the target position is fixed
- * to the finding being corrected). */
+/**
+ * contracts/patient-api.yaml ToothFindingCreateRequest schema — also the body shape for {@code
+ * .../correct} (FR-033), where {@code fdiNumber} is ignored (the target position is fixed to the
+ * finding being corrected).
+ */
 public record ToothFindingCreateRequest(
     int fdiNumber,
     UUID diagnosisCatalogEntryId,

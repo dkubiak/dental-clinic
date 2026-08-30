@@ -26,12 +26,15 @@ public record ToothFindingResponse(
     String authorRole,
     Instant createdAt) {
 
-  public static ToothFindingResponse from(ToothFinding finding, int fdiNumber, DiagnosisCatalogEntry entry) {
+  public static ToothFindingResponse from(
+      ToothFinding finding, int fdiNumber, DiagnosisCatalogEntry entry) {
     return new ToothFindingResponse(
         finding.getId(),
         fdiNumber,
         DiagnosisCatalogEntryResponse.from(entry),
-        finding.getSurfaces() == null ? null : finding.getSurfaces().stream().map(Enum::name).toList(),
+        finding.getSurfaces() == null
+            ? null
+            : finding.getSurfaces().stream().map(Enum::name).toList(),
         finding.getRootCanalId(),
         finding.getSeverity(),
         finding.getFreeTextDescription(),

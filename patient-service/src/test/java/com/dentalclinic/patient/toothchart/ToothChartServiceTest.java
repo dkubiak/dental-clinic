@@ -36,7 +36,8 @@ class ToothChartServiceTest extends PostgresIntegrationTestBase {
   void getChart_returnsThirtyTwoPresentPermanentPositions_withNoFindings_forFreshAdultPatient() {
     PatientRecord patient = createAdultPatient("90011502503");
 
-    ToothChartService.ChartView view = toothChartService.getChart(patient.getId(), UUID.randomUUID());
+    ToothChartService.ChartView view =
+        toothChartService.getChart(patient.getId(), UUID.randomUUID());
 
     assertThat(view.chart().getDentitionMode()).isEqualTo(DentitionMode.PERMANENT);
     assertThat(view.positions()).hasSize(52);

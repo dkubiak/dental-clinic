@@ -50,9 +50,9 @@ public class ToothFindingService {
   }
 
   /**
-   * FR-022/FR-023/FR-036/FR-040/FR-041 — validates scope/surfaces/free-text/date/presence,
-   * persists a new {@code CURRENT}/{@code ACTIVE} finding, audits {@code TOOTH_FINDING_ADDED} with
-   * {@code before_state: null}.
+   * FR-022/FR-023/FR-036/FR-040/FR-041 — validates scope/surfaces/free-text/date/presence, persists
+   * a new {@code CURRENT}/{@code ACTIVE} finding, audits {@code TOOTH_FINDING_ADDED} with {@code
+   * before_state: null}.
    *
    * @throws PatientNotFoundException no patient, position, catalog entry, or (if set) canal exists.
    * @throws InvalidFindingException a validation rule above is violated.
@@ -116,7 +116,8 @@ public class ToothFindingService {
    * FR-032 — close/resolve a finding after treatment: research.md D3's supersede-then-insert, with
    * every field copied forward except {@code clinicalStatus = RESOLVED} and {@code resolvedDate}.
    *
-   * @throws PatientNotFoundException no patient, or no finding with this id on this patient, exists.
+   * @throws PatientNotFoundException no patient, or no finding with this id on this patient,
+   *     exists.
    * @throws FindingConflictException the finding is already {@code SUPERSEDED}.
    */
   @Transactional
@@ -165,7 +166,9 @@ public class ToothFindingService {
     PatientRecord patient =
         patientRecordRepository.findById(patientId).orElseThrow(PatientNotFoundException::new);
     ToothPosition position =
-        toothPositionRepository.findById(original.getToothPositionId()).orElseThrow(PatientNotFoundException::new);
+        toothPositionRepository
+            .findById(original.getToothPositionId())
+            .orElseThrow(PatientNotFoundException::new);
     DiagnosisCatalogEntry entry =
         diagnosisCatalogEntryRepository
             .findById(diagnosisCatalogEntryId)
@@ -213,7 +216,10 @@ public class ToothFindingService {
           "This finding was already corrected or closed by someone else (FR-070/SC-010).");
     }
     int fdiNumber =
-        toothPositionRepository.findById(original.getToothPositionId()).orElseThrow().getFdiNumber();
+        toothPositionRepository
+            .findById(original.getToothPositionId())
+            .orElseThrow()
+            .getFdiNumber();
 
     String beforeJson = toJson(original, fdiNumber);
     original.supersede();
@@ -248,7 +254,8 @@ public class ToothFindingService {
   }
 
   /**
-   * @throws PatientNotFoundException no patient, or no finding with this id on this patient, exists.
+   * @throws PatientNotFoundException no patient, or no finding with this id on this patient,
+   *     exists.
    */
   private ToothFinding requireCurrentFinding(UUID patientId, UUID findingId) {
     ToothChart chart = toothChartService.requireChart(patientId);
@@ -265,7 +272,10 @@ public class ToothFindingService {
   }
 
   public int fdiNumberOf(ToothFinding finding) {
-    return toothPositionRepository.findById(finding.getToothPositionId()).orElseThrow().getFdiNumber();
+    return toothPositionRepository
+        .findById(finding.getToothPositionId())
+        .orElseThrow()
+        .getFdiNumber();
   }
 
   /**
@@ -291,7 +301,8 @@ public class ToothFindingService {
   }
 
   private void validateFreeText(DiagnosisCatalogEntry entry, String freeTextDescription) {
-    if (entry.isRequiresFreeText() && (freeTextDescription == null || freeTextDescription.isBlank())) {
+    if (entry.isRequiresFreeText()
+        && (freeTextDescription == null || freeTextDescription.isBlank())) {
       throw new InvalidFindingException(
           "A free-text description is required for this catalog entry (FR-011a).");
     }

@@ -8,6 +8,10 @@ public record RootCanalResponse(UUID id, String name, String state, boolean remo
 
   public static RootCanalResponse from(RootCanal canal) {
     return new RootCanalResponse(
-        canal.getId(), canal.getName(), canal.getState().name(), canal.isRemoved(), canal.getVersion());
+        canal.getId(),
+        canal.getName(),
+        canal.getState().name(),
+        canal.isRemoved(),
+        canal.getVersion());
   }
 }

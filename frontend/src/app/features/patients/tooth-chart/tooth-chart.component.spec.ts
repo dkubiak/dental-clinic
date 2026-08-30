@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToothChart, ToothPosition } from '../patients.models';
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
@@ -53,6 +53,10 @@ describe('ToothChartComponent', () => {
 
     fixture = TestBed.createComponent(ToothChartComponent);
     fixture.componentRef.setInput('patientId', 'p1');
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
   });
 
   it('shows a loading state before the chart resolves', () => {
@@ -150,5 +154,196 @@ describe('ToothChartComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.selectedFdiNumber()).toBe(11);
+  });
+
+  it('shows a Polish legend explaining every state/layer/surface symbol (FR-008)', () => {
+    fixture.detectChanges();
+
+    const legend = fixture.nativeElement.querySelector('[data-testid="tooth-chart-legend"]');
+    expect(legend).toBeTruthy();
+    const text = legend.textContent as string;
+    // stan pozycji
+    expect(text).toContain('Ząb zdrowy');
+    expect(text).toContain('Brak zęba');
+    expect(text).toContain('Niewyrznięty');
+    // warstwa wpisu
+    expect(text).toContain('Rozpoznanie');
+    expect(text).toContain('Stan istniejący');
+    // symbolika powierzchni
+    expect(text).toContain('mezjalna');
+    expect(text).toContain('dystalna');
+    expect(text).toContain('przedsionkowa');
+    expect(text).toContain('językowa');
+    expect(text).toContain('sieczna');
+  });
+
+  it('the layer filter dims EXISTING_STATE markers while keeping DIAGNOSIS markers visible, purely client-side (FR-009)', () => {
+    const chart = healthyChart();
+    chart.positions[0] = position(11, {
+      currentFindings: [
+        {
+          id: 'diag1',
+          fdiNumber: 11,
+          diagnosisCatalogEntry: {
+            id: 'dx1',
+            code: 'K02.1',
+            namePl: 'Próchnica zębiny',
+            category: 'HARD_TISSUE',
+            anatomicalScope: 'SURFACE',
+            layer: 'DIAGNOSIS',
+            icd10Code: 'K02.1',
+            severityOptions: null,
+            allowedForMissingTooth: false,
+            deciduousAllowed: true,
+            quickAccess: true,
+            requiresFreeText: false,
+          },
+          surfaces: ['MESIAL'],
+          rootCanalId: null,
+          severity: null,
+          freeTextDescription: null,
+          note: null,
+          diagnosisDate: '2026-08-30',
+          resolvedDate: null,
+          clinicalStatus: 'ACTIVE',
+          recordStatus: 'CURRENT',
+          supersedesFindingId: null,
+          authorAccountId: 'a1',
+          authorRole: 'DOCTOR',
+          createdAt: '2026-08-30T00:00:00Z',
+        },
+      ],
+    });
+    chart.positions[1] = position(12, {
+      currentFindings: [
+        {
+          id: 'exist1',
+          fdiNumber: 12,
+          diagnosisCatalogEntry: {
+            id: 'dx2',
+            code: 'REST01',
+            namePl: 'Wypełnienie (istniejące)',
+            category: 'POST_TREATMENT_RESTORATION',
+            anatomicalScope: 'SURFACE',
+            layer: 'EXISTING_STATE',
+            icd10Code: null,
+            severityOptions: null,
+            allowedForMissingTooth: false,
+            deciduousAllowed: true,
+            quickAccess: true,
+            requiresFreeText: false,
+          },
+          surfaces: ['DISTAL'],
+          rootCanalId: null,
+          severity: null,
+          freeTextDescription: null,
+          note: null,
+          diagnosisDate: '2026-08-30',
+          resolvedDate: null,
+          clinicalStatus: 'ACTIVE',
+          recordStatus: 'CURRENT',
+          supersedesFindingId: null,
+          authorAccountId: 'a1',
+          authorRole: 'DOCTOR',
+          createdAt: '2026-08-30T00:00:00Z',
+        },
+      ],
+    });
+    toothChartService.getChart.mockReturnValue(of(chart));
+    fixture.detectChanges();
+
+    const tooth11 = fixture.nativeElement.querySelector('[data-testid="tooth-11"]');
+    const tooth12 = fixture.nativeElement.querySelector('[data-testid="tooth-12"]');
+    expect(tooth11.classList.contains('layer-dimmed')).toBe(false);
+    expect(tooth12.classList.contains('layer-dimmed')).toBe(false);
+
+    fixture.nativeElement
+      .querySelector('[data-testid="layer-filter-diagnosis"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    // filtering is purely a view concern — the underlying chart data is untouched
+    expect(fixture.componentInstance.chart()).toBe(chart);
+    expect(tooth11.classList.contains('layer-dimmed')).toBe(false);
+    expect(tooth11.classList.contains('status-diseased')).toBe(true);
+    expect(tooth12.classList.contains('layer-dimmed')).toBe(true);
+    // FR-039/FR-050 — the non-color state class must still be present while dimmed
+    expect(tooth12.classList.contains('status-restored')).toBe(true);
+  });
+
+  it('renders one surface-map instance per visible tooth column in a middle strip between the two arches (FR-029)', () => {
+    fixture.detectChanges();
+
+    const strip = fixture.nativeElement.querySelector('[data-testid="surface-strip"]');
+    expect(strip).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('app-surface-map').length).toBe(32);
+
+    const layoutChildren = Array.from(
+      fixture.nativeElement.querySelector('.odontogram').children,
+    ) as Element[];
+    const archIndices = layoutChildren
+      .map((el, i) => (el.tagName.toLowerCase() === 'app-tooth-arch' ? i : -1))
+      .filter((i) => i >= 0);
+    const stripIndex = layoutChildren.indexOf(strip);
+    expect(archIndices.length).toBe(2);
+    expect(archIndices[0]).toBeLessThan(stripIndex);
+    expect(stripIndex).toBeLessThan(archIndices[1]);
+  });
+
+  it('clicking a surface zone in the middle strip selects the matching tooth+surface directly, without opening the panel first (FR-029a)', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-tooth-detail-panel')).toBeFalsy();
+    expect(fixture.componentInstance.selectedFdiNumber()).toBeNull();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="surface-cell-11"] [data-testid="surface-zone-MESIAL"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.selectedFdiNumber()).toBe(11);
+    expect(fixture.nativeElement.querySelector('app-tooth-detail-panel')).toBeTruthy();
+    expect(fixture.componentInstance.presetSurface()).toEqual({ fdiNumber: 11, surface: 'MESIAL' });
+  });
+
+  it('the diagram scrolls horizontally only inside its own container, never as page scroll (FR-049)', () => {
+    fixture.detectChanges();
+
+    const container = fixture.nativeElement.querySelector('[data-testid="diagram-scroll-container"]');
+    expect(container).toBeTruthy();
+    expect(container.style.overflowX).toBe('auto');
+  });
+
+  it('a zoom control reaches >=24x24px zones at its first level and >=44x44px at its highest, keeping the selected tooth in view (FR-029b/FR-049)', () => {
+    const scrollIntoViewSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewSpy;
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('[data-testid="zoom-2"]').dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+    expect(minZoneDimension('surface-cell-11')).toBeGreaterThanOrEqual(24);
+    expect(scrollIntoViewSpy).toHaveBeenCalled();
+
+    scrollIntoViewSpy.mockClear();
+    fixture.nativeElement.querySelector('[data-testid="zoom-3"]').dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+    expect(minZoneDimension('surface-cell-11')).toBeGreaterThanOrEqual(44);
+    expect(scrollIntoViewSpy).toHaveBeenCalled();
+
+    function minZoneDimension(cellTestId: string): number {
+      const zone = fixture.nativeElement.querySelector(
+        `[data-testid="${cellTestId}"] [data-testid="surface-zone-MESIAL"] path`,
+      );
+      const d = zone.getAttribute('d') as string;
+      const numbers = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+      const xs = numbers.filter((_, i) => i % 2 === 0);
+      const ys = numbers.filter((_, i) => i % 2 === 1);
+      const width = Math.max(...xs) - Math.min(...xs);
+      const height = Math.max(...ys) - Math.min(...ys);
+      return Math.min(width, height);
+    }
   });
 });

@@ -114,6 +114,85 @@ class ToothChartControllerTest extends PostgresIntegrationTestBase {
     assertThat(countEntries("TOOTH_CHART_VIEWED")).isEqualTo(before + 1);
   }
 
+  @Test
+  void positionHistory_returnsCurrentResolvedAndSuperseded_inChronologicalOrder_withDetailMetadata()
+      throws Exception {
+    UUID id = createPatient("90011502046");
+    String cariesEntryId =
+        jdbcTemplate.queryForObject(
+            "SELECT id::text FROM diagnosis_catalog_entry WHERE code = 'K02.1'", String.class);
+
+    MvcResult createResult =
+        mockMvc
+            .perform(
+                post("/patients/" + id + "/tooth-chart/findings")
+                    .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                    .cookie(CSRF_TOKEN_COOKIE)
+                    .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                    .contentType(APPLICATION_JSON)
+                    .content(
+                        """
+                        {"fdiNumber":26,"diagnosisCatalogEntryId":"%s","surfaces":["MESIAL"],
+                         "diagnosisDate":"2026-01-01"}
+                        """
+                            .formatted(cariesEntryId)))
+            .andExpect(status().isCreated())
+            .andReturn();
+    String originalId = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
+
+    MvcResult correctResult =
+        mockMvc
+            .perform(
+                post("/patients/" + id + "/tooth-chart/findings/" + originalId + "/correct")
+                    .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                    .cookie(CSRF_TOKEN_COOKIE)
+                    .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                    .contentType(APPLICATION_JSON)
+                    .content(
+                        """
+                        {"fdiNumber":26,"diagnosisCatalogEntryId":"%s","surfaces":["DISTAL"],
+                         "diagnosisDate":"2026-01-01"}
+                        """
+                            .formatted(cariesEntryId)))
+            .andExpect(status().isCreated())
+            .andReturn();
+    String correctedId = JsonPath.read(correctResult.getResponse().getContentAsString(), "$.id");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/tooth-chart/findings/" + correctedId + "/close")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content("{\"resolvedDate\":\"2026-08-30\"}"))
+        .andExpect(status().isCreated());
+
+    long before = countEntries("TOOTH_CHART_VIEWED");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/tooth-chart/positions/26/history")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(3))
+        .andExpect(jsonPath("$[0].id").value(originalId))
+        .andExpect(jsonPath("$[0].recordStatus").value("SUPERSEDED"))
+        .andExpect(jsonPath("$[1].id").value(correctedId))
+        .andExpect(jsonPath("$[1].recordStatus").value("SUPERSEDED"))
+        .andExpect(jsonPath("$[2].recordStatus").value("CURRENT"))
+        .andExpect(jsonPath("$[2].clinicalStatus").value("RESOLVED"))
+        .andExpect(jsonPath("$[2].supersedesFindingId").value(correctedId));
+
+    assertThat(countEntries("TOOTH_CHART_VIEWED")).isEqualTo(before + 1);
+    String metadata =
+        jdbcTemplate.queryForObject(
+            "SELECT metadata::text FROM audit_log_entry WHERE event_type ="
+                + " 'TOOTH_CHART_VIEWED'::audit_event_type ORDER BY id DESC LIMIT 1",
+            String.class);
+    assertThat(metadata).contains("\"detail\": \"position-history\"");
+  }
+
   private long countEntries(String eventType) {
     Long count =
         jdbcTemplate.queryForObject(

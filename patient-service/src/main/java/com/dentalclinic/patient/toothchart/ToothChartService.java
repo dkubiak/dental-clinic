@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
-/** FR-005/FR-038/FR-044/FR-045 — read the full chart and its per-position history, and change
- * presence/dentition-mode; every read/write is audit-logged. */
+/**
+ * FR-005/FR-038/FR-044/FR-045 — read the full chart and its per-position history, and change
+ * presence/dentition-mode; every read/write is audit-logged.
+ */
 @Service
 public class ToothChartService {
 
@@ -78,7 +80,9 @@ public class ToothChartService {
   }
 
   ToothChart requireChart(UUID patientId) {
-    return toothChartRepository.findByPatientRecordId(patientId).orElseThrow(PatientNotFoundException::new);
+    return toothChartRepository
+        .findByPatientRecordId(patientId)
+        .orElseThrow(PatientNotFoundException::new);
   }
 
   ToothPosition requirePosition(UUID patientId, int fdiNumber) {
@@ -107,7 +111,9 @@ public class ToothChartService {
 
   FindingView toFindingView(ToothFinding finding) {
     DiagnosisCatalogEntry entry =
-        diagnosisCatalogEntryRepository.findById(finding.getDiagnosisCatalogEntryId()).orElseThrow();
+        diagnosisCatalogEntryRepository
+            .findById(finding.getDiagnosisCatalogEntryId())
+            .orElseThrow();
     return new FindingView(finding, entry);
   }
 

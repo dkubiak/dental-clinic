@@ -8,10 +8,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
- * FR-005/research.md D2 — creates the {@link ToothChart} row plus all 52 {@link ToothPosition}
- * rows (32 permanent FDI 11-48 + 20 deciduous FDI 51-85) at patient-record creation time,
- * regardless of {@code dentitionMode} — the mode only ever controls which positions the frontend
- * renders, never which rows exist (FR-047).
+ * FR-005/research.md D2 — creates the {@link ToothChart} row plus all 52 {@link ToothPosition} rows
+ * (32 permanent FDI 11-48 + 20 deciduous FDI 51-85) at patient-record creation time, regardless of
+ * {@code dentitionMode} — the mode only ever controls which positions the frontend renders, never
+ * which rows exist (FR-047).
  */
 @Component
 public class ToothChartInitializer {
@@ -25,8 +25,10 @@ public class ToothChartInitializer {
     this.toothPositionRepository = toothPositionRepository;
   }
 
-  /** FR-044 — {@code dentitionMode} defaults from age at creation time: DECIDUOUS &lt;6y, MIXED
-   * 6-13y, PERMANENT otherwise. */
+  /**
+   * FR-044 — {@code dentitionMode} defaults from age at creation time: DECIDUOUS &lt;6y, MIXED
+   * 6-13y, PERMANENT otherwise.
+   */
   public void initialize(UUID patientRecordId, LocalDate dateOfBirth) {
     initialize(patientRecordId, defaultDentitionMode(dateOfBirth));
   }

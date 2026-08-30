@@ -153,7 +153,8 @@ class ToothFindingServiceTest extends PostgresIntegrationTestBase {
 
   @Test
   void addFinding_eachOtherRow_resolvesToItsOwnAnatomicalScope() {
-    assertThat(entryByCode("OTHER_SURFACE").getAnatomicalScope()).isEqualTo(AnatomicalScope.SURFACE);
+    assertThat(entryByCode("OTHER_SURFACE").getAnatomicalScope())
+        .isEqualTo(AnatomicalScope.SURFACE);
     assertThat(entryByCode("OTHER_WHOLE_TOOTH").getAnatomicalScope())
         .isEqualTo(AnatomicalScope.WHOLE_TOOTH);
     assertThat(entryByCode("OTHER_ROOT_PERIAPICAL").getAnatomicalScope())
@@ -207,9 +208,9 @@ class ToothFindingServiceTest extends PostgresIntegrationTestBase {
   }
 
   /**
-   * T080 — closeFinding/correctFinding insert a new CURRENT row and flip the original to
-   * SUPERSEDED atomically; a second attempt to close/correct the same already-superseded original
-   * fails (research.md D7).
+   * T080 — closeFinding/correctFinding insert a new CURRENT row and flip the original to SUPERSEDED
+   * atomically; a second attempt to close/correct the same already-superseded original fails
+   * (research.md D7).
    */
   @Test
   void closeFinding_supersedesOriginal_andSetsResolvedDateAndClinicalStatus() {
@@ -309,9 +310,11 @@ class ToothFindingServiceTest extends PostgresIntegrationTestBase {
     assertThat(corrected.getSurfaces()).containsExactly(ToothSurface.DISTAL);
 
     var history =
-        toothFindingRepository.findByToothPositionIdOrderByCreatedAtAsc(original.getToothPositionId());
+        toothFindingRepository.findByToothPositionIdOrderByCreatedAtAsc(
+            original.getToothPositionId());
     assertThat(history).hasSize(2);
-    assertThat(history).extracting(ToothFinding::getId)
+    assertThat(history)
+        .extracting(ToothFinding::getId)
         .containsExactlyInAnyOrder(original.getId(), corrected.getId());
   }
 }

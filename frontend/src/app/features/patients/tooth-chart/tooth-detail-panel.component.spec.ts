@@ -51,14 +51,17 @@ function freshPosition(fdiNumber: number): ToothPosition {
 
 describe('ToothDetailPanelComponent', () => {
   let fixture: ComponentFixture<ToothDetailPanelComponent>;
-  let toothChartService: { addFinding: ReturnType<typeof vi.fn> };
+  let toothChartService: {
+    addFinding: ReturnType<typeof vi.fn>;
+    getPositionHistory: ReturnType<typeof vi.fn>;
+  };
   let diagnosisCatalogService: {
     search: ReturnType<typeof vi.fn>;
     withRecencyTracking: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
-    toothChartService = { addFinding: vi.fn() };
+    toothChartService = { addFinding: vi.fn(), getPositionHistory: vi.fn().mockReturnValue(of([])) };
     diagnosisCatalogService = {
       search: vi.fn().mockReturnValue(of([CARIES, PULPITIS])),
       withRecencyTracking: vi.fn((_code: string, obs) => obs),
@@ -177,5 +180,41 @@ describe('ToothDetailPanelComponent', () => {
     const successEl = fixture.nativeElement.querySelector('[data-testid="save-success"]');
     expect(successEl).toBeTruthy();
     expect(successEl.getAttribute('role')).toBe('status');
+  });
+
+  it('the historia zęba disclosure is collapsed by default and loads resolved/superseded entries only on expansion (FR-034)', () => {
+    const resolved = {
+      id: 'f1',
+      fdiNumber: 36,
+      diagnosisCatalogEntry: CARIES,
+      surfaces: ['MESIAL'],
+      rootCanalId: null,
+      severity: null,
+      freeTextDescription: null,
+      note: null,
+      diagnosisDate: '2026-01-01',
+      resolvedDate: '2026-08-30',
+      clinicalStatus: 'RESOLVED',
+      recordStatus: 'SUPERSEDED',
+      supersedesFindingId: null,
+      authorAccountId: 'a1',
+      authorRole: 'DOCTOR',
+      createdAt: '2026-01-01T00:00:00Z',
+    };
+    const current = { ...resolved, id: 'f2', recordStatus: 'CURRENT', supersedesFindingId: 'f1' };
+    toothChartService.getPositionHistory.mockReturnValue(of([resolved, current]));
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="history-item"]'),
+    ).toBeFalsy();
+    expect(toothChartService.getPositionHistory).not.toHaveBeenCalled();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="history-toggle"]')
+      .dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect(toothChartService.getPositionHistory).toHaveBeenCalledWith('p1', 36);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="history-item"]').length).toBe(2);
   });
 });

@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { ToothPosition } from '../patients.models';
+import { FindingLayer, ToothPosition } from '../patients.models';
 import {
   canalNodes,
   CROWN_ROOT_RATIO,
@@ -17,12 +17,21 @@ interface RenderedTooth {
   canalLines: Array<{ d: string; cls: string }>;
   canalDots: Array<{ x: number; y: number; treat: boolean }>;
   statusClass: 'healthy' | 'diseased' | 'restored' | 'absent' | 'unerupted';
+  /** FR-009 — true when this tooth's shown status is driven solely by a layer the current
+   * layer-filter excludes; the status class itself is left untouched (FR-039/FR-050 non-color
+   * cue), only an opacity-reducing class is layered on top. */
+  dimmed: boolean;
+  /** FR-010/edge case — the diagram can't render every finding distinctly, so a small badge
+   * signals "wiele wpisów" and points the user to the full list in the detail panel. */
+  hasMultipleFindings: boolean;
   labelPl: string;
   ariaLabel: string;
 }
 
 const COLUMN_WIDTH = 40;
 const CROWN_H = 26;
+/** More active findings than this can't be told apart on the compact tooth silhouette. */
+const MULTI_FINDING_THRESHOLD = 3;
 
 /**
  * FR-001/FR-002/FR-039/FR-052/FR-053 — renders one arch (upper or lower) procedurally from
@@ -49,6 +58,7 @@ const CROWN_H = 26;
           [attr.transform]="'translate(' + tooth.x + ' 0)'"
           class="tooth"
           [class]="'tooth status-' + tooth.statusClass"
+          [class.layer-dimmed]="tooth.dimmed"
           [attr.data-testid]="'tooth-' + tooth.fdiNumber"
           [attr.tabindex]="0"
           [attr.role]="'button'"
@@ -69,6 +79,17 @@ const CROWN_H = 26;
           }
           @for (dot of tooth.canalDots; track dot.x) {
             <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="2" [class.canal-dot-treat]="dot.treat" class="canal-dot" />
+          }
+          @if (tooth.hasMultipleFindings) {
+            <text
+              [attr.x]="0"
+              [attr.y]="dir() === 1 ? -14 : 54"
+              class="multi-indicator"
+              [attr.data-testid]="'tooth-' + tooth.fdiNumber + '-multi-indicator'"
+            >
+              <title>wiele wpisów</title>
+              ✳
+            </text>
           }
         </g>
       }
@@ -129,12 +150,25 @@ const CROWN_H = 26;
       fill: currentColor;
       opacity: 0.6;
     }
+    /* FR-009/FR-039/FR-050 — dimmed by the layer filter, but the status-* class (and its
+       shape/stroke cue) stays in place, so the distinction never relies on color alone. */
+    .tooth.layer-dimmed {
+      opacity: 0.35;
+    }
+    .multi-indicator {
+      font-size: 11px;
+      text-anchor: middle;
+      fill: var(--pu-accent-text, #7a5a2e);
+      pointer-events: none;
+    }
   `,
 })
 export class ToothArchComponent {
   readonly positions = input.required<ToothPosition[]>();
   /** +1 renders crowns pointing down/roots up (upper arch); -1 the reverse (lower arch). */
   readonly dir = input.required<1 | -1>();
+  /** FR-009 — purely a view filter; 'ALL' (default) shows every layer at full strength. */
+  readonly layerFilter = input<'ALL' | FindingLayer>('ALL');
 
   readonly toothSelected = output<number>();
   /** FR-020a — right-click or long-press on a tooth opens the quick-add context menu. */
@@ -167,6 +201,10 @@ export class ToothArchComponent {
           .filter((n): n is Extract<typeof n, { kind: 'dot' }> => n.kind === 'dot')
           .map((n) => ({ x: n.x, y: n.y, treat: n.treat })),
         statusClass: this.statusOf(position),
+        dimmed: this.isDimmed(position),
+        hasMultipleFindings:
+          position.currentFindings.filter((f) => f.clinicalStatus === 'ACTIVE').length >
+          MULTI_FINDING_THRESHOLD,
         labelPl: anatomy.labelPl,
         ariaLabel: this.ariaLabelFor(position, anatomy.labelPl),
       };
@@ -248,6 +286,21 @@ export class ToothArchComponent {
       return 'restored';
     }
     return 'healthy';
+  }
+
+  /** FR-009 — a tooth is dimmed only when its shown status is entirely attributable to the
+   * layer the current filter excludes (e.g. an EXISTING_STATE-only tooth under the
+   * "rozpoznanie"-only filter); a DIAGNOSIS finding always keeps a tooth at full strength. */
+  private isDimmed(position: ToothPosition): boolean {
+    const filter = this.layerFilter();
+    if (filter === 'ALL') {
+      return false;
+    }
+    const status = this.statusOf(position);
+    if (filter === 'DIAGNOSIS') {
+      return status === 'restored';
+    }
+    return status === 'diseased';
   }
 
   private ariaLabelFor(position: ToothPosition, labelPl: string): string {

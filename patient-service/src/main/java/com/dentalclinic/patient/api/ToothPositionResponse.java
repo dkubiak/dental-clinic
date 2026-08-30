@@ -4,8 +4,10 @@ import com.dentalclinic.patient.toothchart.ToothChartService.PositionView;
 import java.time.LocalDate;
 import java.util.List;
 
-/** contracts/patient-api.yaml ToothPosition schema. {@code currentFindings} is populated by US1
- * (T058) once {@link ToothFindingResponse} exists. */
+/**
+ * contracts/patient-api.yaml ToothPosition schema. {@code currentFindings} is populated by US1
+ * (T058) once {@link ToothFindingResponse} exists.
+ */
 public record ToothPositionResponse(
     int fdiNumber,
     String dentitionType,

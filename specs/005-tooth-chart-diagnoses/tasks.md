@@ -410,22 +410,22 @@ without using the detail-panel form.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T067 [P] [US2] Failing JUnit test: `GET
+- [X] T067 [P] [US2] Failing JUnit test: `GET
   /patients/{id}/tooth-chart/positions/{fdiNumber}/history` returns current, resolved, and
   superseded findings in chronological order, audited as `TOOTH_CHART_VIEWED`
   (`metadata.detail = "position-history"`) in
   `patient-service/src/test/java/com/dentalclinic/patient/api/ToothChartControllerTest.java`
   (extends T031)
-- [ ] T068 [P] [US2] Failing Vitest test: the legend lists every visual state/layer/surface symbol
+- [X] T068 [P] [US2] Failing Vitest test: the legend lists every visual state/layer/surface symbol
   in Polish (FR-008), and the layer filter dims/hides `EXISTING_STATE` markers while keeping
   `DIAGNOSIS` markers visible, purely client-side (FR-009) in
   `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts` (extends T035)
-- [ ] T069 [P] [US2] Failing Vitest test: a tooth whose findings can't all render shows the "wiele
+- [X] T069 [P] [US2] Failing Vitest test: a tooth whose findings can't all render shows the "wiele
   wpisów" indicator (FR-010); the "historia zęba" disclosure is collapsed by default and reveals
   resolved/superseded entries only on expansion (FR-034) in
   `frontend/src/app/features/patients/tooth-chart/tooth-detail-panel.component.spec.ts` (extends
   T052)
-- [ ] T070 [P] [US2] Failing Vitest test: `tooth-chart.component.ts` renders one `surface-map`
+- [X] T070 [P] [US2] Failing Vitest test: `tooth-chart.component.ts` renders one `surface-map`
   instance per visible tooth column in a middle strip between the two arches (FR-029); each zone is
   directly clickable on mouse, pen, and touch and selects the matching tooth+surface without first
   opening the detail panel (FR-029a); a zoom control reaches ≥24×24px zones at its first level and
@@ -436,27 +436,27 @@ without using the detail-panel form.
 
 ### Implementation for User Story 2
 
-- [ ] T071 [US2] Add `getPositionHistory(patientId, fdiNumber)` to `ToothChartService.java` (depends
+- [X] T071 [US2] Add `getPositionHistory(patientId, fdiNumber)` to `ToothChartService.java` (depends
   on T067)
-- [ ] T072 [US2] Add `GET /patients/{patientId}/tooth-chart/positions/{fdiNumber}/history` to
+- [X] T072 [US2] Add `GET /patients/{patientId}/tooth-chart/positions/{fdiNumber}/history` to
   `ToothChartController.java` (depends on T071)
-- [ ] T073 [US2] Add `getPositionHistory` method to `tooth-chart.service.ts` (depends on T072)
-- [ ] T074 [US2] Add the legend UI (every state/layer/surface symbol, Polish text, FR-008) to
+- [X] T073 [US2] Add `getPositionHistory` method to `tooth-chart.service.ts` (depends on T072)
+- [X] T074 [US2] Add the legend UI (every state/layer/surface symbol, Polish text, FR-008) to
   `tooth-chart.component.ts` (depends on T068)
-- [ ] T075 [US2] Add the layer-filter control ("rozpoznanie"/"stan istniejący"/"wszystkie") to
+- [X] T075 [US2] Add the layer-filter control ("rozpoznanie"/"stan istniejący"/"wszystkie") to
   `tooth-chart.component.ts`, purely client-side (FR-009), with the FR-039/FR-050 non-color cue
   preserved when dimmed (depends on T068)
-- [ ] T076 [US2] Add the "wiele wpisów" indicator to `tooth-arch.component.ts` and the "historia
+- [X] T076 [US2] Add the "wiele wpisów" indicator to `tooth-arch.component.ts` and the "historia
   zęba" disclosure (backed by `getPositionHistory`) to `tooth-detail-panel.component.ts` (depends on
   T069, T073)
-- [ ] T077 [US2] Render the middle-strip surface-map row in `tooth-chart.component.ts` — one
+- [X] T077 [US2] Render the middle-strip surface-map row in `tooth-chart.component.ts` — one
   `surface-map.component.ts` instance per visible tooth column, positioned between the upper and
   lower arch, aligned to its corresponding tooth's column (FR-029) in
   `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` (depends on T070, T061)
-- [ ] T078 [US2] Add the 1×/2×/3× diagram zoom control to `tooth-chart.component.ts` (FR-029b) —
+- [X] T078 [US2] Add the 1×/2×/3× diagram zoom control to `tooth-chart.component.ts` (FR-029b) —
   horizontal scroll confined to the diagram's own container (never page scroll, FR-049), keeps the
   currently selected tooth in view across zoom-level changes (depends on T070, T077)
-- [ ] T079 [US2] Wire direct surface-zone clicks on the middle strip to select the matching
+- [X] T079 [US2] Wire direct surface-zone clicks on the middle strip to select the matching
   tooth+surface and reuse the exact save flow User Story 1 already built (open/update the detail
   panel or route through the quick context-menu), without requiring the panel to be opened first
   (FR-029a) in `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.ts` (depends

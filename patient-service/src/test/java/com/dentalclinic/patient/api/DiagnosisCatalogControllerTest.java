@@ -23,8 +23,7 @@ class DiagnosisCatalogControllerTest extends PostgresIntegrationTestBase {
   void doctorAndAssistant_canSearchCatalog() throws Exception {
     for (String role : new String[] {"DOCTOR", "ASSISTANT"}) {
       mockMvc
-          .perform(
-              get("/diagnosis-catalog").with(user(UUID.randomUUID().toString()).roles(role)))
+          .perform(get("/diagnosis-catalog").with(user(UUID.randomUUID().toString()).roles(role)))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(40)));
     }
@@ -75,7 +74,8 @@ class DiagnosisCatalogControllerTest extends PostgresIntegrationTestBase {
   @Test
   void noWriteMappingExists_onDiagnosisCatalogPath() throws Exception {
     mockMvc
-        .perform(post("/diagnosis-catalog").with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
+        .perform(
+            post("/diagnosis-catalog").with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
         .andExpect(status().is4xxClientError());
     mockMvc
         .perform(

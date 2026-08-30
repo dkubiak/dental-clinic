@@ -6,7 +6,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface DiagnosisCatalogEntryRepository extends JpaRepository<DiagnosisCatalogEntry, UUID> {
+public interface DiagnosisCatalogEntryRepository
+    extends JpaRepository<DiagnosisCatalogEntry, UUID> {
 
   Optional<DiagnosisCatalogEntry> findByCode(String code);
 

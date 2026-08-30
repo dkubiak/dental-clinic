@@ -53,13 +53,13 @@ class ToothChartInitializerTest extends PostgresIntegrationTestBase {
 
     Set<Integer> expectedPermanent =
         expand(new int[] {1, 2, 3, 4}, new int[] {1, 2, 3, 4, 5, 6, 7, 8});
-    Set<Integer> expectedDeciduous =
-        expand(new int[] {5, 6, 7, 8}, new int[] {1, 2, 3, 4, 5});
+    Set<Integer> expectedDeciduous = expand(new int[] {5, 6, 7, 8}, new int[] {1, 2, 3, 4, 5});
     Set<Integer> actual =
         positions.stream().map(ToothPosition::getFdiNumber).collect(Collectors.toSet());
-    assertThat(actual).containsExactlyInAnyOrderElementsOf(
-        Stream.concat(expectedPermanent.stream(), expectedDeciduous.stream())
-            .collect(Collectors.toSet()));
+    assertThat(actual)
+        .containsExactlyInAnyOrderElementsOf(
+            Stream.concat(expectedPermanent.stream(), expectedDeciduous.stream())
+                .collect(Collectors.toSet()));
 
     Map<Integer, ToothPosition> byFdi =
         positions.stream().collect(Collectors.toMap(ToothPosition::getFdiNumber, p -> p));
