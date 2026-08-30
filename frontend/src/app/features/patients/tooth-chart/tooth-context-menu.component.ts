@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { DiagnosisCatalogEntry, ToothFinding, ToothSurface } from '../patients.models';
+import { DiagnosisCatalogEntry, ToothFinding, ToothFindingBulkResult, ToothSurface } from '../patients.models';
 import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 import { ToothChartService } from './tooth-chart.service';
 
@@ -23,6 +23,24 @@ import { ToothChartService } from './tooth-chart.service';
         [style.left.px]="x()"
         [style.top.px]="y()"
       >
+        @if (bulkSkipped(); as skipped) {
+          <div class="section" data-testid="context-menu-skipped">
+            <p class="section-label">Pominięto {{ skipped.length }} z {{ selectedFdiNumbers().length }}:</p>
+            <ul>
+              @for (s of skipped; track s.fdiNumber) {
+                <li>{{ s.fdiNumber }}: {{ s.reason }}</li>
+              }
+            </ul>
+            <button type="button" data-testid="context-menu-skipped-ok" (click)="close()">OK</button>
+          </div>
+        } @else {
+
+        @if (isMultiSelection()) {
+          <p class="section-label" data-testid="context-menu-selection-count">
+            Zaznaczono zębów: {{ selectedFdiNumbers().length }}
+          </p>
+        }
+
         @if (undoTarget(); as target) {
           <button type="button" data-testid="context-menu-undo" (click)="undo(target)">
             Cofnij: {{ target.diagnosisCatalogEntry.namePl }}
@@ -56,6 +74,7 @@ import { ToothChartService } from './tooth-chart.service';
             </button>
           }
         </div>
+        }
       </div>
     }
   `,
@@ -101,6 +120,10 @@ export class ToothContextMenuComponent {
   readonly targetSurface = input<ToothSurface | null>(null);
   /** The most recent CURRENT finding on this tooth, offered as the quick "Cofnij" target. */
   readonly undoTarget = input<ToothFinding | null>(null);
+  /** FR-020b, US6 — when an active multi-selection has more than one tooth, the chosen entry
+   * applies to every one of these positions via the bulk path instead of just `fdiNumber()`.
+   * Opening this menu never changes the selection that produced this list. */
+  readonly selectedFdiNumbers = input<number[]>([]);
 
   readonly saved = output<ToothFinding>();
   readonly closed = output<void>();
@@ -109,6 +132,11 @@ export class ToothContextMenuComponent {
   private readonly diagnosisCatalogService = inject(DiagnosisCatalogService);
 
   private readonly allEntries = signal<DiagnosisCatalogEntry[]>([]);
+  /** FR-020b — set after a bulk pick that skipped >=1 position; keeps the menu open to report it
+   * instead of closing immediately, so a skip is never silently dropped. */
+  readonly bulkSkipped = signal<ToothFindingBulkResult['skipped'] | null>(null);
+
+  readonly isMultiSelection = computed(() => this.selectedFdiNumbers().length > 1);
 
   constructor() {
     this.diagnosisCatalogService.search().subscribe((entries) => this.allEntries.set(entries));
@@ -130,6 +158,10 @@ export class ToothContextMenuComponent {
   });
 
   pick(entry: DiagnosisCatalogEntry): void {
+    if (this.isMultiSelection()) {
+      this.pickBulk(entry);
+      return;
+    }
     const surfaces = entry.anatomicalScope === 'SURFACE' ? this.surfacesFor() : null;
     const request$ = this.toothChartService.addFinding(this.patientId(), {
       fdiNumber: this.fdiNumber(),
@@ -140,6 +172,25 @@ export class ToothContextMenuComponent {
     this.diagnosisCatalogService.withRecencyTracking(entry.code, request$).subscribe((finding) => {
       this.saved.emit(finding);
       this.close();
+    });
+  }
+
+  /** FR-020b, US6 — applies the chosen entry to every selected position via addFindingsBulk. */
+  private pickBulk(entry: DiagnosisCatalogEntry): void {
+    const surfaces = entry.anatomicalScope === 'SURFACE' ? this.surfacesFor() : null;
+    const request$ = this.toothChartService.addFindingsBulk(this.patientId(), {
+      fdiNumbers: this.selectedFdiNumbers(),
+      diagnosisCatalogEntryId: entry.id,
+      surfaces,
+      diagnosisDate: new Date().toISOString().slice(0, 10),
+    });
+    this.diagnosisCatalogService.withRecencyTracking(entry.code, request$).subscribe((result) => {
+      result.created.forEach((finding) => this.saved.emit(finding));
+      if (result.skipped.length > 0) {
+        this.bulkSkipped.set(result.skipped);
+      } else {
+        this.close();
+      }
     });
   }
 
@@ -156,6 +207,7 @@ export class ToothContextMenuComponent {
   }
 
   close(): void {
+    this.bulkSkipped.set(null);
     this.closed.emit();
   }
 

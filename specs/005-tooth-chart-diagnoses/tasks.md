@@ -658,22 +658,22 @@ existing quick context-menu on a multi-selection and confirm it applies to every
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T112 [P] [US6] Failing JUnit test: `addFindingsBulk` creates one independent `ToothFinding`
+- [X] T112 [P] [US6] Failing JUnit test: `addFindingsBulk` creates one independent `ToothFinding`
   per applicable position inside a single transaction, skips inapplicable positions with a
   human-readable reason, and never fails the whole call (FR-004a, US6 scenario 3/4) in
   `patient-service/src/test/java/com/dentalclinic/patient/toothchart/ToothFindingServiceTest.java`
   (extends T050)
-- [ ] T113 [US6] Failing JUnit API test: `POST /patients/{id}/tooth-chart/findings/bulk` returns
+- [X] T113 [US6] Failing JUnit API test: `POST /patients/{id}/tooth-chart/findings/bulk` returns
   `created`/`skipped` per contracts/patient-api.yaml, one `TOOTH_FINDING_ADDED` audit row per
   created finding in
   `patient-service/src/test/java/com/dentalclinic/patient/api/ToothFindingControllerTest.java`
   (extends T051)
-- [ ] T114 [P] [US6] Failing Vitest test: multi-select state in `tooth-chart.component.ts` — select
+- [X] T114 [P] [US6] Failing Vitest test: multi-select state in `tooth-chart.component.ts` — select
   multiple teeth/parts, quadrant/arch/anterior-segment shortcuts, drag-select across adjacent teeth,
   a visible counter, deselecting one tooth leaves the rest intact, and clearing requires an explicit
   action (FR-004a-c) in
   `frontend/src/app/features/patients/tooth-chart/tooth-chart.component.spec.ts` (extends T035)
-- [ ] T115 [P] [US6] Failing Vitest test: `tooth-context-menu.component.ts` (built in US1, T065),
+- [X] T115 [P] [US6] Failing Vitest test: `tooth-context-menu.component.ts` (built in US1, T065),
   when invoked while a multi-selection is active, applies the chosen entry to every selected
   position via the bulk path instead of the single-finding path, reports skipped positions after
   save, and does not alter the current selection when opened (FR-020b) in
@@ -682,24 +682,24 @@ existing quick context-menu on a multi-selection and confirm it applies to every
 
 ### Implementation for User Story 6
 
-- [ ] T116 [US6] Implement `addFindingsBulk(...)` on `ToothFindingService.java` — one `addFinding`
+- [X] T116 [US6] Implement `addFindingsBulk(...)` on `ToothFindingService.java` — one `addFinding`
   call per applicable position in one transaction, collects `created`/`skipped` (research.md D6)
   (depends on T112)
-- [ ] T117 [P] [US6] Create `ToothFindingBulkCreateRequest.java` and
+- [X] T117 [P] [US6] Create `ToothFindingBulkCreateRequest.java` and
   `ToothFindingBulkResultResponse.java` per contracts/patient-api.yaml in
   `patient-service/src/main/java/com/dentalclinic/patient/api/ToothFindingBulkCreateRequest.java`
   and
   `patient-service/src/main/java/com/dentalclinic/patient/api/ToothFindingBulkResultResponse.java`
-- [ ] T118 [US6] Add `POST /patients/{patientId}/tooth-chart/findings/bulk` to
+- [X] T118 [US6] Add `POST /patients/{patientId}/tooth-chart/findings/bulk` to
   `ToothFindingController.java` (depends on T116, T117, T113)
 - [X] T119 [US6] Add `addFindingsBulk` method to `tooth-chart.service.ts` (depends on T118)
-- [ ] T120 [US6] Add multi-select state, quadrant/arch/segment shortcuts, and drag-select to
+- [X] T120 [US6] Add multi-select state, quadrant/arch/segment shortcuts, and drag-select to
   `tooth-chart.component.ts` (depends on T114, T063)
-- [ ] T121 [US6] Extend `tooth-context-menu.component.ts` (US1, T065) to detect an active
+- [X] T121 [US6] Extend `tooth-context-menu.component.ts` (US1, T065) to detect an active
   multi-selection and, when present, apply the chosen entry to every selected position via
   `addFindingsBulk` (T119) instead of `addFinding`, surfacing any skipped positions after save
   (FR-020b) (depends on T115, T119, T120)
-- [ ] T122 [US6] Verify the right-click/long-press handlers already wired in User Story 1 (T066)
+- [X] T122 [US6] Verify the right-click/long-press handlers already wired in User Story 1 (T066)
   correctly open the same menu when a multi-selection is active, and that opening it never changes
   the current selection (FR-020b) — no new event wiring expected, this is a confirmation/adjustment
   pass (depends on T121)

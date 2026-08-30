@@ -254,7 +254,7 @@ class ToothChartControllerTest extends PostgresIntegrationTestBase {
    */
   @Test
   void doctor_canChangeDentitionMode_andItPersistsAndIsAudited() throws Exception {
-    UUID id = createPatient("90011502084");
+    UUID id = createPatient("90011505001");
     long before = countEntries("DENTITION_MODE_CHANGED");
 
     mockMvc

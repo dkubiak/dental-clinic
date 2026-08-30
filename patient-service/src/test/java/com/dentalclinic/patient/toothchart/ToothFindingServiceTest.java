@@ -317,4 +317,59 @@ class ToothFindingServiceTest extends PostgresIntegrationTestBase {
         .extracting(ToothFinding::getId)
         .containsExactlyInAnyOrder(original.getId(), corrected.getId());
   }
+
+  /**
+   * T112 — addFindingsBulk creates one independent ToothFinding per applicable position inside a
+   * single transaction, skips inapplicable positions with a human-readable reason, and never fails
+   * the whole call (FR-004a, US6 scenario 3/4).
+   */
+  @Test
+  void addFindingsBulk_createsOneFindingPerApplicablePosition_andSkipsTheRestWithAReason() {
+    PatientRecord patient = createAdultPatient("90011560011");
+    DiagnosisCatalogEntry caries = entryByCode("K02.1"); // SURFACE scope
+
+    // 99 isn't a real FDI number on this chart, so addFinding rejects it as
+    // PatientNotFoundException — exercising the skip path without failing the whole call.
+    ToothFindingService.BulkResult result =
+        toothFindingService.addFindingsBulk(
+            patient.getId(),
+            List.of(11, 12, 13, 99),
+            caries.getId(),
+            List.of(ToothSurface.MESIAL),
+            null,
+            null,
+            null,
+            LocalDate.of(2026, 8, 30),
+            UUID.randomUUID(),
+            FindingAuthorRole.DOCTOR);
+
+    assertThat(result.created()).hasSize(3);
+    assertThat(result.created()).extracting(f -> toothFindingService.fdiNumberOf(f))
+        .containsExactlyInAnyOrder(11, 12, 13);
+    assertThat(result.skipped()).hasSize(1);
+    assertThat(result.skipped().get(0).fdiNumber()).isEqualTo(99);
+    assertThat(result.skipped().get(0).reason()).isNotBlank();
+  }
+
+  @Test
+  void addFindingsBulk_neverFailsTheWholeCall_whenSomePositionsAreInapplicable() {
+    PatientRecord patient = createAdultPatient("90011560028");
+    DiagnosisCatalogEntry caries = entryByCode("K02.1");
+
+    ToothFindingService.BulkResult result =
+        toothFindingService.addFindingsBulk(
+            patient.getId(),
+            List.of(0, 200),
+            caries.getId(),
+            List.of(ToothSurface.MESIAL),
+            null,
+            null,
+            null,
+            LocalDate.of(2026, 8, 30),
+            UUID.randomUUID(),
+            FindingAuthorRole.DOCTOR);
+
+    assertThat(result.created()).isEmpty();
+    assertThat(result.skipped()).hasSize(2);
+  }
 }

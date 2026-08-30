@@ -247,6 +247,36 @@ class ToothFindingControllerTest extends PostgresIntegrationTestBase {
         .andExpect(jsonPath("$[1].authorRole").value("ASSISTANT"));
   }
 
+  /**
+   * T113 — {@code POST .../findings/bulk} returns created/skipped per contracts/patient-api.yaml,
+   * one TOOTH_FINDING_ADDED audit row per created finding.
+   */
+  @Test
+  void addFindingsBulk_returnsCreatedAndSkipped_withOneAuditRowPerCreatedFinding() throws Exception {
+    UUID id = createPatient("90011527023");
+    long before = countEntries("TOOTH_FINDING_ADDED");
+
+    mockMvc
+        .perform(
+            post("/patients/" + id + "/tooth-chart/findings/bulk")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
+                .cookie(CSRF_TOKEN_COOKIE)
+                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(
+                    """
+                    {"fdiNumbers":[11,12,99],"diagnosisCatalogEntryId":"%s",
+                     "surfaces":["MESIAL"],"diagnosisDate":"2026-08-30"}
+                    """
+                        .formatted(cariesEntryId())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created.length()").value(2))
+        .andExpect(jsonPath("$.skipped.length()").value(1))
+        .andExpect(jsonPath("$.skipped[0].fdiNumber").value(99));
+
+    assertThat(countEntries("TOOTH_FINDING_ADDED")).isEqualTo(before + 2);
+  }
+
   private long countEntries(String eventType) {
     Long count =
         jdbcTemplate.queryForObject(

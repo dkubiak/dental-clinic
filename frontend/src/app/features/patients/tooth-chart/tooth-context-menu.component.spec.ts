@@ -60,7 +60,11 @@ function finding(overrides: Partial<ToothFinding> = {}): ToothFinding {
 
 describe('ToothContextMenuComponent', () => {
   let fixture: ComponentFixture<ToothContextMenuComponent>;
-  let toothChartService: { addFinding: ReturnType<typeof vi.fn>; closeFinding: ReturnType<typeof vi.fn> };
+  let toothChartService: {
+    addFinding: ReturnType<typeof vi.fn>;
+    closeFinding: ReturnType<typeof vi.fn>;
+    addFindingsBulk: ReturnType<typeof vi.fn>;
+  };
   let diagnosisCatalogService: {
     search: ReturnType<typeof vi.fn>;
     recentEntries: ReturnType<typeof vi.fn>;
@@ -87,7 +91,11 @@ describe('ToothContextMenuComponent', () => {
   }
 
   beforeEach(() => {
-    toothChartService = { addFinding: vi.fn().mockReturnValue(of(finding())), closeFinding: vi.fn() };
+    toothChartService = {
+      addFinding: vi.fn().mockReturnValue(of(finding())),
+      closeFinding: vi.fn(),
+      addFindingsBulk: vi.fn().mockReturnValue(of({ created: [finding()], skipped: [] })),
+    };
     diagnosisCatalogService = {
       search: vi.fn().mockReturnValue(of([CARIES, EXTRACTED])),
       recentEntries: vi.fn().mockReturnValue([]),
@@ -135,5 +143,44 @@ describe('ToothContextMenuComponent', () => {
       'f1',
       expect.objectContaining({ resolvedDate: expect.any(String) }),
     );
+  });
+
+  it('applies the chosen entry to every selected position via the bulk path when a multi-selection is active (T115/FR-020b)', async () => {
+    await setup({ targetSurface: 'MESIAL', selectedFdiNumbers: [11, 12, 13] });
+
+    fixture.nativeElement.querySelector('[data-testid="context-menu-quick-K02.1"]').dispatchEvent(new Event('click'));
+
+    expect(toothChartService.addFindingsBulk).toHaveBeenCalledWith(
+      'p1',
+      expect.objectContaining({ fdiNumbers: [11, 12, 13], diagnosisCatalogEntryId: 'dx1' }),
+    );
+    expect(toothChartService.addFinding).not.toHaveBeenCalled();
+  });
+
+  it('reports skipped positions after a bulk save instead of closing silently (T115/FR-020b)', async () => {
+    toothChartService.addFindingsBulk.mockReturnValue(
+      of({ created: [finding({ fdiNumber: 11 })], skipped: [{ fdiNumber: 12, reason: 'Brak zęba.' }] }),
+    );
+    let closedCount = 0;
+    await setup({ targetSurface: 'MESIAL', selectedFdiNumbers: [11, 12] });
+    fixture.componentInstance.closed.subscribe(() => closedCount++);
+
+    fixture.nativeElement.querySelector('[data-testid="context-menu-quick-K02.1"]').dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect(closedCount).toBe(0); // stays open to report the skip
+    const skippedSection = fixture.nativeElement.querySelector('[data-testid="context-menu-skipped"]');
+    expect(skippedSection).toBeTruthy();
+    expect(skippedSection.textContent).toContain('12');
+    expect(skippedSection.textContent).toContain('Brak zęba.');
+  });
+
+  it('does not alter the current selection when opened, single-tooth path is unaffected without a multi-selection', async () => {
+    await setup({ targetSurface: 'MESIAL' }); // selectedFdiNumbers defaults to []
+
+    fixture.nativeElement.querySelector('[data-testid="context-menu-quick-K02.1"]').dispatchEvent(new Event('click'));
+
+    expect(toothChartService.addFinding).toHaveBeenCalled();
+    expect(toothChartService.addFindingsBulk).not.toHaveBeenCalled();
   });
 });

@@ -37,6 +37,8 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
     ToothContextMenuComponent,
     SurfaceMapComponent,
   ],
+  // FR-004a-c, US6 — ends a drag-select gesture even if the pointer is released outside any tooth.
+  host: { '(document:pointerup)': 'endDrag()' },
   template: `
     @switch (loadState()) {
       @case ('loading') {
@@ -144,6 +146,38 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
             <button type="button" data-testid="zoom-2" [attr.aria-pressed]="zoomLevel() === 2" (click)="setZoom(2)">2×</button>
             <button type="button" data-testid="zoom-3" [attr.aria-pressed]="zoomLevel() === 3" (click)="setZoom(3)">3×</button>
           </div>
+
+          <!-- FR-004a-c, US6 — multi-selection: quadrant/arch/segment shortcuts and drag-select
+               produce N independently correctable findings via the bulk save path, never a shared
+               batch entity. -->
+          <div class="multi-select" role="group" aria-label="Zaznaczanie wielokrotne">
+            <button
+              type="button"
+              data-testid="multi-select-toggle"
+              [attr.aria-pressed]="multiSelectMode()"
+              (click)="toggleMultiSelectMode()"
+            >
+              Zaznaczanie wielokrotne
+            </button>
+            @if (multiSelectMode()) {
+              <button type="button" data-testid="select-quadrant-1" (click)="selectQuadrant(1)">Ćwiartka 1</button>
+              <button type="button" data-testid="select-quadrant-2" (click)="selectQuadrant(2)">Ćwiartka 2</button>
+              <button type="button" data-testid="select-quadrant-3" (click)="selectQuadrant(3)">Ćwiartka 3</button>
+              <button type="button" data-testid="select-quadrant-4" (click)="selectQuadrant(4)">Ćwiartka 4</button>
+              <button type="button" data-testid="select-arch-upper" (click)="selectArch(1)">Łuk górny</button>
+              <button type="button" data-testid="select-arch-lower" (click)="selectArch(-1)">Łuk dolny</button>
+              <button type="button" data-testid="select-anterior-segment" (click)="selectAnteriorSegment()">Odcinek przedni</button>
+              <span data-testid="multi-select-count">Zaznaczono zębów: {{ selectedFdiNumbers().length }}</span>
+              <button
+                type="button"
+                data-testid="clear-selection"
+                [disabled]="selectedFdiNumbers().length === 0"
+                (click)="clearSelection()"
+              >
+                Wyczyść zaznaczenie
+              </button>
+            }
+          </div>
         </div>
 
         <div class="odontogram-layout">
@@ -159,8 +193,11 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
                 [positions]="upperPositions()"
                 [dir]="1"
                 [layerFilter]="layerFilter()"
+                [selectedFdiNumbers]="selectedFdiNumbers()"
                 (toothSelected)="select($event)"
                 (toothContextMenu)="openContextMenu($event)"
+                (toothPointerDown)="onToothPointerDown($event)"
+                (toothPointerEnter)="onToothPointerEnter($event)"
               />
 
               <!-- FR-029 — the middle-strip surface-map row: one instance per visible tooth
@@ -204,8 +241,11 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
                 [positions]="lowerPositions()"
                 [dir]="-1"
                 [layerFilter]="layerFilter()"
+                [selectedFdiNumbers]="selectedFdiNumbers()"
                 (toothSelected)="select($event)"
                 (toothContextMenu)="openContextMenu($event)"
+                (toothPointerDown)="onToothPointerDown($event)"
+                (toothPointerEnter)="onToothPointerEnter($event)"
               />
             </div>
           </div>
@@ -230,6 +270,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
           [patientId]="patientId()"
           [fdiNumber]="contextMenu()?.fdiNumber ?? 0"
           [undoTarget]="contextMenuUndoTarget()"
+          [selectedFdiNumbers]="selectedFdiNumbers()"
           (saved)="onSaved()"
           (closed)="contextMenu.set(null)"
         />
@@ -275,13 +316,17 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
     }
     .dentition-mode,
     .layer-filter,
-    .zoom-control {
+    .zoom-control,
+    .multi-select {
       display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 4px;
     }
     .dentition-mode button,
     .layer-filter button,
-    .zoom-control button {
+    .zoom-control button,
+    .multi-select button {
       border: 1px solid var(--pu-border, #e6dfd5);
       background: var(--pu-surface, #fff);
       border-radius: 6px;
@@ -290,10 +335,16 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
     }
     .dentition-mode button[aria-pressed='true'],
     .layer-filter button[aria-pressed='true'],
-    .zoom-control button[aria-pressed='true'] {
+    .zoom-control button[aria-pressed='true'],
+    .multi-select button[aria-pressed='true'] {
       border-color: var(--pu-accent, #cbad89);
       background: var(--pu-accent, #cbad89);
       font-weight: 600;
+    }
+    .multi-select [data-testid='multi-select-count'] {
+      font-size: 13px;
+      color: var(--pu-text-muted, #5c5654);
+      padding: 0 4px;
     }
     .conflict-banner {
       display: flex;
@@ -382,6 +433,16 @@ export class ToothChartComponent implements OnInit {
    * component or a child) hits a 409; cleared once the user reloads. */
   readonly conflictMessage = signal<string | null>(null);
 
+  /** FR-004a-c, US6 — multi-selection: independent of selectedFdiNumber (singular), which drives
+   * the detail panel; clearing requires an explicit action, never an implicit side effect. */
+  readonly multiSelectMode = signal(false);
+  readonly selectedFdiNumbers = signal<number[]>([]);
+  /** Drag-select bookkeeping: not signals — they're gesture-scoped, read only from pointer
+   * handlers, and don't need to trigger change detection on their own. */
+  private dragPointerActive = false;
+  private dragStartFdi: number | null = null;
+  private dragMoved = false;
+
   /** FR-043/FR-046 — dentitionMode is a pure view filter over the 52 positions that always exist
    * (research.md D2); MIXED shows both dentition types, PERMANENT/DECIDUOUS show only their own. */
   readonly visiblePositions = computed<ToothPosition[]>(() => {
@@ -442,10 +503,97 @@ export class ToothChartComponent implements OnInit {
     this.toothChartService.getChart(this.patientId()).subscribe((chart) => this.chart.set(chart));
   }
 
+  /** FR-004a-c — a plain click/tap: in multi-select mode this toggles the tooth in/out of the
+   * selection (deselecting one leaves the rest intact); otherwise it's the ordinary single-tooth
+   * selection that opens the detail panel. Suppressed by the browser during a genuine drag (no
+   * click fires when pointerdown/pointerup land on different elements), so it never fights with
+   * the drag-select handlers below. */
   select(fdiNumber: number): void {
+    if (this.multiSelectMode()) {
+      this.selectedFdiNumbers.update((current) =>
+        current.includes(fdiNumber)
+          ? current.filter((f) => f !== fdiNumber)
+          : [...current, fdiNumber],
+      );
+      return;
+    }
     this.selectedFdiNumber.set(fdiNumber);
     this.presetSurface.set(null);
     this.contextMenu.set(null);
+  }
+
+  /** FR-004a-c — entering multi-select mode closes the single-tooth detail panel; it never clears
+   * an existing multi-selection (clearing is only ever the explicit "Wyczyść zaznaczenie" action). */
+  toggleMultiSelectMode(): void {
+    this.multiSelectMode.update((v) => !v);
+    if (this.multiSelectMode()) {
+      this.selectedFdiNumber.set(null);
+      this.contextMenu.set(null);
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedFdiNumbers.set([]);
+  }
+
+  selectQuadrant(quadrant: number): void {
+    this.selectedFdiNumbers.set(
+      this.visiblePositions()
+        .filter((p) => Math.floor(p.fdiNumber / 10) === quadrant)
+        .map((p) => p.fdiNumber),
+    );
+  }
+
+  selectArch(dir: 1 | -1): void {
+    this.selectedFdiNumbers.set(
+      (dir === 1 ? this.upperPositions() : this.lowerPositions()).map((p) => p.fdiNumber),
+    );
+  }
+
+  /** FR-004b — "odcinek przedni": incisors and canines (FDI position digit 1-3) across every
+   * visible quadrant. */
+  selectAnteriorSegment(): void {
+    this.selectedFdiNumbers.set(
+      this.visiblePositions().filter((p) => p.fdiNumber % 10 <= 3).map((p) => p.fdiNumber),
+    );
+  }
+
+  /** FR-004a-c — drag-select gesture start; does not itself change the selection (a plain click on
+   * the same tooth is what toggles it — see select()). Only marks where a drag, if one follows,
+   * began. */
+  onToothPointerDown(fdiNumber: number): void {
+    this.dragPointerActive = true;
+    this.dragStartFdi = fdiNumber;
+    this.dragMoved = false;
+  }
+
+  /** FR-004a-c — drag-select continuation: the pointer moved onto a DIFFERENT tooth while still
+   * down. The first such move commits the gesture as a drag (adding the start tooth too, since its
+   * own click is suppressed by the browser once pointerdown/pointerup targets differ); every
+   * further move just adds the newly-entered tooth. */
+  onToothPointerEnter(fdiNumber: number): void {
+    if (!this.dragPointerActive || !this.multiSelectMode() || fdiNumber === this.dragStartFdi) {
+      return;
+    }
+    if (!this.dragMoved) {
+      this.dragMoved = true;
+      this.addToSelection(this.dragStartFdi!);
+    }
+    this.addToSelection(fdiNumber);
+  }
+
+  private addToSelection(fdiNumber: number): void {
+    this.selectedFdiNumbers.update((current) =>
+      current.includes(fdiNumber) ? current : [...current, fdiNumber],
+    );
+  }
+
+  /** Ends the current drag gesture — bound to a document-level pointerup (see host binding) so a
+   * release outside any tooth still stops the drag. */
+  endDrag(): void {
+    this.dragPointerActive = false;
+    this.dragStartFdi = null;
+    this.dragMoved = false;
   }
 
   openContextMenu(event: { fdiNumber: number; x: number; y: number }): void {

@@ -6,6 +6,7 @@ import com.dentalclinic.patient.record.PatientNotFoundException;
 import com.dentalclinic.patient.record.PatientRecord;
 import com.dentalclinic.patient.record.PatientRecordRepository;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -111,6 +112,63 @@ public class ToothFindingService {
         null);
     return finding;
   }
+
+  /**
+   * FR-004a-c, US6, research.md D6 — one {@link #addFinding} call per requested position inside a
+   * single transaction; a position the entry doesn't apply to (missing tooth, surface doesn't
+   * exist for that tooth type, bad FDI number, ...) is skipped with a human-readable reason rather
+   * than failing the whole call. Never creates a shared "batch" entity — every created finding is
+   * independently correctable via {@link #closeFinding}/{@link #correctFinding} afterward.
+   *
+   * @throws PatientNotFoundException no patient with this id exists.
+   */
+  @Transactional
+  public BulkResult addFindingsBulk(
+      UUID patientId,
+      List<Integer> fdiNumbers,
+      UUID diagnosisCatalogEntryId,
+      List<ToothSurface> surfaces,
+      String severity,
+      String freeTextDescription,
+      String note,
+      LocalDate diagnosisDate,
+      UUID actorAccountId,
+      FindingAuthorRole authorRole) {
+    if (!patientRecordRepository.existsById(patientId)) {
+      throw new PatientNotFoundException();
+    }
+    List<ToothFinding> created = new ArrayList<>();
+    List<SkippedPosition> skipped = new ArrayList<>();
+    for (int fdiNumber : fdiNumbers) {
+      try {
+        created.add(
+            addFinding(
+                patientId,
+                fdiNumber,
+                diagnosisCatalogEntryId,
+                surfaces,
+                null,
+                severity,
+                freeTextDescription,
+                note,
+                diagnosisDate,
+                actorAccountId,
+                authorRole));
+      } catch (PatientNotFoundException e) {
+        // Deliberately carries no message (rbac-policy.md rule 2) — most often means fdiNumber
+        // doesn't exist on this chart, since patient/entry were already validated above/by the
+        // caller.
+        skipped.add(new SkippedPosition(fdiNumber, "Nie znaleziono zęba o podanym numerze FDI."));
+      } catch (InvalidFindingException | FindingConflictException e) {
+        skipped.add(new SkippedPosition(fdiNumber, e.getMessage()));
+      }
+    }
+    return new BulkResult(created, skipped);
+  }
+
+  public record BulkResult(List<ToothFinding> created, List<SkippedPosition> skipped) {}
+
+  public record SkippedPosition(int fdiNumber, String reason) {}
 
   /**
    * FR-032 — close/resolve a finding after treatment: research.md D3's supersede-then-insert, with

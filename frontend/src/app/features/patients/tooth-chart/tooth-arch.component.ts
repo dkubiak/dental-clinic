@@ -63,6 +63,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           [class]="'tooth status-' + tooth.statusClass"
           [class.layer-dimmed]="tooth.dimmed"
           [class.tooth-deciduous]="tooth.deciduous"
+          [class.tooth-multi-selected]="isMultiSelected(tooth.fdiNumber)"
           [attr.data-testid]="'tooth-' + tooth.fdiNumber"
           [attr.tabindex]="0"
           [attr.role]="'button'"
@@ -73,6 +74,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           (keydown.arrowleft)="onArrowKey($any($event), i)"
           (contextmenu)="onContextMenu($event, tooth.fdiNumber)"
           (pointerdown)="onPointerDown($event, tooth.fdiNumber)"
+          (pointerenter)="onPointerEnter(tooth.fdiNumber)"
           (pointerup)="onPointerUp()"
           (pointerleave)="onPointerUp()"
         >
@@ -170,6 +172,13 @@ const MULTI_FINDING_THRESHOLD = 3;
     .tooth.tooth-deciduous .crown {
       stroke-dasharray: 2 1.5;
     }
+    /* FR-004a-c — a multi-selected tooth gets its own outline, independent of statusClass, so
+       selection state is never confused with clinical state. */
+    .tooth.tooth-multi-selected .crown,
+    .tooth.tooth-multi-selected .root {
+      stroke: var(--pu-accent-text, #7a5a2e);
+      stroke-width: 2.5;
+    }
   `,
 })
 export class ToothArchComponent {
@@ -178,8 +187,15 @@ export class ToothArchComponent {
   readonly dir = input.required<1 | -1>();
   /** FR-009 — purely a view filter; 'ALL' (default) shows every layer at full strength. */
   readonly layerFilter = input<'ALL' | FindingLayer>('ALL');
+  /** FR-004a-c, US6 — the active multi-selection, rendered with its own outline (independent of
+   * clinical statusClass). Empty when no multi-selection is active. */
+  readonly selectedFdiNumbers = input<number[]>([]);
 
   readonly toothSelected = output<number>();
+  /** FR-004a-c, US6 — drag-select: the pointer went down on this tooth (gesture start). */
+  readonly toothPointerDown = output<number>();
+  /** FR-004a-c, US6 — drag-select: pointer moved onto this tooth (gesture continuation). */
+  readonly toothPointerEnter = output<number>();
   /** FR-020a — right-click or long-press on a tooth opens the quick-add context menu. */
   readonly toothContextMenu = output<{ fdiNumber: number; x: number; y: number }>();
 
@@ -264,7 +280,18 @@ export class ToothArchComponent {
     this.toothContextMenu.emit({ fdiNumber, x: event.clientX, y: event.clientY });
   }
 
+  isMultiSelected(fdiNumber: number): boolean {
+    return this.selectedFdiNumbers().includes(fdiNumber);
+  }
+
+  /** FR-004a-c, US6 — drag-select: the pointer landed on/moved onto this tooth; the parent
+   * decides whether that means anything (only while a drag is active in multi-select mode). */
+  onPointerEnter(fdiNumber: number): void {
+    this.toothPointerEnter.emit(fdiNumber);
+  }
+
   onPointerDown(event: PointerEvent, fdiNumber: number): void {
+    this.toothPointerDown.emit(fdiNumber);
     if (event.pointerType !== 'touch') {
       return;
     }

@@ -433,4 +433,97 @@ describe('ToothChartComponent', () => {
     expect(toothChartService.changeDentitionMode).toHaveBeenCalledWith('p1', { dentitionMode: 'MIXED' });
     expect(fixture.componentInstance.chart()).toBe(switched);
   });
+
+  describe('multi-selection (T114/FR-004a-c)', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('[data-testid="multi-select-toggle"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+    });
+
+    it('clicking teeth toggles them in/out of the selection, with a visible counter', () => {
+      fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
+      fixture.nativeElement.querySelector('[data-testid="tooth-12"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11, 12]);
+      expect(fixture.nativeElement.querySelector('[data-testid="multi-select-count"]').textContent).toContain('2');
+
+      // deselecting one tooth leaves the rest intact
+      fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([12]);
+    });
+
+    it('a quadrant shortcut selects every visible tooth in that quadrant', () => {
+      fixture.nativeElement.querySelector('[data-testid="select-quadrant-2"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([21, 22, 23, 24, 25, 26, 27, 28]);
+    });
+
+    it('an arch shortcut selects every visible tooth in that arch', () => {
+      fixture.nativeElement.querySelector('[data-testid="select-arch-upper"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.selectedFdiNumbers().length).toBe(16);
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual(
+        expect.arrayContaining([11, 21]),
+      );
+    });
+
+    it('the anterior-segment shortcut selects only incisors/canines across every quadrant', () => {
+      fixture.nativeElement.querySelector('[data-testid="select-anterior-segment"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+
+      const selected = fixture.componentInstance.selectedFdiNumbers();
+      expect(selected.every((fdi) => fdi % 10 <= 3)).toBe(true);
+      expect(selected.length).toBe(12); // 3 anterior positions x 4 quadrants
+    });
+
+    it('drag-select across adjacent teeth adds each one, including the tooth the drag started on', () => {
+      const start = fixture.nativeElement.querySelector('[data-testid="tooth-11"]');
+      const mid = fixture.nativeElement.querySelector('[data-testid="tooth-12"]');
+      const end = fixture.nativeElement.querySelector('[data-testid="tooth-13"]');
+
+      start.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      mid.dispatchEvent(new Event('pointerenter', { bubbles: true }));
+      end.dispatchEvent(new Event('pointerenter', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11, 12, 13]);
+    });
+
+    it('clearing the selection requires the explicit "Wyczyść zaznaczenie" action', () => {
+      fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11]);
+
+      // toggling multi-select mode off and back on must not silently clear it
+      fixture.nativeElement.querySelector('[data-testid="multi-select-toggle"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('[data-testid="multi-select-toggle"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11]);
+
+      fixture.nativeElement.querySelector('[data-testid="clear-selection"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([]);
+    });
+
+    it('right-click on a selected tooth opens the quick context-menu without altering the multi-selection (T122/FR-020b)', () => {
+      fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
+      fixture.nativeElement.querySelector('[data-testid="tooth-12"]').dispatchEvent(new Event('click'));
+      fixture.detectChanges();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11, 12]);
+
+      fixture.nativeElement
+        .querySelector('[data-testid="tooth-11"]')
+        .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="tooth-context-menu"]')).toBeTruthy();
+      expect(fixture.componentInstance.selectedFdiNumbers()).toEqual([11, 12]);
+    });
+  });
 });

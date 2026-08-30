@@ -54,6 +54,28 @@ public class ToothFindingController {
         .body(toResponse(finding, request.fdiNumber(), toothFindingService));
   }
 
+  @PostMapping("/patients/{patientId}/tooth-chart/findings/bulk")
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
+  public ResponseEntity<ToothFindingBulkResultResponse> addFindingsBulk(
+      @PathVariable UUID patientId,
+      @RequestBody ToothFindingBulkCreateRequest request,
+      Principal principal,
+      Authentication authentication) {
+    var result =
+        toothFindingService.addFindingsBulk(
+            patientId,
+            request.fdiNumbers(),
+            request.diagnosisCatalogEntryId(),
+            request.surfaces(),
+            request.severity(),
+            request.freeTextDescription(),
+            request.note(),
+            request.diagnosisDate(),
+            actorId(principal),
+            authorRole(authentication));
+    return ResponseEntity.ok(ToothFindingBulkResultResponse.from(result, toothFindingService));
+  }
+
   @PostMapping("/patients/{patientId}/tooth-chart/findings/{findingId}/close")
   @PreAuthorize("hasAnyRole('DOCTOR', 'ASSISTANT')")
   public ResponseEntity<ToothFindingResponse> closeFinding(
