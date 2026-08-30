@@ -731,7 +731,7 @@ accessibility audit, and end-to-end validation across every user story.
   2026-08-30 piąta tura)
 - [X] T127 [P] Verify checkstyle/lint and full test suites are green: `cd patient-service && ./gradlew
   build`, `cd backend && ./gradlew build`, `cd frontend && npm run lint && npm test`
-- [ ] T128 Document the security/compliance self-review required by constitution v1.5.0's
+- [X] T128 Document the security/compliance self-review required by constitution v1.5.0's
   risk-tiered gate in the PR description before merge (this PR touches patient data and audit
   logging), explicitly addressing FR-058's ASSISTANT/DOCTOR write-parity divergence from
   `004-patient-medical-history` as a deliberate, spec-driven decision (plan.md Constitution Check);
