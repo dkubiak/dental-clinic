@@ -25,6 +25,23 @@
   wymagającą opisu tekstowego — elastyczność przy fotelu bez utraty kontroli nad danymi
   referencyjnymi.
 
+### Session 2026-08-30 (druga tura)
+
+- Q: Czy potrzebna jest migracja istniejących danych binarnego stanu uzębienia z
+  `002-patient-records`? → A: Nie. System nie jest wdrożony produkcyjnie i nie istnieją dane
+  pacjentów do przeniesienia — binarny model stanu zęba jest zastępowany, a nie migrowany. Sekcja
+  wymagań migracyjnych została usunięta.
+- Q: Czy operator ma móc zaznaczyć naraz kilka zębów **i** kilka części zęba, a potem jednym
+  zapisem określić ich stan? → A: Tak — zaznaczenie wielokrotne obejmuje zarówno zęby, jak i
+  powierzchnie/kanały w ich obrębie, ze skrótami "cała ćwiartka", "cały łuk", "odcinek przedni"
+  i zaznaczaniem przeciągnięciem (FR-004a..FR-004c).
+- Q: Czy odontogram ma pokazywać liczbę kanałów korzeniowych? → A: Tak. Każdy ząb ma domyślną,
+  podręcznikową liczbę kanałów widoczną bez dodatkowej interakcji, a operator może ją zmienić dla
+  konkretnego pacjenta (nowa sekcja wymagań I, FR-063..FR-069).
+- Q: Jak mają wyglądać zęby na łuku? → A: Anatomicznie rozpoznawalne sylwetki właściwe dla typu
+  zęba (siekacz, kieł, przedtrzonowiec, trzonowiec), z koroną i korzeniami, nie prostokąty
+  (FR-001a).
+
 **Input**: User description: "Interaktywny model wizualizacji zębów (diagram stomatologiczny /
 odontogram): dwa łuki zębowe z klikalnymi zębami, w którym lekarz oznacza który ząb jest chory,
 wybiera z listy szczegółową jednostkę chorobową (rozpoznanie) oraz wyklikuje konkretną
@@ -44,7 +61,8 @@ Zależności w obie strony:
 
 - `002-patient-records` — istniejący diagram, endpointy stanu uzębienia, role DOCTOR/ASSISTANT,
   wpisy audytu `TOOTH_CHART_VIEWED` / `TOOTH_STATE_CHANGED`, eksport i usuwanie danych (RODO).
-  Istniejące dane binarne muszą zostać zmigrowane bez utraty informacji (FR-060..FR-062).
+  System nie jest wdrożony produkcyjnie i nie ma danych pacjentów, więc binarny model stanu zęba
+  jest **zastępowany, a nie migrowany** — migracja danych jest poza zakresem tej specyfikacji.
 - `003-brand-ui-theme` — paleta marki, tryb jasny/ciemny, audyt kontrastu w testach jednostkowych,
   istniejące tokeny `tooth-healthy-*`, `tooth-diseased-*`, `tooth-selected-stroke`. Nowe stany
   zęba wymagają nowych tokenów w tym samym systemie.
@@ -52,6 +70,18 @@ Zależności w obie strony:
   techniczny "aktualny/nieaktualny" dla korekt) oraz model append-only. Ta specyfikacja stosuje
   ten sam wzorzec dla spójności. Alergie i choroby przewlekłe z 004 pozostają źródłem alertów
   ogólnoustrojowych — odontogram ich nie duplikuje.
+
+### Mockup UI (przed `/speckit-plan`)
+
+`mockup/odontogram-mockup.html` to klikalny prototyp interfejsu, uzgodniony z użytkownikiem przed
+planowaniem. Nie jest kodem produkcyjnym ani kontraktem — jest wizualnym odpowiednikiem wymagań z
+sekcji A, C, G oraz I i służy jako referencja dla `/speckit-plan`. Odwzorowuje: dwa łuki z
+anatomicznymi sylwetkami zębów (FR-001a), zaznaczanie wielu zębów i wielu części
+(FR-004a..FR-004c), słownik z zakresami anatomicznymi (FR-011..FR-021), mapę powierzchni
+(FR-024..FR-026), licznik kanałów z wartością domyślną (FR-063..FR-065), warstwy i legendę
+(FR-008, FR-009), tryb jasny/ciemny na tokenach z `003-brand-ui-theme` (FR-051) oraz cele
+dotknięcia ≥ 44 px bez poziomego przewijania strony (FR-049). Przełącznik „Wymagania" w pasku
+górnym pokazuje przy elementach interfejsu numery wymagań, których dotyczą.
 
 Moduł pozostaje w klasyfikacji **high-risk "patient records"** (Principle V) i przetwarza dane
 szczególnej kategorii wg RODO Art. 9.
@@ -85,8 +115,8 @@ mlecznego.
    żadnych rozpoznań.
 2. **Given** otwarty odontogram, **When** lekarz dotyka zęba 36, **Then** ząb zostaje wizualnie
    zaznaczony, a otwarty panel szczegółów pokazuje numer FDI, nazwę anatomiczną zęba ("pierwszy
-   trzonowiec dolny lewy"), powiększony schemat jego powierzchni i listę dotychczasowych wpisów
-   (pustą).
+   trzonowiec dolny lewy"), powiększony schemat jego powierzchni, domyślną liczbę kanałów
+   korzeniowych właściwą dla tej pozycji oraz listę dotychczasowych wpisów (pustą).
 3. **Given** wybrany ząb 36, **When** lekarz wybiera ze słownika rozpoznanie o zakresie
    powierzchniowym (np. "próchnica zębiny"), **Then** system wymaga wskazania co najmniej jednej
    powierzchni i nie pozwala zapisać wpisu bez tego wskazania.
@@ -240,7 +270,7 @@ istniejących wpisów.
 
 ---
 
-### User Story 6 - Lekarz oznacza zmianę obejmującą grupę zębów (Priority: P3)
+### User Story 6 - Operator oznacza stan wielu zębów i wielu części naraz (Priority: P3)
 
 Lekarz stwierdza kamień nazębny i zapalenie dziąseł w całym odcinku przednim dolnym. Zamiast
 sześciokrotnie powtarzać ten sam formularz, zaznacza kilka zębów naraz i przypisuje im wspólne
@@ -249,6 +279,10 @@ rozpoznanie jednym zapisem.
 **Why this priority**: Znacząco skraca realną pracę przy fotelu i zmniejsza liczbę pominięć, ale
 każdy z tych zapisów da się wykonać pojedynczo przez przepływ z US1 — więc jest to optymalizacja, a
 nie warunek działania.
+
+**Uwaga**: zaznaczenie wielokrotne obejmuje zarówno zęby, jak i części zęba — operator może wskazać
+np. sześć zębów przednich i w każdym z nich powierzchnię przedsionkową, a następnie zapisać jeden
+wspólny stan (FR-004a..FR-004c).
 
 **Independent Test**: Można przetestować zaznaczając wielokrotnie kilka zębów, przypisując im jedno
 rozpoznanie o zakresie przyzębia i weryfikując, że powstało tyle odrębnych wpisów, ile zaznaczono
@@ -268,6 +302,11 @@ zębów, a każdy da się później skorygować niezależnie.
    powierzchnie, **Then** ten sam zestaw powierzchni jest stosowany do każdego zaznaczonego zęba, z
    pominięciem powierzchni nieistniejących dla danego typu zęba, i lekarz jest o tym poinformowany
    przed zapisem.
+5. **Given** otwarty odontogram, **When** lekarz używa skrótu "odcinek przedni górny" albo
+   przeciąga palcem po sąsiadujących zębach, **Then** wszystkie objęte zęby zostają zaznaczone
+   jednym gestem, a licznik pokazuje ich liczbę.
+6. **Given** zaznaczenie wielu zębów, **When** lekarz odznacza jeden z nich, **Then** pozostałe
+   zaznaczenie zostaje nienaruszone.
 
 ---
 
@@ -287,6 +326,18 @@ zębów, a każdy da się później skorygować niezależnie.
   musi zasygnalizować, że powierzchnia ma więcej niż jeden wpis.
 - Co się dzieje, gdy ząb ma tyle wpisów, że nie da się ich zmieścić na schemacie? Diagram pokazuje
   wskaźnik "wiele wpisów", a pełna lista jest w panelu zęba.
+- Co się dzieje, gdy pierwszy trzonowiec górny ma czwarty kanał (MB2)? Operator podnosi liczbę
+  kanałów z domyślnych 3 na 4, a ząb zostaje oznaczony jako mający liczbę kanałów inną niż
+  domyślna.
+- Co się dzieje, gdy operator zmniejsza liczbę kanałów zęba, który ma wpisy przypisane do
+  usuwanych kanałów? System ostrzega przed zapisem, a wpisy zostają w historii zęba oznaczone jako
+  dotyczące kanału nieobecnego w bieżącym modelu — nic nie znika po cichu.
+- Co się dzieje przy zaznaczeniu wielu zębów o różnej liczbie kanałów i wskazaniu kanału trzeciego?
+  Wpis powstaje tylko dla zębów, które ten kanał mają, a pominięte pozycje są jawnie wymienione
+  przed zapisem.
+- Co się dzieje, gdy zaznaczenie wielokrotne obejmuje zęby mleczne i stałe naraz? Zestaw części
+  jest stosowany tam, gdzie istnieje, a różnice są wymienione przed zapisem — operacja nie jest
+  blokowana w całości.
 - Co się dzieje z wpisami zęba mlecznego po jego wymianie na stały? Zostają w historii pozycji,
   jawnie przypisane do zęba mlecznego (patrz US5 scenariusz 4).
 
@@ -336,6 +387,11 @@ zębów, a każdy da się później skorygować niezależnie.
 
 - **FR-001**: System MUST prezentować odontogram jako **dwa łuki zębowe** — górny (szczęka) i dolny
   (żuchwa) — widoczne jednocześnie w jednym widoku, bez konieczności przełączania między nimi.
+- **FR-001a**: System MUST rysować każdy ząb jako anatomicznie rozpoznawalną sylwetkę właściwą dla
+  jego typu (siekacz, kieł, przedtrzonowiec, trzonowiec, trzonowiec mleczny), z widoczną koroną i
+  korzeniami w liczbie odpowiadającej pozycji — nie jako jednolity prostokąt, kółko ani samą
+  etykietę z numerem. Zęby górne i dolne MUST być zwrócone koronami do siebie, korzeniami na
+  zewnątrz łuku, tak jak wyglądają w zwarciu.
 - **FR-002**: System MUST rozmieszczać zęby w konwencji klinicznej: prawa strona pacjenta po lewej
   stronie ekranu, obie połowy łuku odbite względem linii pośrodkowej, oraz MUST oznaczać ćwiartki
   (1–4 dla uzębienia stałego, 5–8 dla mlecznego) etykietami czytelnymi dla użytkownika.
@@ -343,6 +399,17 @@ zębów, a każdy da się później skorygować niezależnie.
   użytkownikowi: 11–18, 21–28, 31–38, 41–48 (stałe) oraz 51–55, 61–65, 71–75, 81–85 (mleczne).
 - **FR-004**: System MUST umożliwiać wybór pojedynczego zęba jednym kliknięciem/dotknięciem i MUST
   wyraźnie oznaczać ząb aktualnie wybrany.
+- **FR-004a**: System MUST umożliwiać jednoczesne zaznaczenie **wielu zębów oraz wielu części
+  zęba** (powierzchni i/lub kanałów) i przypisanie im jednego stanu w jednym zapisie; wskazany
+  zestaw części MUST być stosowany do każdego zaznaczonego zęba, z pominięciem części, które dla
+  danego zęba nie istnieją, i z jawną informacją o tych pominięciach przed zapisem.
+- **FR-004b**: System MUST udostępniać skróty zaznaczania obejmujące co najmniej: całą ćwiartkę,
+  cały łuk (górny/dolny), odcinek przedni i odcinki boczne, oraz zaznaczanie przeciągnięciem po
+  sąsiadujących zębach; MUST też pozwalać odznaczyć pojedynczy ząb bez utraty pozostałego
+  zaznaczenia.
+- **FR-004c**: System MUST pokazywać licznik zaznaczonych zębów i części, MUST utrzymywać
+  zaznaczenie przy otwieraniu i zamykaniu panelu szczegółów oraz MUST wymagać jawnego wyczyszczenia
+  zaznaczenia — zaznaczenie nie może znikać jako efekt uboczny innej czynności.
 - **FR-005**: System MUST wyświetlać dla wybranego zęba panel szczegółów zawierający: numer FDI,
   polską nazwę anatomiczną zęba, powiększony schemat jego powierzchni, listę aktywnych wpisów oraz
   dostęp do historii zęba.
@@ -430,7 +497,8 @@ zębów, a każdy da się później skorygować niezależnie.
 - **FR-027**: System MUST umożliwiać wskazanie wielu powierzchni w jednym wpisie (np. ubytek
   mezjalno-okluzyjny) oraz odznaczenie już wskazanej powierzchni przed zapisem.
 - **FR-028**: System MUST umożliwiać — dla pozycji o zakresie `korzeń / tkanki okołowierzchołkowe`
-  — opcjonalne wskazanie korzenia w zębach wielokorzeniowych.
+  — wskazanie konkretnego korzenia lub konkretnego kanału korzeniowego w zębach
+  wielokorzeniowych/wielokanałowych (patrz sekcja I).
 - **FR-029**: System MUST odwzorowywać wskazane powierzchnie na małym schemacie zęba w widoku
   całego łuku, a nie tylko w panelu szczegółów.
 
@@ -531,29 +599,52 @@ zębów, a każdy da się później skorygować niezależnie.
   samych zasadach i z tym samym uwzględnieniem ustawowych okresów retencji dokumentacji medycznej,
   co pozostałe dane kartoteki.
 
-#### I. Migracja i zgodność wsteczna
+#### I. Kanały korzeniowe i anatomia zęba
 
-- **FR-063**: System MUST zmigrować istniejące dane binarnego stanu uzębienia z
-  `002-patient-records` bez utraty informacji: każdy ząb o stanie `SICK` MUST otrzymać wpis
-  odontogramu z wyróżnioną pozycją słownika oznaczającą rozpoznanie nieokreślone, przeniesione z
-  migracji, wraz z zachowaną datą i autorem ostatniej zmiany.
-- **FR-064**: System MUST oznaczać wpisy pochodzące z migracji w sposób rozpoznawalny dla lekarza,
-  żeby dało się je świadomie uszczegółowić.
-- **FR-065**: Zęby o stanie `HEALTHY` MUST NOT generować żadnych wpisów — brak wpisów jest
-  reprezentacją stanu "bez odnotowanych zmian".
-- **FR-066**: Po migracji system MUST NOT udostępniać już binarnego przełącznika "zdrowy/chory" jako
-  jedynego sposobu opisu stanu zęba.
+- **FR-063**: System MUST przypisywać każdej pozycji zębowej domyślną liczbę kanałów korzeniowych
+  wynikającą z typowej anatomii dla danego numeru FDI i MUST prezentować ją bez dodatkowej
+  interakcji użytkownika — liczba kanałów jest widoczna od razu po otwarciu panelu zęba.
+- **FR-064**: Domyślne liczby kanałów MUST odpowiadać co najmniej poniższemu rozkładowi
+  (uzębienie stałe):
+
+  | Pozycje FDI | Zęby | Domyślna liczba kanałów |
+  | --- | --- | --- |
+  | 11–13, 21–23, 31–33, 41–43 | siekacze i kły | 1 |
+  | 14, 24 | pierwsze przedtrzonowce górne | 2 |
+  | 15, 25 | drugie przedtrzonowce górne | 1 |
+  | 34, 35, 44, 45 | przedtrzonowce dolne | 1 |
+  | 16, 17, 26, 27 | trzonowce górne | 3 |
+  | 36, 37, 46, 47 | trzonowce dolne | 3 |
+  | 18, 28, 38, 48 | trzecie trzonowce (ósemki) | 3, z założeniem dużej zmienności |
+
+  Dla uzębienia mlecznego: siekacze i kły — 1; trzonowce mleczne górne — 3; trzonowce mleczne
+  dolne — 2.
+- **FR-065**: System MUST umożliwiać operatorowi zmianę liczby kanałów dla konkretnego zęba
+  konkretnego pacjenta w zakresie od 1 do 6, MUST zapisywać autora i datę tej zmiany oraz MUST
+  wizualnie oznaczać ząb, którego liczba kanałów różni się od domyślnej — częsty przypadek
+  kliniczny to czwarty kanał (MB2) w pierwszym trzonowcu górnym.
+- **FR-066**: System MUST prezentować kanały graficznie w panelu zęba, w obrębie odpowiednich
+  korzeni, jako elementy dające się wskazać pojedynczo i nazwane zgodnie z anatomią (np.
+  policzkowy bliższy, policzkowy dalszy, podniebienny).
+- **FR-067**: System MUST umożliwiać przypisanie wpisu o zakresie `korzeń / tkanki
+  okołowierzchołkowe` do konkretnego kanału oraz odnotowanie stanu leczenia kanałowego osobno dla
+  każdego kanału (np. wypełniony, niedopełniony, przepełniony, nieodnaleziony).
+- **FR-068**: Zmniejszenie liczby kanałów MUST NOT usuwać ani ukrywać wpisów przypisanych do
+  kanałów, które przestają istnieć; system MUST ostrzec przed zapisem i zachować takie wpisy w
+  historii zęba, jawnie oznaczone jako dotyczące kanału już nieobecnego w modelu.
+- **FR-069**: Zmiana liczby kanałów MUST być traktowana jak każda inna zmiana danych klinicznych:
+  append-only, z wpisem w dzienniku audytu zawierającym stan przed i po (FR-030, FR-060).
 
 #### J. Współbieżność, wydajność, odporność
 
-- **FR-067**: System MUST wykrywać próbę zapisu opartego na nieaktualnym stanie odontogramu i
+- **FR-070**: System MUST wykrywać próbę zapisu opartego na nieaktualnym stanie odontogramu i
   MUST zwracać czytelną informację z możliwością przeładowania, zamiast cicho nadpisywać zmianę
   innego użytkownika.
-- **FR-068**: System MUST zachować niezapisaną treść formularza przy nieudanym zapisie, tak aby
+- **FR-071**: System MUST zachować niezapisaną treść formularza przy nieudanym zapisie, tak aby
   ponowienie próby nie wymagało wypełniania go od nowa.
-- **FR-069**: System MUST prezentować zmianę zaznaczenia zęba i wskazania powierzchni natychmiast,
+- **FR-072**: System MUST prezentować zmianę zaznaczenia zęba i wskazania powierzchni natychmiast,
   niezależnie od czasu trwania zapisu na serwerze.
-- **FR-070**: Moduł MUST pozostać w granicach modułu wysokiego ryzyka "kartoteka pacjenta"
+- **FR-073**: Moduł MUST pozostać w granicach modułu wysokiego ryzyka "kartoteka pacjenta"
   (Principle V) i nie może współdzielić domeny awarii z modułami niższego poziomu ryzyka.
 
 ### Key Entities *(include if feature involves data)*
@@ -561,11 +652,16 @@ zębów, a każdy da się później skorygować niezależnie.
 - **Odontogram pacjenta (ToothChart)**: zbiór pozycji zębowych jednej kartoteki wraz z wybranym
   trybem uzębienia. Nie przechowuje stanu zęba wprost — stan wynika z wpisów (FR-037).
 - **Pozycja zębowa (ToothPosition)**: konkretne miejsce w łuku identyfikowane numerem FDI, z
-  informacją o obecności zęba (obecny / usunięty / wrodzony brak / niewyrznięty) oraz o tym, czy
-  dotyczy uzębienia stałego czy mlecznego. Determinuje zbiór dostępnych powierzchni (FR-024).
+  informacją o obecności zęba (obecny / usunięty / wrodzony brak / niewyrznięty), o tym, czy
+  dotyczy uzębienia stałego czy mlecznego, oraz o liczbie kanałów korzeniowych (domyślnej lub
+  skorygowanej przez operatora). Determinuje zbiór dostępnych powierzchni (FR-024) i kanałów
+  (FR-063).
+- **Kanał korzeniowy (RootCanal)**: pojedynczy kanał w obrębie pozycji zębowej, z nazwą
+  anatomiczną i opcjonalnym stanem leczenia kanałowego. Może być celem wpisu o zakresie
+  `korzeń / tkanki okołowierzchołkowe` (FR-067).
 - **Wpis odontogramu (ToothFinding)**: pojedyncza obserwacja kliniczna przypisana do pozycji
   zębowej. Atrybuty: pozycja słownika, warstwa (rozpoznanie / stan istniejący), zbiór powierzchni
-  albo część anatomiczna, opcjonalny stopień nasilenia, opcjonalna notatka, data rozpoznania, data
+  albo część anatomiczna (w tym konkretny kanał), opcjonalny stopień nasilenia, opcjonalna notatka, data rozpoznania, data
   zakończenia, autor, status kliniczny, status korekty, odniesienie do wpisu korygowanego.
 - **Pozycja słownika rozpoznań (DiagnosisCatalogEntry)**: wersjonowana definicja jednostki
   chorobowej lub stanu: kod, nazwa polska, kategoria, zakres anatomiczny, warstwa, opcjonalny kod
@@ -598,18 +694,19 @@ zębów, a każdy da się później skorygować niezależnie.
   automatycznym audytem uruchamianym w tym samym miejscu, co dotychczasowy.
 - **SC-007**: 100% przepływów tej specyfikacji (wybór zęba, wybór rozpoznania, wskazanie
   powierzchni, zapis, korekta, zamknięcie wpisu) da się wykonać wyłącznie klawiaturą.
-- **SC-008**: Migracja z modelu binarnego zachowuje 100% informacji: liczba pozycji z aktywnym
-  rozpoznaniem po migracji równa się liczbie zębów o stanie `SICK` przed migracją, a każdy taki wpis
-  zachowuje pierwotną datę i autora zmiany.
-- **SC-009**: Żadna zmiana zapisana w odontogramie nie daje się usunąć ani nadpisać przez interfejs
+- **SC-008**: Żadna zmiana zapisana w odontogramie nie daje się usunąć ani nadpisać przez interfejs
   aplikacji — 100% korekt tworzy nową wersję wpisu z zachowaniem poprzedniej.
-- **SC-010**: W teście z udziałem co najmniej 5 lekarzy 90% uczestników poprawnie odczytuje
+- **SC-009**: W teście z udziałem co najmniej 5 lekarzy 90% uczestników poprawnie odczytuje
   znaczenie wszystkich oznaczeń na przykładowym odontogramie, korzystając wyłącznie z legendy
   dostępnej w interfejsie i bez wcześniejszego szkolenia.
-- **SC-011**: Równoległa edycja odontogramu tego samego pacjenta przez dwóch użytkowników nigdy nie
+- **SC-010**: Równoległa edycja odontogramu tego samego pacjenta przez dwóch użytkowników nigdy nie
   skutkuje cichą utratą zmiany — 100% konfliktów kończy się komunikatem i możliwością przeładowania.
-- **SC-012**: Odontogram w pełnym trybie mieszanym (52 pozycje) reaguje na wskazanie zęba widoczną
+- **SC-011**: Odontogram w pełnym trybie mieszanym (52 pozycje) reaguje na wskazanie zęba widoczną
   zmianą zaznaczenia w czasie poniżej 0,1 s, niezależnie od czasu zapisu na serwerze.
+- **SC-012**: Domyślna liczba kanałów jest widoczna dla 100% zębów bez żadnej dodatkowej
+  interakcji poza wybraniem zęba, a zmiana tej liczby wymaga nie więcej niż 2 interakcji.
+- **SC-013**: Odnotowanie tego samego stanu na sześciu zębach odcinka przedniego wymaga jednego
+  zapisu i nie więcej niż 1/3 liczby interakcji potrzebnych przy oznaczaniu każdego zęba osobno.
 
 ## Assumptions
 
@@ -641,7 +738,16 @@ zębów, a każdy da się później skorygować niezależnie.
   przyjęte jako typowe i podlegają korekcie lekarza.
 - Widok odontogramu pozostaje zakładką w istniejącym widoku szczegółów pacjenta, obok zakładek
   danych podstawowych, historii medycznej i historii wizyt.
-- **Zależność międzymodułowa**: ta specyfikacja zastępuje binarny model stanu zęba wdrożony w
+- **Brak migracji danych**: system nie jest wdrożony produkcyjnie i nie istnieją dane pacjentów,
+  więc binarny model `ToothStatus` z `002-patient-records` jest zastępowany bez ścieżki migracyjnej.
+  Plan może usunąć go wraz z odpowiadającą mu tabelą, zamiast utrzymywać zgodność wsteczną.
+- Domyślne liczby kanałów korzeniowych są danymi referencyjnymi opisującymi typową anatomię, nie
+  rozpoznaniem — ich obecność w kartotece nie oznacza, że ząb był badany ani leczony
+  endodontycznie.
+- Zaznaczenie wielokrotne jest narzędziem wprowadzania danych, nie osobnym bytem — jego rezultatem
+  jest zawsze zbiór niezależnych wpisów, po jednym na ząb, każdy z własną historią i możliwością
+  osobnej korekty.
+- **Zależność międzymodułowa**: ta specyfikacja zastępuje binarny model stanu zęba z
   `002-patient-records` i rozszerza system tokenów z `003-brand-ui-theme`. Uprawnienia ról
   pozostają zgodne z FR-006a z `002` (DOCTOR i ASSISTANT z prawem zapisu, RECEPTION bez dostępu).
-  Zmiana modelu danych i plan migracji muszą zostać jawnie uwzględnione w `/speckit-plan`.
+  Zmianę modelu danych należy jawnie uwzględnić w `/speckit-plan`.
