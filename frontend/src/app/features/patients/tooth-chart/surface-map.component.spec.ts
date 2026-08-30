@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SurfaceMapComponent } from './surface-map.component';
 
 describe('SurfaceMapComponent', () => {
@@ -73,5 +73,34 @@ describe('SurfaceMapComponent', () => {
     expect(distal.classList.contains('has-entry')).toBe(true);
     expect(vestibular.classList.contains('selected')).toBe(false);
     expect(vestibular.classList.contains('has-entry')).toBe(false);
+  });
+
+  it('right-clicking a zone emits zoneContextMenu with that surface and the click position (FR-020a/T066)', async () => {
+    await setup(36);
+    let emitted: { surface: string; x: number; y: number } | undefined;
+    fixture.componentInstance.zoneContextMenu.subscribe((e: { surface: string; x: number; y: number }) => (emitted = e));
+
+    fixture.nativeElement
+      .querySelector('[data-testid="surface-zone-DISTAL"]')
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 12, clientY: 34 }));
+
+    expect(emitted).toEqual({ surface: 'DISTAL', x: 12, y: 34 });
+  });
+
+  it('a touch long-press on a zone emits zoneContextMenu after the long-press delay', async () => {
+    vi.useFakeTimers();
+    await setup(36);
+    let emitted: { surface: string } | undefined;
+    fixture.componentInstance.zoneContextMenu.subscribe((e: { surface: string }) => (emitted = e));
+
+    const zone = fixture.nativeElement.querySelector('[data-testid="surface-zone-OCCLUSAL_INCISAL"]');
+    const pointerDown = new Event('pointerdown');
+    Object.assign(pointerDown, { pointerType: 'touch', clientX: 5, clientY: 6 });
+    zone.dispatchEvent(pointerDown);
+    expect(emitted).toBeUndefined();
+
+    vi.advanceTimersByTime(500);
+    expect(emitted).toEqual(expect.objectContaining({ surface: 'OCCLUSAL_INCISAL' }));
+    vi.useRealTimers();
   });
 });

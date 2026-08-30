@@ -48,6 +48,10 @@ const ZONE_LETTERS: Record<ToothSurface, string> = {
           [attr.aria-label]="zone.namePl + (zone.selected ? ' (zaznaczona)' : '')"
           (click)="toggle(zone.surface)"
           (keydown.enter)="toggle(zone.surface)"
+          (contextmenu)="onContextMenu($event, zone.surface)"
+          (pointerdown)="onPointerDown($event, zone.surface)"
+          (pointerup)="onPointerUp()"
+          (pointerleave)="onPointerUp()"
         >
           <title>{{ zone.namePl }}</title>
           <path [attr.d]="zone.d" class="zone-shape" />
@@ -97,6 +101,13 @@ export class SurfaceMapComponent {
   readonly showLabels = input<boolean>(false);
 
   readonly surfaceToggled = output<ToothSurface>();
+  /** FR-020a, T066 — right-click or long-press on a surface zone opens the quick-add context
+   * menu pre-targeted at this surface, same as right-clicking the tooth itself in
+   * tooth-arch.component.ts. */
+  readonly zoneContextMenu = output<{ surface: ToothSurface; x: number; y: number }>();
+
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly LONG_PRESS_MS = 500;
 
   readonly zones = computed<RenderedZone[]>(() => {
     const fdiNumber = this.fdiNumber();
@@ -126,5 +137,27 @@ export class SurfaceMapComponent {
 
   toggle(surface: ToothSurface): void {
     this.surfaceToggled.emit(surface);
+  }
+
+  onContextMenu(event: MouseEvent, surface: ToothSurface): void {
+    event.preventDefault();
+    this.zoneContextMenu.emit({ surface, x: event.clientX, y: event.clientY });
+  }
+
+  onPointerDown(event: PointerEvent, surface: ToothSurface): void {
+    if (event.pointerType !== 'touch') {
+      return;
+    }
+    const { clientX, clientY } = event;
+    this.longPressTimer = setTimeout(() => {
+      this.zoneContextMenu.emit({ surface, x: clientX, y: clientY });
+    }, SurfaceMapComponent.LONG_PRESS_MS);
+  }
+
+  onPointerUp(): void {
+    if (this.longPressTimer !== null) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
   }
 }

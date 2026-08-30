@@ -264,6 +264,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
                       [size]="zoomSize()"
                       [existingSurfaces]="existingSurfacesFor(position)"
                       (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
+                      (zoneContextMenu)="openSurfaceContextMenu(position.fdiNumber, $event)"
                     />
                   </div>
                 }
@@ -280,6 +281,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
                       [size]="zoomSize()"
                       [existingSurfaces]="existingSurfacesFor(position)"
                       (surfaceToggled)="onSurfaceZoneClicked(position.fdiNumber, $event)"
+                      (zoneContextMenu)="openSurfaceContextMenu(position.fdiNumber, $event)"
                     />
                   </div>
                 }
@@ -329,6 +331,7 @@ const ZOOM_SIZES: Record<1 | 2 | 3, number> = { 1: 40, 2: 90, 3: 160 };
           [y]="contextMenu()?.y ?? 0"
           [patientId]="patientId()"
           [fdiNumber]="contextMenu()?.fdiNumber ?? 0"
+          [targetSurface]="contextMenu()?.surface ?? null"
           [undoTarget]="contextMenuUndoTarget()"
           [selectedFdiNumbers]="selectedFdiNumbers()"
           (saved)="onSaved()"
@@ -546,7 +549,9 @@ export class ToothChartComponent implements OnInit {
   readonly loadState = signal<LoadState>('loading');
   readonly chart = signal<ToothChart | null>(null);
   readonly selectedFdiNumber = signal<number | null>(null);
-  readonly contextMenu = signal<{ fdiNumber: number; x: number; y: number } | null>(null);
+  readonly contextMenu = signal<
+    { fdiNumber: number; x: number; y: number; surface?: ToothSurface } | null
+  >(null);
 
   readonly dentitionModes: Array<{ value: DentitionMode; labelPl: string }> = [
     { value: 'PERMANENT', labelPl: 'Stałe' },
@@ -791,6 +796,16 @@ export class ToothChartComponent implements OnInit {
 
   openContextMenu(event: { fdiNumber: number; x: number; y: number }): void {
     this.contextMenu.set(event);
+  }
+
+  /** FR-020a, T066 — right-click/long-press on a surface zone in the middle strip opens the same
+   * quick-add menu, pre-targeted at that surface (so a SURFACE-scope entry applies to exactly the
+   * zone the user pointed at, without first opening the detail panel). */
+  openSurfaceContextMenu(
+    fdiNumber: number,
+    event: { surface: ToothSurface; x: number; y: number },
+  ): void {
+    this.contextMenu.set({ fdiNumber, x: event.x, y: event.y, surface: event.surface });
   }
 
   /** FR-004 acceptance scenario 4 — re-render the diagram to show "z aktywnym rozpoznaniem" after

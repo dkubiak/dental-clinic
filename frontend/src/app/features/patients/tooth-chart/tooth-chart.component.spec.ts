@@ -327,6 +327,20 @@ describe('ToothChartComponent', () => {
     expect(fixture.componentInstance.presetSurface()).toEqual({ fdiNumber: 11, surface: 'MESIAL' });
   });
 
+  it('right-clicking a surface zone in the middle strip opens the quick context-menu pre-targeted at that surface (FR-020a/T066)', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-context-menu"]')).toBeFalsy();
+
+    fixture.nativeElement
+      .querySelector('[data-testid="surface-cell-11"] [data-testid="surface-zone-DISTAL"]')
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 50 }));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.contextMenu()).toEqual({ fdiNumber: 11, x: 40, y: 50, surface: 'DISTAL' });
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-context-menu"]')).toBeTruthy();
+  });
+
   it('the diagram scrolls horizontally only inside its own container, never as page scroll (FR-049)', () => {
     fixture.detectChanges();
 
