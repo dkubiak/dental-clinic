@@ -1,96 +1,154 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PatientsService } from '../patients.service';
-import { ToothStateEntry } from '../patients.models';
-import { FDI_TOOTH_NUMBERS, ToothChartComponent } from './tooth-chart.component';
+import { ToothChart, ToothPosition } from '../patients.models';
+import { DiagnosisCatalogService } from './diagnosis-catalog.service';
+import { ToothChartService } from './tooth-chart.service';
+import { ToothChartComponent } from './tooth-chart.component';
+
+function position(fdiNumber: number, overrides: Partial<ToothPosition> = {}): ToothPosition {
+  const quadrant = Math.floor(fdiNumber / 10);
+  return {
+    fdiNumber,
+    dentitionType: quadrant >= 5 ? 'DECIDUOUS' : 'PERMANENT',
+    toothType: 'MOLAR',
+    presence: 'PRESENT',
+    presenceDate: null,
+    version: 0,
+    canals: [],
+    currentFindings: [],
+    ...overrides,
+  };
+}
+
+const PERMANENT_FDI = [1, 2, 3, 4].flatMap((q) => [1, 2, 3, 4, 5, 6, 7, 8].map((p) => q * 10 + p));
+
+function healthyChart(): ToothChart {
+  return {
+    patientId: 'p1',
+    dentitionMode: 'PERMANENT',
+    positions: PERMANENT_FDI.map((fdi) => position(fdi)),
+  };
+}
 
 describe('ToothChartComponent', () => {
   let fixture: ComponentFixture<ToothChartComponent>;
-  let component: ToothChartComponent;
-  let patientsService: {
-    getToothChart: ReturnType<typeof vi.fn>;
-    setToothStatus: ReturnType<typeof vi.fn>;
-  };
-
-  const healthyChart: ToothStateEntry[] = FDI_TOOTH_NUMBERS.map((toothNumber) => ({
-    toothNumber,
-    status: 'HEALTHY',
-    updatedAt: null,
-  }));
+  let toothChartService: { getChart: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    patientsService = {
-      getToothChart: vi.fn().mockReturnValue(of(healthyChart)),
-      setToothStatus: vi.fn(),
+    toothChartService = { getChart: vi.fn().mockReturnValue(of(healthyChart())) };
+    const diagnosisCatalogService = {
+      search: vi.fn().mockReturnValue(of([])),
+      recentEntries: vi.fn().mockReturnValue([]),
+      withRecencyTracking: vi.fn((_code: string, obs) => obs),
     };
 
     await TestBed.configureTestingModule({
       imports: [ToothChartComponent],
-      providers: [{ provide: PatientsService, useValue: patientsService }],
+      providers: [
+        { provide: ToothChartService, useValue: toothChartService },
+        { provide: DiagnosisCatalogService, useValue: diagnosisCatalogService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ToothChartComponent);
-    component = fixture.componentInstance;
-    component.patientId = 'p1';
-    fixture.detectChanges();
+    fixture.componentRef.setInput('patientId', 'p1');
   });
 
-  it('renders the jaw SVG with all 32 teeth', () => {
-    expect(patientsService.getToothChart).toHaveBeenCalledWith('p1');
-    const teethEls = fixture.nativeElement.querySelectorAll('[data-testid^="tooth-"]');
+  it('shows a loading state before the chart resolves', () => {
+    toothChartService.getChart.mockReturnValue(new Subject<ToothChart>());
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-chart-loading"]')).toBeTruthy();
+  });
+
+  it('shows an error state, not an empty area, when the read fails', () => {
+    toothChartService.getChart.mockReturnValue(throwError(() => new Error('boom')));
+    fixture.detectChanges();
+
+    const errorEl = fixture.nativeElement.querySelector('[data-testid="tooth-chart-error"]');
+    expect(errorEl).toBeTruthy();
+    expect(errorEl.textContent.trim().length).toBeGreaterThan(0);
+  });
+
+  it('renders both arches simultaneously with all 32 permanent teeth (FR-001)', () => {
+    fixture.detectChanges();
+
+    const teethEls = fixture.nativeElement.querySelectorAll('[data-testid^="tooth-"]:not([data-testid^="tooth-chart"])');
     expect(teethEls.length).toBe(32);
+    expect(fixture.nativeElement.querySelectorAll('svg.arch-upper').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('svg.arch-lower').length).toBe(1);
   });
 
-  it('tapping a tooth selects it', () => {
+  it('shows readable quadrant labels 1-4 for a permanent chart (FR-002)', () => {
+    fixture.detectChanges();
+
+    const labels = Array.from(fixture.nativeElement.querySelectorAll('.quadrant-label')).map(
+      (el) => (el as Element).textContent,
+    );
+    expect(labels).toEqual(expect.arrayContaining(['1', '2', '3', '4']));
+  });
+
+  it('shows the FR-054 empty state message when the chart has no findings (US1 Scenario 1)', () => {
+    fixture.detectChanges();
+
+    const emptyEl = fixture.nativeElement.querySelector('[data-testid="tooth-chart-empty"]');
+    expect(emptyEl).toBeTruthy();
+    expect(emptyEl.textContent).toContain('Brak odnotowanych zmian');
+    // FR-054 — the empty state must never present as a blank area: the diagram still renders.
+    expect(fixture.nativeElement.querySelectorAll('[data-testid^="tooth-"]:not([data-testid^="tooth-chart"])').length).toBe(32);
+  });
+
+  it('does not show the empty-state message once a finding exists', () => {
+    const chartWithFinding = healthyChart();
+    chartWithFinding.positions[0] = position(11, {
+      currentFindings: [
+        {
+          id: 'f1',
+          fdiNumber: 11,
+          diagnosisCatalogEntry: {
+            id: 'dx1',
+            code: 'K02.1',
+            namePl: 'Próchnica zębiny',
+            category: 'HARD_TISSUE',
+            anatomicalScope: 'SURFACE',
+            layer: 'DIAGNOSIS',
+            icd10Code: 'K02.1',
+            severityOptions: null,
+            allowedForMissingTooth: false,
+            deciduousAllowed: true,
+            quickAccess: true,
+            requiresFreeText: false,
+          },
+          surfaces: ['MESIAL'],
+          rootCanalId: null,
+          severity: null,
+          freeTextDescription: null,
+          note: null,
+          diagnosisDate: '2026-08-30',
+          resolvedDate: null,
+          clinicalStatus: 'ACTIVE',
+          recordStatus: 'CURRENT',
+          supersedesFindingId: null,
+          authorAccountId: 'a1',
+          authorRole: 'DOCTOR',
+          createdAt: '2026-08-30T00:00:00Z',
+        },
+      ],
+    });
+    toothChartService.getChart.mockReturnValue(of(chartWithFinding));
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="tooth-chart-empty"]')).toBeFalsy();
+  });
+
+  it('selecting a tooth updates the selection signal', () => {
+    fixture.detectChanges();
+
     fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
     fixture.detectChanges();
 
-    expect(component.selectedTooth()).toBe(11);
-    const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('11');
-  });
-
-  it('marks a sick tooth with a signal other than fill color (FR-019) — fills alone are 1.23:1/1.09:1, indistinguishable', () => {
-    patientsService.getToothChart.mockReturnValue(
-      of(
-        healthyChart.map((t) =>
-          t.toothNumber === 11 ? { ...t, status: 'SICK' as const } : t,
-        ),
-      ),
-    );
-    fixture = TestBed.createComponent(ToothChartComponent);
-    component = fixture.componentInstance;
-    component.patientId = 'p1';
-    fixture.detectChanges();
-
-    const healthyTooth = fixture.nativeElement.querySelector('[data-testid="tooth-12"]');
-    const sickTooth = fixture.nativeElement.querySelector('[data-testid="tooth-11"]');
-
-    // The non-color signal must be a real attribute difference — a class name alone (which only
-    // exists to carry a color rule) would not satisfy "an attribute other than fill".
-    expect(sickTooth.getAttribute('stroke-dasharray')).not.toBe(
-      healthyTooth.getAttribute('stroke-dasharray'),
-    );
-    expect(sickTooth.getAttribute('stroke-dasharray')).toBeTruthy();
-  });
-
-  it('toggling the selected tooth updates its visual (and data) state', () => {
-    patientsService.setToothStatus.mockReturnValue(
-      of({ toothNumber: 11, status: 'SICK', updatedAt: '2026-01-01T00:00:00Z' }),
-    );
-
-    fixture.nativeElement.querySelector('[data-testid="tooth-11"]').dispatchEvent(new Event('click'));
-    fixture.detectChanges();
-    fixture.nativeElement
-      .querySelector('[data-testid="toggle-status"]')
-      .dispatchEvent(new Event('click'));
-    fixture.detectChanges();
-
-    expect(patientsService.setToothStatus).toHaveBeenCalledWith('p1', 11, 'SICK');
-    expect(component.teeth().find((t) => t.toothNumber === 11)?.status).toBe('SICK');
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="tooth-11"]').classList.contains('sick'),
-    ).toBe(true);
+    expect(fixture.componentInstance.selectedFdiNumber()).toBe(11);
   });
 });

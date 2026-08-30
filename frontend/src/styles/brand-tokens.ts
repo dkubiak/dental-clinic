@@ -35,7 +35,14 @@ export type RoleName =
   | 'tooth-healthy-stroke'
   | 'tooth-diseased-fill'
   | 'tooth-diseased-stroke'
-  | 'tooth-selected-stroke';
+  | 'tooth-selected-stroke'
+  | 'tooth-root-fill'
+  | 'tooth-restored-fill'
+  | 'tooth-restored-stroke'
+  | 'tooth-closed-stroke'
+  | 'tooth-absent'
+  | 'canal-treat'
+  | 'canal-done';
 
 export type BrandTokens = Record<RoleName, Record<ThemeName, HexColor>>;
 
@@ -76,4 +83,13 @@ export const brandTokens: BrandTokens = {
   'tooth-diseased-fill': { light: '#F7E3E1', dark: '#5A2B27' },
   'tooth-diseased-stroke': { light: '#A33A32', dark: '#E88178' },
   'tooth-selected-stroke': { light: '#7A5A2E', dark: '#E3C9A6' },
+
+  // Feature 005 (odontogram z rozpoznaniami) — research.md D10.
+  'tooth-root-fill': { light: '#EAE0D2', dark: '#413C3B' },
+  'tooth-restored-fill': { light: '#D7E8E4', dark: '#24413E' },
+  'tooth-restored-stroke': { light: '#3E7A72', dark: '#7FB3AA' },
+  'tooth-closed-stroke': { light: '#2E6B45', dark: '#6FBF8E' },
+  'tooth-absent': { light: '#8C8480', dark: '#7A726C' },
+  'canal-treat': { light: '#A33A32', dark: '#E88178' },
+  'canal-done': { light: '#2E6B45', dark: '#6FBF8E' },
 };

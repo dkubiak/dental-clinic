@@ -33,4 +33,11 @@ module.exports = {
       }
     },
   },
+  // Feature 005 (005-tooth-chart-diagnoses) — GET /diagnosis-catalog is the one new endpoint NOT
+  // nested under /patients/{id}/..., so it needs its own entry here (mirrors nginx.conf's own
+  // dedicated location for the same reason).
+  '/diagnosis-catalog': {
+    target: 'http://localhost:8081',
+    secure: false,
+  },
 };

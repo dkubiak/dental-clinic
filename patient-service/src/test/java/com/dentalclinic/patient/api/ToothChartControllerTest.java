@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,18 +17,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T042 — {@code GET/PATCH /patients/{id}/tooth-chart[/{toothNumber}]} per
- * contracts/patient-api.yaml (FR-005/FR-006). {@code 200} for DOCTOR/ASSISTANT, {@code 404} for
- * RECEPTION; GET writes a TOOTH_CHART_VIEWED audit entry, PATCH writes TOOTH_STATE_CHANGED with
- * before/after.
+ * T031 — {@code GET /patients/{id}/tooth-chart[/positions/{fdi}/history]} per
+ * contracts/patient-api.yaml (FR-005/FR-034/FR-059). 200 for DOCTOR/ASSISTANT, 404 for RECEPTION
+ * and for a nonexistent patient (indistinguishable, FR-059); one TOOTH_CHART_VIEWED audit row per
+ * successful read.
  */
-class ToothChartApiTest extends PostgresIntegrationTestBase {
+class ToothChartControllerTest extends PostgresIntegrationTestBase {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
   private static final String CREATE_BODY =
       """
-      {"firstName":"Jan","lastName":"ToothChart","dateOfBirth":"1990-01-15",
+      {"firstName":"Jan","lastName":"Odontogram","dateOfBirth":"1990-01-15",
        "pesel":"%s","addressStreet":"Polna","addressBuildingNo":"12A",
        "addressPostalCode":"00-001","addressCity":"Warszawa"}
       """;
@@ -61,8 +60,9 @@ class ToothChartApiTest extends PostgresIntegrationTestBase {
               get("/patients/" + id + "/tooth-chart")
                   .with(user(UUID.randomUUID().toString()).roles(role)))
           .andExpect(status().isOk())
-          .andExpect(jsonPath("$.length()").value(32))
-          .andExpect(jsonPath("$[0].status").value("HEALTHY"));
+          .andExpect(jsonPath("$.dentitionMode").value("PERMANENT"))
+          .andExpect(jsonPath("$.positions.length()").value(52))
+          .andExpect(jsonPath("$.positions[0].presence").value("PRESENT"));
     }
 
     assertThat(countEntries("TOOTH_CHART_VIEWED")).isEqualTo(before + 2);
@@ -80,7 +80,18 @@ class ToothChartApiTest extends PostgresIntegrationTestBase {
   }
 
   @Test
-  void nonexistentPatient_returns404_onReadChart() throws Exception {
+  void administrator_isDenied404_onReadChart() throws Exception {
+    UUID id = createPatient("90011502022");
+
+    mockMvc
+        .perform(
+            get("/patients/" + id + "/tooth-chart")
+                .with(user(UUID.randomUUID().toString()).roles("ADMINISTRATOR")))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void nonexistentPatient_returns404_onReadChart_indistinguishableFromDenial() throws Exception {
     mockMvc
         .perform(
             get("/patients/" + UUID.randomUUID() + "/tooth-chart")
@@ -89,60 +100,18 @@ class ToothChartApiTest extends PostgresIntegrationTestBase {
   }
 
   @Test
-  void doctor_canToggleToothStatus_andItWritesAnAuditEntryWithBeforeAfter() throws Exception {
-    UUID id = createPatient("90011502022");
-    long before = countEntries("TOOTH_STATE_CHANGED");
-
-    mockMvc
-        .perform(
-            patch("/patients/" + id + "/tooth-chart/11")
-                .with(user(UUID.randomUUID().toString()).roles("DOCTOR"))
-                .cookie(CSRF_TOKEN_COOKIE)
-                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
-                .contentType(APPLICATION_JSON)
-                .content("{\"status\":\"SICK\"}"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.toothNumber").value(11))
-        .andExpect(jsonPath("$.status").value("SICK"));
-
-    assertThat(countEntries("TOOTH_STATE_CHANGED")).isEqualTo(before + 1);
-    String afterState =
-        jdbcTemplate.queryForObject(
-            "SELECT after_state::text FROM audit_log_entry WHERE event_type ="
-                + " 'TOOTH_STATE_CHANGED'::audit_event_type ORDER BY id DESC LIMIT 1",
-            String.class);
-    assertThat(afterState).contains("SICK");
-  }
-
-  @Test
-  void assistant_canToggleToothStatus() throws Exception {
+  void positionHistory_returnsEmptyForFreshTooth_andIsAuditedAsChartViewed() throws Exception {
     UUID id = createPatient("90011502039");
+    long before = countEntries("TOOTH_CHART_VIEWED");
 
     mockMvc
         .perform(
-            patch("/patients/" + id + "/tooth-chart/48")
-                .with(user(UUID.randomUUID().toString()).roles("ASSISTANT"))
-                .cookie(CSRF_TOKEN_COOKIE)
-                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
-                .contentType(APPLICATION_JSON)
-                .content("{\"status\":\"SICK\"}"))
+            get("/patients/" + id + "/tooth-chart/positions/11/history")
+                .with(user(UUID.randomUUID().toString()).roles("DOCTOR")))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("SICK"));
-  }
+        .andExpect(jsonPath("$.length()").value(0));
 
-  @Test
-  void reception_isDenied404_onToggleToothStatus() throws Exception {
-    UUID id = createPatient("90011502046");
-
-    mockMvc
-        .perform(
-            patch("/patients/" + id + "/tooth-chart/11")
-                .with(user(UUID.randomUUID().toString()).roles("RECEPTION"))
-                .cookie(CSRF_TOKEN_COOKIE)
-                .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE)
-                .contentType(APPLICATION_JSON)
-                .content("{\"status\":\"SICK\"}"))
-        .andExpect(status().isNotFound());
+    assertThat(countEntries("TOOTH_CHART_VIEWED")).isEqualTo(before + 1);
   }
 
   private long countEntries(String eventType) {

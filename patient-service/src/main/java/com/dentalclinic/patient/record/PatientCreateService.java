@@ -78,7 +78,7 @@ public class PatientCreateService {
     } catch (DataIntegrityViolationException e) {
       throw new DuplicatePeselException();
     }
-    toothChartInitializer.initialize(record.getId());
+    toothChartInitializer.initialize(record.getId(), dateOfBirth);
 
     auditWriter.append(
         PatientAuditEventType.PATIENT_RECORD_CREATED,

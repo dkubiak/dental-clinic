@@ -13,7 +13,7 @@ changes touching authz require security/compliance review).
 | `RECEPTION` | recepcja | Appointments and patient contact details, for all patients. No clinical/medical data. |
 | `DOCTOR` | lekarz | Medical records and treatment history, for all patients (clinic-wide, not per-doctor assignment — FR-014). No account/config administration. |
 | `ADMINISTRATOR` | administrator | User accounts and system configuration. No default access to clinical patient data (contact, medical, or otherwise). |
-| `ASSISTANT` | asystent/asystentka | *Added by feature 002 (002-patient-records).* Chairside assistant. Read-only patient basic data (identification only) + view/edit the tooth chart alongside `DOCTOR`. No account/config administration, no basic-data write, no audit/export/erasure access. |
+| `ASSISTANT` | asystent/asystentka | *Added by feature 002 (002-patient-records).* Chairside assistant. Read-only patient basic data (identification only) + full read/write parity with `DOCTOR` on the odontogram, including diagnosis findings (rule 8, feature 005) — extended from the original tooth-chart-only scope. No account/config administration, no basic-data write, no audit/export/erasure access. |
 
 ## Permission matrix
 
@@ -31,13 +31,18 @@ changes touching authz require security/compliance review).
 | *Added by feature 002 (002-patient-records):* | | | | |
 | Create / edit patient basic data (kartoteka) | ✅ | ✅ | ❌ | ❌ |
 | Read patient basic data (identification only) | ✅ | ✅ | ✅ | ❌ |
-| View / edit tooth chart | ❌ | ✅ | ✅ | ❌ |
 | View visit-history placeholder | ✅ | ✅ | ❌ | ❌ |
 | Export / erase patient data (RODO, FR-009/FR-010 of 002) | ❌ | ✅ | ❌ | ❌ |
 | *Added by feature 004 (004-patient-medical-history):* | | | | |
 | Add allergy / medication / chronic-condition entries (kartoteka historii medycznej) | ❌ | ✅ | ❌ | ❌ |
 | Read current + "historia zmian" entries for allergies / medications / chronic conditions | ❌ | ✅ | ✅ | ❌ |
 | See fact-only critical-allergy alert (boolean, no clinical detail — `hasCriticalAllergyAlert` on the existing patient-basic-data response) | ✅ | ✅ | ✅ | ❌ |
+| *Replaced by feature 005 (005-tooth-chart-diagnoses) — supersedes the "View / edit tooth chart" row above:* | | | | |
+| Read odontogram (chart, positions, canals, current findings, per-position history) | ❌ | ✅ | ✅ | ❌ |
+| Add / correct / close diagnosis findings, including disease diagnoses (rozpoznania chorobowe) | ❌ | ✅ | ✅ | ❌ |
+| Add / rename / change state / remove root canals | ❌ | ✅ | ✅ | ❌ |
+| Set tooth presence (obecny/usunięty/wrodzony brak/niewyrznięty) and dentition mode | ❌ | ✅ | ✅ | ❌ |
+| Read the diagnosis catalog (search, quick-access list) | ❌ | ✅ | ✅ | ❌ |
 
 ## Enforcement rules
 
@@ -73,3 +78,17 @@ changes touching authz require security/compliance review).
    `hasCriticalAllergyAlert` boolean carried on the basic-data response it already reads — that
    boolean reveals no substance/reaction/medication/diagnosis content, so it does not create a new
    permission row of its own (004's research.md #5).
+8. **`ASSISTANT` write parity with `DOCTOR` on the odontogram (feature 005) is deliberate, not a
+   copy-paste error, and not the same shape as rule 7.** Unlike medical history (004), where
+   `ASSISTANT` is read-only, `ASSISTANT` here has the *exact same* create/correct/close/canal/
+   presence write scope as `DOCTOR` (005's spec.md FR-057/FR-058, Clarifications session
+   2026-08-30) — reflecting the real chairside workflow of a doctor dictating a diagnosis and an
+   assistant recording it. Accountability for this parity does not come from a narrower role; it
+   comes from `authorRole` being recorded on every finding (which role the author acted in at
+   write time) plus the unconditional audit trail (rule 5) — per 005's research.md D8, this
+   divergence from rule 7's read-parity/write-restricted shape MUST be called out explicitly in
+   any future change to this table, never silently generalized into "ASSISTANT always has DOCTOR's
+   write access." `ADMINISTRATOR` exclusion is unchanged (rule 3/6/7); `RECEPTION` has zero rows
+   for the odontogram, including no fact-only alert equivalent to rule 7's
+   `hasCriticalAllergyAlert` — 005's spec.md FR-059 requires denying RECEPTION knowledge that any
+   finding exists at all, not just its clinical detail.

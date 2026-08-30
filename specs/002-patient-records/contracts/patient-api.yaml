@@ -5,9 +5,11 @@ info:
   description: >
     REST API served by the independent `patient-service` deployable (own Helm release, own
     Deployment — plan.md Risk Tier & Availability) for the patient-records (kartoteka) module:
-    basic patient data, tooth-chart view/edit, the read-only visit-history placeholder, and
-    (since feature 004) the medical-history sub-resources — allergies, medications, chronic
-    conditions.
+    basic patient data, the read-only visit-history placeholder, the medical-history
+    sub-resources (since feature 004) — allergies, medications, chronic conditions — and (since
+    feature 005) the full clinical odontogram: positions, root canals, dentition mode, and
+    append-only diagnosis findings, replacing feature 002's original binary tooth-chart
+    (HEALTHY/SICK).
     Authorization is enforced server-side only (@PreAuthorize), same as auth-service's
     auth-api — the Angular frontend's route/UI guards are UX-only. patient-service validates
     the caller by reading the same session table auth-service writes (research.md #7) — no
@@ -103,50 +105,331 @@ paths:
         "404":
           description: Not found, or caller's role is not RECEPTION/DOCTOR.
 
+  # --- Replaced by feature 005 (005-tooth-chart-diagnoses). The single binary /tooth-chart
+  # GET+PATCH pair (32 teeth, HEALTHY/SICK) is replaced wholesale — no production data exists to
+  # migrate (spec.md Assumptions, research.md D1) — by the richer surface below: 52 positions,
+  # per-position presence/canals, and append-only diagnosis findings following the same
+  # supersede-based correction pattern feature 004 established (research.md D3).
   /patients/{patientId}/tooth-chart:
     get:
-      summary: Read a patient's full tooth chart (32 teeth) (FR-005).
-      description: Available to DOCTOR, ASSISTANT only — RECEPTION has no access, per FR-006.
+      summary: Read a patient's full odontogram — 52 positions, canals, current findings (FR-005).
+      description: >
+        Available to DOCTOR, ASSISTANT only — RECEPTION has no access (FR-059). Audit-logged as
+        TOOTH_CHART_VIEWED.
       parameters:
         - $ref: "#/components/parameters/PatientId"
       responses:
         "200":
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/ToothState" }
+              schema: { $ref: "#/components/schemas/ToothChart" }
         "404":
           description: Not found, or caller's role is not DOCTOR/ASSISTANT.
 
-  /patients/{patientId}/tooth-chart/{toothNumber}:
+  /patients/{patientId}/tooth-chart/dentition-mode:
     patch:
-      summary: Set a single tooth's state to HEALTHY or SICK (FR-006).
+      summary: Override the proposed dentition mode (FR-044, FR-045).
       description: >
-        Available to DOCTOR, ASSISTANT only. Audit-logged as TOOTH_STATE_CHANGED with
-        before/after state.
+        Available to DOCTOR, ASSISTANT only. Never deletes or hides existing findings (FR-047) —
+        purely a view filter over the 52 positions that always exist. Audit-logged as
+        DENTITION_MODE_CHANGED with before/after state.
       parameters:
         - $ref: "#/components/parameters/PatientId"
-        - name: toothNumber
-          in: path
-          required: true
-          schema: { type: integer, enum: [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48] }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [status]
+              required: [dentitionMode]
               properties:
-                status: { type: string, enum: [HEALTHY, SICK] }
+                dentitionMode: { type: string, enum: [PERMANENT, DECIDUOUS, MIXED] }
       responses:
         "200":
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ToothState" }
+              schema: { $ref: "#/components/schemas/ToothChart" }
         "404":
           description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/tooth-chart/positions/{fdiNumber}/presence:
+    patch:
+      summary: Set a position's presence — obecny/usunięty/wrodzony brak/niewyrznięty (FR-038).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Audit-logged as TOOTH_POSITION_PRESENCE_CHANGED with
+        before/after state. Returns 409 if `expectedVersion` doesn't match the position's current
+        version (optimistic concurrency, research.md D7, FR-070).
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - $ref: "#/components/parameters/FdiNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [presence, expectedVersion]
+              properties:
+                presence: { type: string, enum: [PRESENT, EXTRACTED, CONGENITALLY_MISSING, UNERUPTED] }
+                presenceDate: { type: string, format: date, nullable: true }
+                expectedVersion: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothPosition" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: >
+            `expectedVersion` is stale (another user changed this position since it was read,
+            FR-070/SC-010), or the position has findings that would become invalid (FR-040).
+
+  /patients/{patientId}/tooth-chart/positions/{fdiNumber}/history:
+    get:
+      summary: Read a position's full finding history — current, resolved, and superseded (FR-034).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Audit-logged as TOOTH_CHART_VIEWED
+        (metadata.detail = "position-history").
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - $ref: "#/components/parameters/FdiNumber"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ToothFinding" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/tooth-chart/positions/{fdiNumber}/canals:
+    post:
+      summary: Add a root canal to a position (up to 6, FR-065).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Requires `presence = PRESENT` on the position.
+        Audit-logged as ROOT_CANAL_ADDED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - $ref: "#/components/parameters/FdiNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, description: "Anatomical name, e.g. \"policzkowy bliższy\", \"MB2\" (FR-065)." }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RootCanal" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: Position already has 6 non-removed canals, or is not PRESENT.
+
+  /patients/{patientId}/tooth-chart/positions/{fdiNumber}/canals/{canalId}:
+    patch:
+      summary: Rename a canal or change its treatment state (FR-065, FR-066).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Audit-logged as ROOT_CANAL_CHANGED with before/after
+        state. Returns 409 if `expectedVersion` is stale (research.md D7).
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - $ref: "#/components/parameters/FdiNumber"
+        - name: canalId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion]
+              properties:
+                name: { type: string, nullable: true }
+                state: { type: string, enum: [NEEDS_TREATMENT, TREATED, UNDERTREATED], nullable: true }
+                expectedVersion: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RootCanal" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: "`expectedVersion` is stale."
+    delete:
+      summary: Remove a canal — soft delete only (FR-068).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Findings that reference this canal are never removed
+        or hidden; they keep referencing it and the frontend flags it as absent-from-model
+        (FR-068). Audit-logged as ROOT_CANAL_REMOVED with before/after state.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - $ref: "#/components/parameters/FdiNumber"
+        - name: canalId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Canal marked removed.
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/tooth-chart/findings:
+    post:
+      summary: Add a clinical finding to one position (FR-022, US1).
+      description: >
+        Available to DOCTOR, ASSISTANT only, identical scope for both (FR-057/FR-058) —
+        `authorRole` records which role the caller acted in. `surfaces` is required iff the
+        referenced catalog entry's `anatomicalScope = SURFACE` (FR-022/FR-023). Audit-logged as
+        TOOTH_FINDING_ADDED.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ToothFindingCreateRequest" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothFinding" }
+        "400":
+          description: >
+            Missing required surfaces for a SURFACE-scope entry, surfaces supplied for a
+            non-SURFACE-scope entry, missing free-text description for the "inne rozpoznanie"
+            entry, or a diagnosis date in the future / before the patient's date of birth (FR-036).
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: Position's `presence != PRESENT` and the entry isn't `allowedForMissingTooth` (FR-040).
+
+  /patients/{patientId}/tooth-chart/findings/bulk:
+    post:
+      summary: Add the same finding to multiple positions/parts in one save (FR-004a-c, US6).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Creates one independent `ToothFinding` per applicable
+        position inside a single transaction — never a shared "batch" entity (research.md D6).
+        Positions where the entry doesn't apply (missing tooth, surface doesn't exist for that
+        tooth type, canal doesn't exist) are skipped and reported, never silently dropped and
+        never failing the whole call (FR-004a, US6 scenario 3/4). Each created finding gets its
+        own TOOTH_FINDING_ADDED audit entry.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ToothFindingBulkCreateRequest" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothFindingBulkResult" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+
+  /patients/{patientId}/tooth-chart/findings/{findingId}/close:
+    post:
+      summary: Close/resolve a finding — e.g. after treatment (FR-032).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Implemented as a correction (research.md D3): inserts
+        a new `CURRENT` finding with `clinicalStatus = RESOLVED` and `supersedesFindingId` pointing
+        at this one; the original flips to `SUPERSEDED`. Audit-logged as TOOTH_FINDING_ADDED with
+        the superseded finding as `before_state`.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - name: findingId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolvedDate]
+              properties:
+                resolvedDate: { type: string, format: date }
+                note: { type: string, nullable: true }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothFinding" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: >
+            The finding is already SUPERSEDED (someone else corrected/closed it first —
+            FR-070/SC-010; the partial unique index on `supersedesFindingId` makes this atomic).
+
+  /patients/{patientId}/tooth-chart/findings/{findingId}/correct:
+    post:
+      summary: Correct a previously-saved finding, e.g. a wrong surface (FR-033, US3).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Same supersede mechanism as `/close` (research.md
+        D3), but with corrected field values instead of just a status flip. Never overwrites or
+        deletes the original (FR-030). Audit-logged as TOOTH_FINDING_ADDED with the superseded
+        finding as `before_state`.
+      parameters:
+        - $ref: "#/components/parameters/PatientId"
+        - name: findingId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ToothFindingCreateRequest" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ToothFinding" }
+        "404":
+          description: Not found, or caller's role is not DOCTOR/ASSISTANT.
+        "409":
+          description: The finding is already SUPERSEDED.
+
+  /diagnosis-catalog:
+    get:
+      summary: Search the versioned, read-only diagnosis catalog (FR-013, FR-020).
+      description: >
+        Available to DOCTOR, ASSISTANT only. Not editable through any endpoint — it ships as
+        Flyway-seeded reference data (research.md D5); there is no POST/PATCH/DELETE here.
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+          description: Fragment of `nameNamePl` or `code` (FR-013).
+        - name: quickAccessOnly
+          in: query
+          required: false
+          schema: { type: boolean }
+          description: When true, returns only entries flagged `quickAccess` (FR-020).
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DiagnosisCatalogEntry" }
+        "404":
+          description: Caller's role is not DOCTOR/ASSISTANT.
 
   /patients/{patientId}/visit-history:
     get:
@@ -377,6 +660,15 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    FdiNumber:
+      name: fdiNumber
+      in: path
+      required: true
+      description: Added by feature 005. FDI/ISO 3950 position number — 32 permanent + 20 deciduous (FR-003).
+      schema:
+        type: integer
+        enum: [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48,
+               51,52,53,54,55,61,62,63,64,65,71,72,73,74,75,81,82,83,84,85]
 
   schemas:
     PatientSummary:
@@ -424,20 +716,18 @@ components:
     PatientUpdateRequest:
       $ref: "#/components/schemas/PatientCreateRequest"
 
-    ToothState:
-      type: object
-      properties:
-        toothNumber: { type: integer }
-        status: { type: string, enum: [HEALTHY, SICK] }
-        updatedAt: { type: string, format: date-time, nullable: true }
+    # --- Replaced by feature 005 (005-tooth-chart-diagnoses); ToothState/HEALTHY|SICK is gone,
+    # see the schemas under "Added by feature 005" below.
 
     PatientFullExport:
       type: object
       properties:
         patient: { $ref: "#/components/schemas/PatientDetail" }
-        toothChart:
-          type: array
-          items: { $ref: "#/components/schemas/ToothState" }
+        # Added by feature 005. Full odontogram export: chart + all 52 positions + canals +
+        # complete finding history (current, resolved, and superseded alike — a subject-access
+        # request covers everything held, not just the current view, same posture 004's own
+        # export extension took).
+        toothChart: { $ref: "#/components/schemas/ToothChart" }
         visitHistory:
           type: array
           items: {}
@@ -530,6 +820,148 @@ components:
         clinicalStatus: { type: string, enum: [ACTIVE, PAST] }
         diagnosisDate: { type: string, format: date }
         supersedesEntryId: { type: string, format: uuid, nullable: true }
+
+    # --- Added by feature 005 (005-tooth-chart-diagnoses) ---
+
+    ToothChart:
+      type: object
+      properties:
+        patientId: { type: string, format: uuid }
+        dentitionMode: { type: string, enum: [PERMANENT, DECIDUOUS, MIXED] }
+        positions:
+          type: array
+          items: { $ref: "#/components/schemas/ToothPosition" }
+
+    ToothPosition:
+      type: object
+      properties:
+        fdiNumber: { type: integer }
+        dentitionType: { type: string, enum: [PERMANENT, DECIDUOUS] }
+        toothType: { type: string, enum: [INCISOR, CANINE, PREMOLAR, MOLAR] }
+        presence: { type: string, enum: [PRESENT, EXTRACTED, CONGENITALLY_MISSING, UNERUPTED] }
+        presenceDate: { type: string, format: date, nullable: true }
+        version:
+          type: integer
+          description: Optimistic-concurrency token — echo back as `expectedVersion` on the next write (research.md D7).
+        canals:
+          type: array
+          items: { $ref: "#/components/schemas/RootCanal" }
+        currentFindings:
+          type: array
+          description: Only `recordStatus = CURRENT` findings (FR-034); full history is `.../history`.
+          items: { $ref: "#/components/schemas/ToothFinding" }
+
+    RootCanal:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        state: { type: string, enum: [NEEDS_TREATMENT, TREATED, UNDERTREATED] }
+        removed: { type: boolean }
+        version: { type: integer }
+
+    DiagnosisCatalogEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        namePl: { type: string }
+        category:
+          type: string
+          enum: [HARD_TISSUE, PULP_PERIAPICAL, TRAUMA, NON_CARIOUS_LESION, PERIODONTAL_SOFT_TISSUE, ERUPTION_MISSING, POST_TREATMENT_RESTORATION]
+        anatomicalScope: { type: string, enum: [SURFACE, WHOLE_TOOTH, ROOT_PERIAPICAL, PERIODONTIUM] }
+        layer: { type: string, enum: [DIAGNOSIS, EXISTING_STATE] }
+        icd10Code: { type: string, nullable: true }
+        severityOptions: { type: array, items: { type: string }, nullable: true }
+        allowedForMissingTooth: { type: boolean }
+        deciduousAllowed: { type: boolean }
+        quickAccess: { type: boolean }
+        requiresFreeText: { type: boolean }
+
+    ToothFinding:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        fdiNumber: { type: integer }
+        diagnosisCatalogEntry: { $ref: "#/components/schemas/DiagnosisCatalogEntry" }
+        surfaces:
+          type: array
+          nullable: true
+          items: { type: string, enum: [MESIAL, DISTAL, VESTIBULAR, LINGUAL_PALATAL, OCCLUSAL_INCISAL] }
+        rootCanalId: { type: string, format: uuid, nullable: true }
+        severity: { type: string, nullable: true }
+        freeTextDescription: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        diagnosisDate: { type: string, format: date }
+        resolvedDate: { type: string, format: date, nullable: true }
+        clinicalStatus: { type: string, enum: [ACTIVE, RESOLVED] }
+        recordStatus: { type: string, enum: [CURRENT, SUPERSEDED] }
+        supersedesFindingId: { type: string, format: uuid, nullable: true }
+        authorAccountId: { type: string, format: uuid }
+        authorRole: { type: string, enum: [DOCTOR, ASSISTANT], description: "Role the author acted in at write time (FR-058)." }
+        createdAt: { type: string, format: date-time }
+
+    ToothFindingCreateRequest:
+      type: object
+      required: [fdiNumber, diagnosisCatalogEntryId, diagnosisDate]
+      properties:
+        fdiNumber:
+          type: integer
+          description: >
+            The target position (contract gap found during /speckit-implement: the endpoint path
+            carries no {fdiNumber} segment, so the body must — matches ToothFindingBulkCreateRequest's
+            existing fdiNumbers array). Ignored on `.../correct`, where the target position is fixed
+            to the finding being corrected.
+        diagnosisCatalogEntryId: { type: string, format: uuid }
+        surfaces:
+          type: array
+          nullable: true
+          items: { type: string, enum: [MESIAL, DISTAL, VESTIBULAR, LINGUAL_PALATAL, OCCLUSAL_INCISAL] }
+          description: Required iff the catalog entry's `anatomicalScope = SURFACE` (FR-022/FR-023).
+        rootCanalId: { type: string, format: uuid, nullable: true }
+        severity: { type: string, nullable: true }
+        freeTextDescription:
+          type: string
+          nullable: true
+          description: Required iff the catalog entry `requiresFreeText` ("inne rozpoznanie", FR-011a).
+        note: { type: string, nullable: true, maxLength: 1000 }
+        diagnosisDate: { type: string, format: date }
+
+    ToothFindingBulkCreateRequest:
+      type: object
+      required: [fdiNumbers, diagnosisCatalogEntryId, diagnosisDate]
+      properties:
+        fdiNumbers:
+          type: array
+          items: { type: integer }
+          minItems: 1
+          description: Target positions from a multi-select gesture — quadrant/arch/segment shortcuts or drag-select all resolve to this list client-side (FR-004b) before the call is made.
+        diagnosisCatalogEntryId: { type: string, format: uuid }
+        surfaces:
+          type: array
+          nullable: true
+          items: { type: string, enum: [MESIAL, DISTAL, VESTIBULAR, LINGUAL_PALATAL, OCCLUSAL_INCISAL] }
+          description: Applied to every applicable position, skipping surfaces that don't exist for a given tooth type (FR-004a).
+        severity: { type: string, nullable: true }
+        freeTextDescription: { type: string, nullable: true }
+        note: { type: string, nullable: true, maxLength: 1000 }
+        diagnosisDate: { type: string, format: date }
+
+    ToothFindingBulkResult:
+      type: object
+      properties:
+        created:
+          type: array
+          items: { $ref: "#/components/schemas/ToothFinding" }
+        skipped:
+          type: array
+          items:
+            type: object
+            properties:
+              fdiNumber: { type: integer }
+              reason:
+                type: string
+                description: Human-readable, Polish (e.g. missing tooth, surface doesn't exist for this tooth type, canal not present) — FR-004a, US6 scenario 3/4.
 
   securitySchemes:
     sessionCookie:

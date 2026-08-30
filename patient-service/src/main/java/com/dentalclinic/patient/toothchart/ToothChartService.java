@@ -7,75 +7,131 @@ import com.dentalclinic.patient.record.PatientRecordRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
-/** FR-005/FR-006 — read the full chart, or toggle a single tooth's status; always audit-logged. */
+/** FR-005/FR-038/FR-044/FR-045 — read the full chart and its per-position history, and change
+ * presence/dentition-mode; every read/write is audit-logged. */
 @Service
 public class ToothChartService {
 
-  private final ToothStateRepository repository;
+  private final ToothChartRepository toothChartRepository;
+  private final ToothPositionRepository toothPositionRepository;
+  private final RootCanalRepository rootCanalRepository;
+  private final ToothFindingRepository toothFindingRepository;
+  private final DiagnosisCatalogEntryRepository diagnosisCatalogEntryRepository;
   private final PatientRecordRepository patientRecordRepository;
   private final PatientAuditWriter auditWriter;
-  private final ObjectMapper objectMapper;
 
   public ToothChartService(
-      ToothStateRepository repository,
+      ToothChartRepository toothChartRepository,
+      ToothPositionRepository toothPositionRepository,
+      RootCanalRepository rootCanalRepository,
+      ToothFindingRepository toothFindingRepository,
+      DiagnosisCatalogEntryRepository diagnosisCatalogEntryRepository,
       PatientRecordRepository patientRecordRepository,
-      PatientAuditWriter auditWriter,
-      ObjectMapper objectMapper) {
-    this.repository = repository;
+      PatientAuditWriter auditWriter) {
+    this.toothChartRepository = toothChartRepository;
+    this.toothPositionRepository = toothPositionRepository;
+    this.rootCanalRepository = rootCanalRepository;
+    this.toothFindingRepository = toothFindingRepository;
+    this.diagnosisCatalogEntryRepository = diagnosisCatalogEntryRepository;
     this.patientRecordRepository = patientRecordRepository;
     this.auditWriter = auditWriter;
-    this.objectMapper = objectMapper;
   }
 
   /**
    * @throws PatientNotFoundException no patient record with this id exists.
    */
-  public List<ToothState> getChart(UUID patientId, UUID actorId) {
+  public ChartView getChart(UUID patientId, UUID actorId) {
     requirePatientExists(patientId);
-    List<ToothState> teeth = repository.findByPatientRecordIdOrderByToothNumberAsc(patientId);
+    ToothChart chart = requireChart(patientId);
+    List<ToothPosition> positions =
+        toothPositionRepository.findByToothChartIdOrderByFdiNumberAsc(chart.getId());
+    List<PositionView> positionViews = positions.stream().map(this::toPositionView).toList();
+
     auditWriter.append(
         PatientAuditEventType.TOOTH_CHART_VIEWED, actorId, patientId, null, null, null);
-    return teeth;
+    return new ChartView(chart, positionViews);
   }
 
   /**
-   * @throws PatientNotFoundException no patient record, or no tooth with this number, exists.
+   * FR-034 — full per-position history: current, resolved, and superseded findings, in
+   * chronological order.
+   *
+   * @throws PatientNotFoundException no patient record, or no position with this FDI number,
+   *     exists.
    */
-  @Transactional
-  public ToothState setStatus(UUID patientId, int toothNumber, ToothStatus status, UUID actorId) {
+  public List<FindingView> getPositionHistory(UUID patientId, int fdiNumber, UUID actorId) {
     requirePatientExists(patientId);
-    ToothState tooth =
-        repository
-            .findByPatientRecordIdAndToothNumber(patientId, toothNumber)
-            .orElseThrow(PatientNotFoundException::new);
-
-    String beforeJson = toJson(tooth);
-    tooth.changeStatus(status, actorId);
-    repository.save(tooth);
-
+    ToothPosition position = requirePosition(patientId, fdiNumber);
+    List<FindingView> history =
+        toothFindingRepository.findByToothPositionIdOrderByCreatedAtAsc(position.getId()).stream()
+            .map(this::toFindingView)
+            .toList();
     auditWriter.append(
-        PatientAuditEventType.TOOTH_STATE_CHANGED,
+        PatientAuditEventType.TOOTH_CHART_VIEWED,
         actorId,
         patientId,
-        beforeJson,
-        toJson(tooth),
-        null);
-    return tooth;
+        null,
+        null,
+        "{\"detail\":\"position-history\"}");
+    return history;
   }
 
-  private void requirePatientExists(UUID patientId) {
+  ToothChart requireChart(UUID patientId) {
+    return toothChartRepository.findByPatientRecordId(patientId).orElseThrow(PatientNotFoundException::new);
+  }
+
+  ToothPosition requirePosition(UUID patientId, int fdiNumber) {
+    ToothChart chart = requireChart(patientId);
+    return toothPositionRepository
+        .findByToothChartIdAndFdiNumber(chart.getId(), fdiNumber)
+        .orElseThrow(PatientNotFoundException::new);
+  }
+
+  void requirePatientExists(UUID patientId) {
     if (!patientRecordRepository.existsById(patientId)) {
       throw new PatientNotFoundException();
     }
   }
 
-  private String toJson(ToothState tooth) {
-    return objectMapper.writeValueAsString(
-        new ToothSnapshot(tooth.getToothNumber(), tooth.getStatus()));
+  private PositionView toPositionView(ToothPosition position) {
+    List<RootCanal> canals = rootCanalRepository.findByToothPositionId(position.getId());
+    List<FindingView> currentFindings =
+        toothFindingRepository
+            .findByToothPositionIdAndRecordStatus(position.getId(), FindingRecordStatus.CURRENT)
+            .stream()
+            .map(this::toFindingView)
+            .toList();
+    return new PositionView(position, canals, currentFindings);
   }
 
-  private record ToothSnapshot(int toothNumber, ToothStatus status) {}
+  FindingView toFindingView(ToothFinding finding) {
+    DiagnosisCatalogEntry entry =
+        diagnosisCatalogEntryRepository.findById(finding.getDiagnosisCatalogEntryId()).orElseThrow();
+    return new FindingView(finding, entry);
+  }
+
+  public record ChartView(ToothChart chart, List<PositionView> positions) {}
+
+  public record PositionView(
+      ToothPosition position, List<RootCanal> canals, List<FindingView> currentFindings) {
+
+    public int fdiNumber() {
+      return position.getFdiNumber();
+    }
+
+    public DentitionType dentitionType() {
+      return position.getDentitionType();
+    }
+
+    public ToothType toothType() {
+      return position.getToothType();
+    }
+
+    public ToothPresence presence() {
+      return position.getPresence();
+    }
+  }
+
+  public record FindingView(ToothFinding finding, DiagnosisCatalogEntry entry) {}
 }

@@ -54,7 +54,8 @@ class PatientExportApiTest extends PostgresIntegrationTestBase {
                 .header("X-XSRF-TOKEN", CSRF_TOKEN_VALUE))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.patient.lastName").value("Export"))
-        .andExpect(jsonPath("$.toothChart.length()").value(32))
+        .andExpect(jsonPath("$.toothChart.dentitionMode").value("PERMANENT"))
+        .andExpect(jsonPath("$.toothChart.positions.length()").value(52))
         .andExpect(jsonPath("$.visitHistory.length()").value(0));
   }
 

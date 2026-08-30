@@ -53,4 +53,16 @@ html {
   --pu-tooth-diseased-fill: light-dark(#F7E3E1, #5A2B27);
   --pu-tooth-diseased-stroke: light-dark(#A33A32, #E88178);
   --pu-tooth-selected-stroke: light-dark(#7A5A2E, #E3C9A6);
+
+  // Feature 005 (odontogram z rozpoznaniami) — research.md D10. Trzeci stan kanału
+  // ("niedoleczony") łączy --pu-canal-done (trzon) z --pu-canal-treat (wierzchołek) na jednym
+  // kształcie zamiast osobnego trzeciego koloru — sam podział jest sygnałem niezależnym od koloru
+  // (FR-066a).
+  --pu-tooth-root-fill: light-dark(#EAE0D2, #413C3B);
+  --pu-tooth-restored-fill: light-dark(#D7E8E4, #24413E);
+  --pu-tooth-restored-stroke: light-dark(#3E7A72, #7FB3AA);
+  --pu-tooth-closed-stroke: light-dark(#2E6B45, #6FBF8E);
+  --pu-tooth-absent: light-dark(#8C8480, #7A726C);
+  --pu-canal-treat: light-dark(#A33A32, #E88178);
+  --pu-canal-done: light-dark(#2E6B45, #6FBF8E);
 }

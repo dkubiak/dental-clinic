@@ -9,8 +9,7 @@ import com.dentalclinic.patient.medicalhistory.MedicationEntry;
 import com.dentalclinic.patient.record.PatientNotFoundException;
 import com.dentalclinic.patient.record.PatientRecord;
 import com.dentalclinic.patient.record.PatientRecordRepository;
-import com.dentalclinic.patient.toothchart.ToothState;
-import com.dentalclinic.patient.toothchart.ToothStateRepository;
+import com.dentalclinic.patient.toothchart.ToothChartService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -26,17 +25,17 @@ import org.springframework.stereotype.Service;
 public class PatientExportService {
 
   private final PatientRecordRepository patientRecordRepository;
-  private final ToothStateRepository toothStateRepository;
+  private final ToothChartService toothChartService;
   private final MedicalHistoryService medicalHistoryService;
   private final PatientAuditWriter auditWriter;
 
   public PatientExportService(
       PatientRecordRepository patientRecordRepository,
-      ToothStateRepository toothStateRepository,
+      ToothChartService toothChartService,
       MedicalHistoryService medicalHistoryService,
       PatientAuditWriter auditWriter) {
     this.patientRecordRepository = patientRecordRepository;
-    this.toothStateRepository = toothStateRepository;
+    this.toothChartService = toothChartService;
     this.medicalHistoryService = medicalHistoryService;
     this.auditWriter = auditWriter;
   }
@@ -47,8 +46,7 @@ public class PatientExportService {
   public PatientExport export(UUID patientId, UUID actorId) {
     PatientRecord record =
         patientRecordRepository.findById(patientId).orElseThrow(PatientNotFoundException::new);
-    List<ToothState> toothChart =
-        toothStateRepository.findByPatientRecordIdOrderByToothNumberAsc(patientId);
+    ToothChartService.ChartView toothChart = toothChartService.getChart(patientId, actorId);
     List<AllergyEntry> allergies = medicalHistoryService.getAllergyHistory(patientId, actorId);
     List<MedicationEntry> medications =
         medicalHistoryService.getMedicationHistory(patientId, actorId);
@@ -64,7 +62,7 @@ public class PatientExportService {
   /** Visit history is deliberately excluded here — always empty in this version (US3). */
   public record PatientExport(
       PatientRecord patient,
-      List<ToothState> toothChart,
+      ToothChartService.ChartView toothChart,
       List<AllergyEntry> allergies,
       List<MedicationEntry> medications,
       List<ChronicConditionEntry> chronicConditions) {}
