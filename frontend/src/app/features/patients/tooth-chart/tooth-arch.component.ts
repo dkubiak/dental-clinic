@@ -41,6 +41,12 @@ const COLUMN_WIDTH = 40;
  * keep individual teeth legible next to the middle-strip surface maps (matches the density of
  * the approved mockup, research.md D11). */
 const CROWN_H = 55;
+/** Generous upper bound on rootGeometry()'s actual output (canine root height, the tallest case,
+ * is ~26 at max tooth width) — used only to place the FDI-number label safely past every root
+ * tip, never inside the filled root shape (T129 live-verification finding, 2026-08-30). */
+const MAX_ROOT_H = 28;
+const VIEW_BOX_MIN_Y = -100;
+const VIEW_BOX_HEIGHT = 200;
 /** More active findings than this can't be told apart on the compact tooth silhouette. */
 const MULTI_FINDING_THRESHOLD = 3;
 
@@ -87,6 +93,17 @@ const MULTI_FINDING_THRESHOLD = 3;
           (pointerup)="onPointerUp()"
           (pointerleave)="onPointerUp()"
         >
+          <!-- Invisible hit area covering the whole column — without it, only the exact
+               crown/root path outline (not the gaps around it) responds to clicks/right-clicks/
+               long-press, which is a much smaller and harder-to-hit target than the visible
+               column width once teeth render at a realistic, slender size. -->
+          <rect
+            [attr.x]="-columnWidth / 2"
+            [attr.y]="viewBoxMinY"
+            [attr.width]="columnWidth"
+            [attr.height]="viewBoxHeight"
+            fill="transparent"
+          />
           <path [attr.d]="tooth.rootD" class="root" />
           <path [attr.d]="tooth.crownD" class="crown" />
           @for (line of tooth.canalLines; track line.d) {
@@ -98,7 +115,7 @@ const MULTI_FINDING_THRESHOLD = 3;
           @if (tooth.hasMultipleFindings) {
             <text
               [attr.x]="0"
-              [attr.y]="dir() === 1 ? -30 : 120"
+              [attr.y]="dir() === 1 ? -15 : 15"
               class="multi-indicator"
               [attr.data-testid]="'tooth-' + tooth.fdiNumber + '-multi-indicator'"
             >
@@ -258,7 +275,7 @@ export class ToothArchComponent {
           MULTI_FINDING_THRESHOLD,
         labelPl: anatomy.labelPl,
         ariaLabel: this.ariaLabelFor(position, anatomy.labelPl),
-        numberY: dir * (CROWN_H + 9),
+        numberY: dir * (CROWN_H + MAX_ROOT_H + 8),
       };
     });
   });
@@ -271,7 +288,7 @@ export class ToothArchComponent {
     positions.forEach((position, index) => {
       const quadrant = Math.floor(position.fdiNumber / 10);
       if (quadrant !== lastQuadrant) {
-        labels.push({ quadrant, x: index * COLUMN_WIDTH + COLUMN_WIDTH / 2, y: dir === 1 ? -18 : 105 });
+        labels.push({ quadrant, x: index * COLUMN_WIDTH + COLUMN_WIDTH / 2, y: dir === 1 ? -25 : 25 });
         lastQuadrant = quadrant;
       }
     });
@@ -280,8 +297,13 @@ export class ToothArchComponent {
 
   readonly viewBox = computed(() => {
     const count = Math.max(this.positions().length, 1);
-    return `0 -45 ${count * COLUMN_WIDTH} 140`;
+    return `0 ${VIEW_BOX_MIN_Y} ${count * COLUMN_WIDTH} ${VIEW_BOX_HEIGHT}`;
   });
+
+  /** Exposed for the template's per-tooth hit-rect (see its usage). */
+  readonly columnWidth = COLUMN_WIDTH;
+  readonly viewBoxMinY = VIEW_BOX_MIN_Y;
+  readonly viewBoxHeight = VIEW_BOX_HEIGHT;
 
   select(fdiNumber: number): void {
     this.toothSelected.emit(fdiNumber);
